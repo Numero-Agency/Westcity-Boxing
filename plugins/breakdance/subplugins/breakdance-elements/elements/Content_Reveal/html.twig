@@ -1,0 +1,18 @@
+<div class="bde-content-reveal__container is-hidden">
+  <div class="bde-content-reveal__content">
+    %%CHILDREN%%
+  </div>
+
+  {% set text = content.content.labels.reveal_label|default(esc_html__('Read More', 'breakdance')) %}
+  {% set textHide = content.content.labels.hide_label|default(esc_html__('Read Less', 'breakdance')) %}
+  {% set link = {
+      html: { 
+          attributes: [
+              { name: 'data-i18n-more', value: text },
+              { name: 'data-i18n-less', value: textHide },
+          ]
+      } 
+  } %}
+
+  {{ macros.atomV1ButtonHtmlManual(text, link, 'bde-content-reveal__button', design.overlay.button, 'primary', false, false, 'content.content.labels.reveal_label') }}
+</div>

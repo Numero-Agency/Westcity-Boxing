@@ -1,0 +1,17 @@
+{{ macros.EssentialElements_PostsSharedCss('%%SELECTOR%%', design, globalSettings, isBaseBreakpoint, breakpoint, isBuilder) }}
+
+%%SELECTOR%% > .bde-loop > .bde-loop-item,
+%%SELECTOR%% > .bde-loop-accordion > .bde-accordion__content-wrapper > .bde-accordion__panel > .bde-accordion__panel-content > .bde-loop-item,
+%%SELECTOR%% > .breakdance-swiper-wrapper > .swiper > .bde-loop > .bde-loop-item {
+  background-color: {{ design.post.background }};
+  {{ macros.borders(design.post.borders) }}
+  {{ macros.spacing_padding_all(design.post.padding) }}
+}
+
+%%SELECTOR%% {
+  background-color: {{ design.container.background }};
+  {{ macros.borders(design.container.borders) }}
+  {{ macros.spacing_padding_all(design.container.padding) }}
+}
+
+{{ macros.atomV1TabsCss('%%SELECTOR%%', design.filter_bar, breakpoint, globalSettings) }}

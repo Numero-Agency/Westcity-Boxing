@@ -1,0 +1,22 @@
+label {
+  width: 100%;
+  display: block;
+  font-size: 125%;
+}
+
+.mepr-import {
+  margin: 25px 0 0 0;
+}
+
+.mpimp-return-link, .mpimp-processing-complete {
+  display: none;
+}
+
+.mpimp-messages, .mpimp-errors, .mpimp-error-rows {
+  width: 95%;
+  height: 150px;
+}
+
+.mpimp-summary h3 span {
+  font-weight: bold;
+}

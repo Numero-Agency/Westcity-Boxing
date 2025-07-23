@@ -1,0 +1,2421 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<data>
+	<node>
+		<username><![CDATA[Paul]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Mel Paul]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Mel]]></first_name>
+		<last_name><![CDATA[Paul]]></last_name>
+		<email><![CDATA[melaniepaul833@hotmail.com]]></email>
+		<ethnicity><![CDATA[Māori]]></ethnicity>
+		<date_of_birth><![CDATA[22/10/2013]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(022) 033-4272]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Melanie Paul]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[220334272]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[melaniepaul833@hotmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[26 Cherrytree Place]]></address>
+		<suburb><![CDATA[Massey]]></suburb>
+		<registration_date><![CDATA[22/10/2013]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[24/7/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Kaufusi]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Manu Kaufusi]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Manu]]></first_name>
+		<last_name><![CDATA[Kaufusi]]></last_name>
+		<email><![CDATA[melanie.greening@live.com]]></email>
+		<ethnicity><![CDATA[Tongan/maori]]></ethnicity>
+		<date_of_birth><![CDATA[17/6/2013]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(021) 0339 839]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Melanie Greening]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[(021) 0339 839]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[melanie.greening@live.com]]></parent_guardians_email_address>
+		<address><![CDATA[1A Katrina Place]]></address>
+		<suburb><![CDATA[Massey]]></suburb>
+		<registration_date><![CDATA[21/11/2022]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[22/11/2022]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Robertson]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Freedom Robertson]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[9]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Freedom]]></first_name>
+		<last_name><![CDATA[Robertson]]></last_name>
+		<email><![CDATA[]]></email>
+		<ethnicity><![CDATA[Māori]]></ethnicity>
+		<date_of_birth><![CDATA[27/4/2015]]></date_of_birth>
+		<medical_information><![CDATA[No]]></medical_information>
+		<phone_number><![CDATA[2041270146]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Nga Tai Hohepa-Robertson]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[2041270146]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[Ngataihohepa.r@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[26 Enderby Drive]]></address>
+		<suburb><![CDATA[Te Atatu Peninsula]]></suburb>
+		<registration_date><![CDATA[6/12/2022]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[6/12/2022]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Poi]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[SJ Poi]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[SJ]]></first_name>
+		<last_name><![CDATA[Poi]]></last_name>
+		<email><![CDATA[brooketaurima@gmail.com]]></email>
+		<ethnicity><![CDATA[Samoan and Maori]]></ethnicity>
+		<date_of_birth><![CDATA[30/8/2013]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(027) 324-2753]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Brooke and Solomon Poi]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[273242753]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[brooketaurima@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[33 Korihi Drive]]></address>
+		<suburb><![CDATA[Swanson]]></suburb>
+		<registration_date><![CDATA[6/2/2023]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[24/1/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Estall-arai]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Kimo Estall-arai]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Kimo]]></first_name>
+		<last_name><![CDATA[Estall-arai]]></last_name>
+		<email><![CDATA[michel.arai18@gmail.com]]></email>
+		<ethnicity><![CDATA[Samoan Maori Tahitian]]></ethnicity>
+		<date_of_birth><![CDATA[21/7/2013]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[2108233930]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Michel]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[2108233930]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[Michel]]></parent_guardians_email_address>
+		<address><![CDATA[158 Solar Road]]></address>
+		<suburb><![CDATA[Glen Eden]]></suburb>
+		<registration_date><![CDATA[6/2/2023]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[6/2/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Ajeil]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Abdul mehsen Ajeil]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[10]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Abdul mehsen]]></first_name>
+		<last_name><![CDATA[Ajeil]]></last_name>
+		<email><![CDATA[Lawrenceajeil102@gmail.com]]></email>
+		<ethnicity><![CDATA[Middle Eastern/Latin American/African]]></ethnicity>
+		<date_of_birth><![CDATA[3/4/2014]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(021) 230-3099]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Fahad]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[222474792]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[lawrenceajeil@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[244b Great North Road]]></address>
+		<suburb><![CDATA[Henderson]]></suburb>
+		<registration_date><![CDATA[11/2/2023]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[11/2/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Chu Ling]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Selafi Chu Ling]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Selafi]]></first_name>
+		<last_name><![CDATA[Chu Ling]]></last_name>
+		<email><![CDATA[echuling@gmail.com]]></email>
+		<ethnicity><![CDATA[Samoan]]></ethnicity>
+		<date_of_birth><![CDATA[9/10/2013]]></date_of_birth>
+		<medical_information><![CDATA[No]]></medical_information>
+		<phone_number><![CDATA[642108484411]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Esekiel Chu Ling]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[642108484411]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[echuling@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[25 Lavelle Road]]></address>
+		<suburb><![CDATA[Auckland]]></suburb>
+		<registration_date><![CDATA[21/2/2023]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[12/4/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Beckett-Cormack]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[William Beckett-Cormack]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[William]]></first_name>
+		<last_name><![CDATA[Beckett-Cormack]]></last_name>
+		<email><![CDATA[jessica.ann.cormack@gmail.com]]></email>
+		<ethnicity><![CDATA[Pakeha]]></ethnicity>
+		<date_of_birth><![CDATA[17/6/2013]]></date_of_birth>
+		<medical_information><![CDATA[nope]]></medical_information>
+		<phone_number><![CDATA[(027) 200-0100]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Jessica Cormack]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[272000100]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[jessica.ann.cormack@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[32 Vincent McGrath Crescent]]></address>
+		<suburb><![CDATA[Swanson]]></suburb>
+		<registration_date><![CDATA[27/2/2023]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[27/2/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Chu Ling]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Selafi William Chu Ling]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Selafi William]]></first_name>
+		<last_name><![CDATA[Chu Ling]]></last_name>
+		<email><![CDATA[echuling@gmail.com]]></email>
+		<ethnicity><![CDATA[Samoan]]></ethnicity>
+		<date_of_birth><![CDATA[9/10/2013]]></date_of_birth>
+		<medical_information><![CDATA[None]]></medical_information>
+		<phone_number><![CDATA[2108484411]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Esekiel . Chu Ling]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[2108484411]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[echuling@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[25 Lavelle Road]]></address>
+		<suburb><![CDATA[Henderson]]></suburb>
+		<registration_date><![CDATA[6/3/2023]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[10/4/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Ese]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Roman Ese]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Roman]]></first_name>
+		<last_name><![CDATA[Ese]]></last_name>
+		<email><![CDATA[gnpupa@gmail.com]]></email>
+		<ethnicity><![CDATA[Samoan]]></ethnicity>
+		<date_of_birth><![CDATA[24/9/2013]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(021) 294-4165]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Gloria Pupa]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[212944165]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[gnpupa@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[8 Denver Avenue]]></address>
+		<suburb><![CDATA[Sunnyvale]]></suburb>
+		<registration_date><![CDATA[14/3/2023]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[14/3/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Hollands]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Chase Hollands]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Chase]]></first_name>
+		<last_name><![CDATA[Hollands]]></last_name>
+		<email><![CDATA[Hnhollands@gmail.com]]></email>
+		<ethnicity><![CDATA[NZ European]]></ethnicity>
+		<date_of_birth><![CDATA[19/9/2013]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[2102310382]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Hannah hollands]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[2102310382]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[hnhollands@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[242 Sturges Road]]></address>
+		<suburb><![CDATA[Henderson]]></suburb>
+		<registration_date><![CDATA[15/3/2023]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[15/3/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Chamberlain-reti]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Elijah Chamberlain-reti]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[10]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Elijah]]></first_name>
+		<last_name><![CDATA[Chamberlain-reti]]></last_name>
+		<email><![CDATA[Ashley.paige@windowslive.com]]></email>
+		<ethnicity><![CDATA[Nz Maori]]></ethnicity>
+		<date_of_birth><![CDATA[15/5/2014]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(021) 274-5392]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Ashley]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[212745392]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[Ashley.Paige@windowslive.com]]></parent_guardians_email_address>
+		<address><![CDATA[29 Amberley Avenue]]></address>
+		<suburb><![CDATA[Te Atatu South]]></suburb>
+		<registration_date><![CDATA[15/3/2023]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[15/3/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Weston Dallow]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Harlow Weston Dallow]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Harlow]]></first_name>
+		<last_name><![CDATA[Weston Dallow]]></last_name>
+		<email><![CDATA[amy.weston@police.govt.nz]]></email>
+		<ethnicity><![CDATA[New Zealander,Māori]]></ethnicity>
+		<date_of_birth><![CDATA[4/9/2013]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[2102340300]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Amy Weston]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[2102340300]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[amy.weston@police.govt.nz]]></parent_guardians_email_address>
+		<address><![CDATA[267 Amreins Road]]></address>
+		<suburb><![CDATA[Taupaki]]></suburb>
+		<registration_date><![CDATA[28/3/2023]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[28/3/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Willmoth]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[jesse Willmoth]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[jesse]]></first_name>
+		<last_name><![CDATA[Willmoth]]></last_name>
+		<email><![CDATA[danishdelight@icloud.com]]></email>
+		<ethnicity><![CDATA[NZ European]]></ethnicity>
+		<date_of_birth><![CDATA[22/7/2013]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(027) 483-6834]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[John Willmoth]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[274836834]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[danishdelight@icloud.com]]></parent_guardians_email_address>
+		<address><![CDATA[241 Forest Hill Road]]></address>
+		<suburb><![CDATA[Henderson]]></suburb>
+		<registration_date><![CDATA[31/3/2023]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[31/3/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Ropiha]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Reign Ropiha]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[9]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Reign]]></first_name>
+		<last_name><![CDATA[Ropiha]]></last_name>
+		<email><![CDATA[Jade_tongalea@hotmail.com]]></email>
+		<ethnicity><![CDATA[Niuean,Maori]]></ethnicity>
+		<date_of_birth><![CDATA[22/5/2015]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(027) 710-0002]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Jade]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[277100002]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[Jade_tongalea@hotmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[12 Sunpark Place]]></address>
+		<suburb><![CDATA[Massey]]></suburb>
+		<registration_date><![CDATA[3/4/2023]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[3/4/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Ahsan]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Shaael Ahsan]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[10]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Shaael]]></first_name>
+		<last_name><![CDATA[Ahsan]]></last_name>
+		<email><![CDATA[Shaariff@gmail.com]]></email>
+		<ethnicity><![CDATA[Indian]]></ethnicity>
+		<date_of_birth><![CDATA[16/11/2014]]></date_of_birth>
+		<medical_information><![CDATA[He did fractured his right arm last year, it has healed since.]]></medical_information>
+		<phone_number><![CDATA[64277070771]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Syed Ahsan]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[64277070771]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[Shaariff@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[38 Routley Drive]]></address>
+		<suburb><![CDATA[Auckland]]></suburb>
+		<registration_date><![CDATA[6/4/2023]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[6/4/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Afualo]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Titus Afualo]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[9]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Titus]]></first_name>
+		<last_name><![CDATA[Afualo]]></last_name>
+		<email><![CDATA[sinaalison@gmail.com]]></email>
+		<ethnicity><![CDATA[Samoan]]></ethnicity>
+		<date_of_birth><![CDATA[22/12/2015]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[2102231717]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Sina]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[2102231717]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[sinaalison@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[43A Urlich Drive]]></address>
+		<suburb><![CDATA[Ranui]]></suburb>
+		<registration_date><![CDATA[14/4/2023]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[14/4/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Pascoe]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Boston Pascoe]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Boston]]></first_name>
+		<last_name><![CDATA[Pascoe]]></last_name>
+		<email><![CDATA[Jennishayes@gmail.com]]></email>
+		<ethnicity><![CDATA[NZ European]]></ethnicity>
+		<date_of_birth><![CDATA[25/8/2013]]></date_of_birth>
+		<medical_information><![CDATA[ADHD, ASD (mild/ high functioning)]]></medical_information>
+		<phone_number><![CDATA[(021) 280-5806]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Jennis Pascoe]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[212805806]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[Jennishayes@gmail.vom]]></parent_guardians_email_address>
+		<address><![CDATA[2/149 View Road]]></address>
+		<suburb><![CDATA[Sunnyvale]]></suburb>
+		<registration_date><![CDATA[24/4/2023]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[12/4/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Phillips]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Gaz Phillips]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[9]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Gaz]]></first_name>
+		<last_name><![CDATA[Phillips]]></last_name>
+		<email><![CDATA[N/A]]></email>
+		<ethnicity><![CDATA[Māori]]></ethnicity>
+		<date_of_birth><![CDATA[5/11/2015]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[N/A]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Mariece]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[212623720]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[mariece1985@hotmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[60 Milan Drive]]></address>
+		<suburb><![CDATA[Glen Eden]]></suburb>
+		<registration_date><![CDATA[26/4/2023]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[26/4/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Morgan]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Canary Morgan]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[9]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Canary]]></first_name>
+		<last_name><![CDATA[Morgan]]></last_name>
+		<email><![CDATA[Tamatimorgan@gmail.com]]></email>
+		<ethnicity><![CDATA[Māori]]></ethnicity>
+		<date_of_birth><![CDATA[3/4/2015]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(022) 408-9303]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Tamati]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[022 408 9303]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[Tamatimorgan@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[11a Muriel Place]]></address>
+		<suburb><![CDATA[Ranui]]></suburb>
+		<registration_date><![CDATA[27/4/2023]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[27/4/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Hollands]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Chase Hollands]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Chase]]></first_name>
+		<last_name><![CDATA[Hollands]]></last_name>
+		<email><![CDATA[hnhollands@gmail.com]]></email>
+		<ethnicity><![CDATA[Pakeha]]></ethnicity>
+		<date_of_birth><![CDATA[19/9/2013]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[2102310382]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Hannah Hollands]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[2102310382]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[hnhollands@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[242 Sturges Road]]></address>
+		<suburb><![CDATA[Henderson]]></suburb>
+		<registration_date><![CDATA[8/5/2023]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[28/4/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Mu]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Wrickson Mu]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Wrickson]]></first_name>
+		<last_name><![CDATA[Mu]]></last_name>
+		<email><![CDATA[lou_wesse@outlook.com]]></email>
+		<ethnicity><![CDATA[Samoan,Niuean]]></ethnicity>
+		<date_of_birth><![CDATA[25/5/2013]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[2108151394]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Louise masiu]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[2108151394]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[lou_wesse@outlook.com]]></parent_guardians_email_address>
+		<address><![CDATA[3c Baumea Rise]]></address>
+		<suburb><![CDATA[Massey]]></suburb>
+		<registration_date><![CDATA[27/5/2023]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[27/5/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Tagatoa]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Mekuini Tagatoa]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Mekuini]]></first_name>
+		<last_name><![CDATA[Tagatoa]]></last_name>
+		<email><![CDATA[Tagatoafam@gmail.com]]></email>
+		<ethnicity><![CDATA[Niuean]]></ethnicity>
+		<date_of_birth><![CDATA[20/10/2013]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(021) 127-8742]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Theo]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[211278742]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[Tagatoafam@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[2 Sunvue Road]]></address>
+		<suburb><![CDATA[Glen Eden]]></suburb>
+		<registration_date><![CDATA[22/6/2023]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[22/6/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Ratumaitavuki-Naqau]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Andre Ratumaitavuki-Naqau]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Andre]]></first_name>
+		<last_name><![CDATA[Ratumaitavuki-Naqau]]></last_name>
+		<email><![CDATA[Ratje93@hotmail.com]]></email>
+		<ethnicity><![CDATA[Fijian,european nz]]></ethnicity>
+		<date_of_birth><![CDATA[23/3/2014]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(021) 033-7890]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Jesse Ratumaitavuki]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[210337890]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[Ratje93@hotmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[2/444 Swanson Road]]></address>
+		<suburb><![CDATA[Ranui]]></suburb>
+		<registration_date><![CDATA[28/6/2023]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[28/6/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Wildy]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Hudson Wildy]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Hudson]]></first_name>
+		<last_name><![CDATA[Wildy]]></last_name>
+		<email><![CDATA[huddywildy@gmail.com]]></email>
+		<ethnicity><![CDATA[Māori]]></ethnicity>
+		<date_of_birth><![CDATA[12/12/2013]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(021) 244-2699]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Heath]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[212442699]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[heathwildy@hotmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[14 Kelman Road]]></address>
+		<suburb><![CDATA[Kelston]]></suburb>
+		<registration_date><![CDATA[22/7/2023]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[22/7/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Jenkins]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[La’Dre Jenkins]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[10]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[La’Dre]]></first_name>
+		<last_name><![CDATA[Jenkins]]></last_name>
+		<email><![CDATA[harrington077@hotmail.com]]></email>
+		<ethnicity><![CDATA[Māori,European]]></ethnicity>
+		<date_of_birth><![CDATA[11/6/2014]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(027) 438-5286]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Tracey Downs]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[274385286]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[harrington077@hotmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[2/38 Harrington Road]]></address>
+		<suburb><![CDATA[Henderson]]></suburb>
+		<registration_date><![CDATA[2/8/2023]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[2/8/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Hunt-Makaneti]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Harley Hunt-Makaneti]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[10]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Harley]]></first_name>
+		<last_name><![CDATA[Hunt-Makaneti]]></last_name>
+		<email><![CDATA[kaylee.bayb@gmail.com]]></email>
+		<ethnicity><![CDATA[Māori,Niuean,Samoan]]></ethnicity>
+		<date_of_birth><![CDATA[2/6/2014]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[64226473687]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Kendell Hunt]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[64226473687]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[kaylee.bayb@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[5a Durrant Place]]></address>
+		<suburb><![CDATA[Auckland]]></suburb>
+		<registration_date><![CDATA[28/8/2023]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[28/8/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Walker]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Kayhl-Quade Walker]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Kayhl-Quade]]></first_name>
+		<last_name><![CDATA[Walker]]></last_name>
+		<email><![CDATA[Melaniepaul833@hotmail.com]]></email>
+		<ethnicity><![CDATA[Māori]]></ethnicity>
+		<date_of_birth><![CDATA[22/10/2013]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(022) 033-4272]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Melanie Paul]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[220334272]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[Melaniepaul833@hotmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[26 Cherry Tree Place]]></address>
+		<suburb><![CDATA[Massey]]></suburb>
+		<registration_date><![CDATA[22/9/2023]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[22/9/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Kirby]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Kyzer Kirby]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[10]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Kyzer]]></first_name>
+		<last_name><![CDATA[Kirby]]></last_name>
+		<email><![CDATA[alazaebotica@gmail.com]]></email>
+		<ethnicity><![CDATA[Māori]]></ethnicity>
+		<date_of_birth><![CDATA[5/7/2014]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(021) 255-1719]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Culton kirby]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[212551719]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[alazaebotica@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[70 Ruze Vida Drive]]></address>
+		<suburb><![CDATA[Massey]]></suburb>
+		<registration_date><![CDATA[7/10/2023]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[7/10/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Halkyard-Leaf]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Gabriel Halkyard-Leaf]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Gabriel]]></first_name>
+		<last_name><![CDATA[Halkyard-Leaf]]></last_name>
+		<email><![CDATA[leafcecily@gmail.com]]></email>
+		<ethnicity><![CDATA[Māori]]></ethnicity>
+		<date_of_birth><![CDATA[20/3/2014]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(021) 233-4590]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Cecily Leaf]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[212334590]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[leafcecily@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[304 Blockhouse Bay Rd]]></address>
+		<suburb><![CDATA[Avondale]]></suburb>
+		<registration_date><![CDATA[9/10/2023]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[9/10/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Wildy]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Hudson Wildy]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Hudson]]></first_name>
+		<last_name><![CDATA[Wildy]]></last_name>
+		<email><![CDATA[heathwildy@hotmail.om]]></email>
+		<ethnicity><![CDATA[Fijian]]></ethnicity>
+		<date_of_birth><![CDATA[12/12/2013]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(021) 244-2699]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Heath]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[212442699]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[heathwildy@hotmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[14 Kelman Road]]></address>
+		<suburb><![CDATA[Kelston]]></suburb>
+		<registration_date><![CDATA[9/10/2023]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[9/10/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Rickit]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Jahramiah Leigh Rickit]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Jahramiah Leigh]]></first_name>
+		<last_name><![CDATA[Rickit]]></last_name>
+		<email><![CDATA[Sarinarickit2308@gmail.com]]></email>
+		<ethnicity><![CDATA[Samoan]]></ethnicity>
+		<date_of_birth><![CDATA[15/6/2013]]></date_of_birth>
+		<medical_information><![CDATA[N/A]]></medical_information>
+		<phone_number><![CDATA[(020) 423-0805]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Sarina Rickit]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[2041995238]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[Sarinarickit2308@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[2/137 Rosier Road]]></address>
+		<suburb><![CDATA[Glen Eden]]></suburb>
+		<registration_date><![CDATA[24/10/2023]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[23/10/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Mcgregor]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Righteous Mcgregor]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Righteous]]></first_name>
+		<last_name><![CDATA[Mcgregor]]></last_name>
+		<email><![CDATA[andersonheaven1979@gmail.com]]></email>
+		<ethnicity><![CDATA[Māori]]></ethnicity>
+		<date_of_birth><![CDATA[16/4/2013]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(022) 648-4778]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Ngahuia]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[226384778]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[andersonheaven1979@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[76 Harrington Road]]></address>
+		<suburb><![CDATA[Henderson]]></suburb>
+		<registration_date><![CDATA[4/11/2023]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[3/11/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Taulealeausumai]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Carter Taulealeausumai]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Carter]]></first_name>
+		<last_name><![CDATA[Taulealeausumai]]></last_name>
+		<email><![CDATA[Raaegan@gmail.com]]></email>
+		<ethnicity><![CDATA[Samoan]]></ethnicity>
+		<date_of_birth><![CDATA[21/6/2013]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(022) 130-9171]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Raegan Taulealeausumai]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[226761560]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[Raaegan@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[35 Swanson Road]]></address>
+		<suburb><![CDATA[Henderson]]></suburb>
+		<registration_date><![CDATA[9/11/2023]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[8/11/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Warner-Fellowes]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Marlon Warner-Fellowes]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[10]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Marlon]]></first_name>
+		<last_name><![CDATA[Warner-Fellowes]]></last_name>
+		<email><![CDATA[Mistywarner6@gmail.com]]></email>
+		<ethnicity><![CDATA[Pakeha]]></ethnicity>
+		<date_of_birth><![CDATA[11/11/2014]]></date_of_birth>
+		<medical_information><![CDATA[No]]></medical_information>
+		<phone_number><![CDATA[(021) 124-5701]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Misty]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[211245701]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[Mistywarner6@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[3 Sapperton Drive]]></address>
+		<suburb><![CDATA[Henderson]]></suburb>
+		<registration_date><![CDATA[12/11/2023]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[16/7/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Bentley]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Levi Bentley]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Levi]]></first_name>
+		<last_name><![CDATA[Bentley]]></last_name>
+		<email><![CDATA[rkenny748@gmail.com]]></email>
+		<ethnicity><![CDATA[Niuean,Samoan,Cook Islands]]></ethnicity>
+		<date_of_birth><![CDATA[10/6/2013]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(027) 325-9887]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Rosemary Bentley]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[273259887]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[rkenny748@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[31 Essex Street]]></address>
+		<suburb><![CDATA[Te Atatu South]]></suburb>
+		<registration_date><![CDATA[17/11/2023]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[17/11/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Navuni]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Epeli Navuni]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[9]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Epeli]]></first_name>
+		<last_name><![CDATA[Navuni]]></last_name>
+		<email><![CDATA[naunaeloni13@gmail.com]]></email>
+		<ethnicity><![CDATA[Fijian]]></ethnicity>
+		<date_of_birth><![CDATA[16/3/2016]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[64224768829]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Eloni Navuni]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[64224768829]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[naunaeloni13@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[33a Lowtherhurst Road]]></address>
+		<suburb><![CDATA[Massey]]></suburb>
+		<registration_date><![CDATA[28/11/2023]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[28/11/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Bentley]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Jordan Bentley]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[10]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Jordan]]></first_name>
+		<last_name><![CDATA[Bentley]]></last_name>
+		<email><![CDATA[rkenny748@gmail.com]]></email>
+		<ethnicity><![CDATA[Samoan,Niuean,Cook Islands]]></ethnicity>
+		<date_of_birth><![CDATA[16/5/2014]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(027) 325-9887]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Rosemary Bentley]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[273259887]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[rkenny748@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[31 Essex Street]]></address>
+		<suburb><![CDATA[Te Atatu South]]></suburb>
+		<registration_date><![CDATA[9/1/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[9/1/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Malit]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Kien iuwine tovi Malit]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Kien iuwine tovi]]></first_name>
+		<last_name><![CDATA[Malit]]></last_name>
+		<email><![CDATA[kitnov16@yahoo.com]]></email>
+		<ethnicity><![CDATA[Asian]]></ethnicity>
+		<date_of_birth><![CDATA[24/8/2013]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[21325272]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Maricris Malit]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[21325272]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[kitnov16@yahoo.com]]></parent_guardians_email_address>
+		<address><![CDATA[6 Tango Place]]></address>
+		<suburb><![CDATA[Henderson]]></suburb>
+		<registration_date><![CDATA[16/1/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[16/1/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Pou-Jones]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Casper Pou-Jones]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Casper]]></first_name>
+		<last_name><![CDATA[Pou-Jones]]></last_name>
+		<email><![CDATA[miss_lil.lady@hotmail.co.nz]]></email>
+		<ethnicity><![CDATA[Māori]]></ethnicity>
+		<date_of_birth><![CDATA[8/1/2014]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(021) 033-6409]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Clarkie Pou]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[210336409]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[miss_lil.lady@hotmail.co.nz]]></parent_guardians_email_address>
+		<address><![CDATA[17 Sabot Place]]></address>
+		<suburb><![CDATA[Massey]]></suburb>
+		<registration_date><![CDATA[23/1/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[23/1/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Ae]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Andy Ae]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[10]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Andy]]></first_name>
+		<last_name><![CDATA[Ae]]></last_name>
+		<email><![CDATA[juneandrew81@gmail.com]]></email>
+		<ethnicity><![CDATA[Samoan]]></ethnicity>
+		<date_of_birth><![CDATA[26/12/2014]]></date_of_birth>
+		<medical_information><![CDATA[N/A]]></medical_information>
+		<phone_number><![CDATA[2041782408]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[June]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[Andrew]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[juneandrew81@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[22 Sabot Place]]></address>
+		<suburb><![CDATA[Massey]]></suburb>
+		<registration_date><![CDATA[30/1/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[30/1/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Fehoko]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Roman Fehoko]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[9]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Roman]]></first_name>
+		<last_name><![CDATA[Fehoko]]></last_name>
+		<email><![CDATA[vaiolulu_hoeter@hotmail.com]]></email>
+		<ethnicity><![CDATA[Tongan]]></ethnicity>
+		<date_of_birth><![CDATA[24/6/2015]]></date_of_birth>
+		<medical_information><![CDATA[asthmatic and had seizure in the past when he was 3yrs old. no longer has them]]></medical_information>
+		<phone_number><![CDATA[21735214]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Ane]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[21735214]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[vaiolulu_hoeter@hotmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[11a Rixon Place]]></address>
+		<suburb><![CDATA[Te Atatu]]></suburb>
+		<registration_date><![CDATA[2/2/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[2/2/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Ngere-Tarei]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Nikau Ngere-Tarei]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[9]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Nikau]]></first_name>
+		<last_name><![CDATA[Ngere-Tarei]]></last_name>
+		<email><![CDATA[cctarei@gmail.com]]></email>
+		<ethnicity><![CDATA[Maori]]></ethnicity>
+		<date_of_birth><![CDATA[23/4/2015]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[2108043548]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Cassandra Tarei]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[2108043548]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[cctarei@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[2/49 Sunnyside Road]]></address>
+		<suburb><![CDATA[Sunnyvale]]></suburb>
+		<registration_date><![CDATA[7/2/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[7/2/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Nepo]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Heith Nepo]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[9]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Heith]]></first_name>
+		<last_name><![CDATA[Nepo]]></last_name>
+		<email><![CDATA[...]]></email>
+		<ethnicity><![CDATA[Samoan]]></ethnicity>
+		<date_of_birth><![CDATA[15/10/2015]]></date_of_birth>
+		<medical_information><![CDATA[N/a]]></medical_information>
+		<phone_number><![CDATA[(022) 524-1040]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Levei Nepo]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[225241040]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[rhodatoleafoa91@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[26 Sapperton Drive]]></address>
+		<suburb><![CDATA[Henderson]]></suburb>
+		<registration_date><![CDATA[8/2/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[8/2/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Jenkins]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[La’Dre Jenkins]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[10]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[La’Dre]]></first_name>
+		<last_name><![CDATA[Jenkins]]></last_name>
+		<email><![CDATA[harrington077@hotmail.com]]></email>
+		<ethnicity><![CDATA[Māori]]></ethnicity>
+		<date_of_birth><![CDATA[11/6/2014]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(027) 438-5286]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Tracey Tipu]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[274385286]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[harrington077@hotmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[2/38 Harrington road]]></address>
+		<suburb><![CDATA[Henderson]]></suburb>
+		<registration_date><![CDATA[26/2/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[26/2/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Warner]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Manaia Warner]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[9]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Manaia]]></first_name>
+		<last_name><![CDATA[Warner]]></last_name>
+		<email><![CDATA[chonnyzz@gmail.com]]></email>
+		<ethnicity><![CDATA[Māori]]></ethnicity>
+		<date_of_birth><![CDATA[16/5/2015]]></date_of_birth>
+		<medical_information><![CDATA[No]]></medical_information>
+		<phone_number><![CDATA[(021) 163-0914]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Chantelle]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[211630914]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[chonnyzz@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[21a Beaubank Road]]></address>
+		<suburb><![CDATA[Kelston]]></suburb>
+		<registration_date><![CDATA[1/3/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[24/7/2023]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Taito]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Edmund Taito]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[10]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Edmund]]></first_name>
+		<last_name><![CDATA[Taito]]></last_name>
+		<email><![CDATA[toaduffy@icloud.com]]></email>
+		<ethnicity><![CDATA[Samoan]]></ethnicity>
+		<date_of_birth><![CDATA[12/12/2014]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[2108069910]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Toa-Alice Duffy]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[2108069910]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[toaduffy@icloud.com]]></parent_guardians_email_address>
+		<address><![CDATA[83 Te Atatu Road]]></address>
+		<suburb><![CDATA[Te Atatu South]]></suburb>
+		<registration_date><![CDATA[1/3/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[1/3/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Cannell]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Adam Cannell]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Adam]]></first_name>
+		<last_name><![CDATA[Cannell]]></last_name>
+		<email><![CDATA[cannell.lauren@gmail.com]]></email>
+		<ethnicity><![CDATA[African]]></ethnicity>
+		<date_of_birth><![CDATA[19/11/2013]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(022) 652-8926]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Lauren Cannell]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[226528926]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[cannell.lauren@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[15 Raymond Grace Avenue]]></address>
+		<suburb><![CDATA[Huapai]]></suburb>
+		<registration_date><![CDATA[11/3/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[11/3/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Duffy]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Darrius Duffy]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Darrius]]></first_name>
+		<last_name><![CDATA[Duffy]]></last_name>
+		<email><![CDATA[Upright.org.nz@gmail.com]]></email>
+		<ethnicity><![CDATA[Samoan]]></ethnicity>
+		<date_of_birth><![CDATA[31/12/2013]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(022) 376-5935]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Emma]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[223765935]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[Upright.org.nz@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[83 solar rd]]></address>
+		<suburb><![CDATA[Glen eden]]></suburb>
+		<registration_date><![CDATA[18/3/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[15/3/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Bremner]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Manu Te Whare Piki Bremner]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[9]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Manu Te Whare Piki]]></first_name>
+		<last_name><![CDATA[Bremner]]></last_name>
+		<email><![CDATA[shannon.b.fluffy@gmail.com]]></email>
+		<ethnicity><![CDATA[Māori]]></ethnicity>
+		<date_of_birth><![CDATA[25/6/2015]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(027) 206-6692]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Shannon bremner]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[272066692]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[shannon.b.fluffy@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[16 John Davis Road]]></address>
+		<suburb><![CDATA[Auckland]]></suburb>
+		<registration_date><![CDATA[26/3/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[26/3/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Prasad]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Zaric Prasad]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Zaric]]></first_name>
+		<last_name><![CDATA[Prasad]]></last_name>
+		<email><![CDATA[Nicole4n6@yahoo.com]]></email>
+		<ethnicity><![CDATA[Fijian,Indian]]></ethnicity>
+		<date_of_birth><![CDATA[7/2/2014]]></date_of_birth>
+		<medical_information><![CDATA[Nil]]></medical_information>
+		<phone_number><![CDATA[(021) 146-5361]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Nicole]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[211465361]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[Nicole4n6@yahoo.com]]></parent_guardians_email_address>
+		<address><![CDATA[228 Sturges road]]></address>
+		<suburb><![CDATA[Henderson]]></suburb>
+		<registration_date><![CDATA[28/3/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[28/3/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Tangipa]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Roman Tangipa]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[10]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Roman]]></first_name>
+		<last_name><![CDATA[Tangipa]]></last_name>
+		<email><![CDATA[Ofa.fifita05@gmail.com]]></email>
+		<ethnicity><![CDATA[Tongan,Pakeha]]></ethnicity>
+		<date_of_birth><![CDATA[30/11/2014]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[2040792039]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Ofa fifita]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[2040792039]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[Ofa.fifita05@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[2/129 tirimoana rd]]></address>
+		<suburb><![CDATA[Te atatu south]]></suburb>
+		<registration_date><![CDATA[23/4/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[21/3/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[sila]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[leo sila]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[9]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[leo]]></first_name>
+		<last_name><![CDATA[sila]]></last_name>
+		<email><![CDATA[faithbowden1995@gmail.com]]></email>
+		<ethnicity><![CDATA[Maori]]></ethnicity>
+		<date_of_birth><![CDATA[10/6/2015]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[2108108661]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[faith]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[2108108661]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[faithbowden1995@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[20 ward crescent]]></address>
+		<suburb><![CDATA[te atatu peninsula]]></suburb>
+		<registration_date><![CDATA[16/5/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[16/5/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Salaivao]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Jameroquai Salaivao]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Jameroquai]]></first_name>
+		<last_name><![CDATA[Salaivao]]></last_name>
+		<email><![CDATA[Ttuaine78@gmail.com]]></email>
+		<ethnicity><![CDATA[Cook Islands,Samoan/cookisland]]></ethnicity>
+		<date_of_birth><![CDATA[2/11/2013]]></date_of_birth>
+		<medical_information><![CDATA[No]]></medical_information>
+		<phone_number><![CDATA[(021) 257-3807]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Tai samuela]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[212573807]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[Ttuaine78@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[22 hydra place]]></address>
+		<suburb><![CDATA[Glen eden]]></suburb>
+		<registration_date><![CDATA[20/5/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[20/5/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Aldworth]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Finn Aldworth]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Finn]]></first_name>
+		<last_name><![CDATA[Aldworth]]></last_name>
+		<email><![CDATA[esandsa10@gmail.com]]></email>
+		<ethnicity><![CDATA[NZ European]]></ethnicity>
+		<date_of_birth><![CDATA[5/9/2013]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(021) 257-7871]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Emily]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[212577871]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[esandsa10@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[88 Brigham Lane]]></address>
+		<suburb><![CDATA[Kumeu]]></suburb>
+		<registration_date><![CDATA[4/6/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[4/6/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Maumasi-Rihari]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Kroyde Maumasi-Rihari]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[10]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Kroyde]]></first_name>
+		<last_name><![CDATA[Maumasi-Rihari]]></last_name>
+		<email><![CDATA[angelarihari@hotmail.com]]></email>
+		<ethnicity><![CDATA[Māori,Samoan]]></ethnicity>
+		<date_of_birth><![CDATA[1/9/2014]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(027) 403-9445]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Angela Rihari]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[274039445]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[angelarihari@hotmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[27a Pomaria Road]]></address>
+		<suburb><![CDATA[Henderson]]></suburb>
+		<registration_date><![CDATA[17/6/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[10/6/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Smith]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Noah Smith]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[10]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Noah]]></first_name>
+		<last_name><![CDATA[Smith]]></last_name>
+		<email><![CDATA[samanthalatoasmith@gmail.com]]></email>
+		<ethnicity><![CDATA[Māori,Pacific]]></ethnicity>
+		<date_of_birth><![CDATA[13/8/2014]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[21660405]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Samantha Smith]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[21660405]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[samanthalatoasmith@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[40 Larnoch Road]]></address>
+		<suburb><![CDATA[Henderson]]></suburb>
+		<registration_date><![CDATA[27/6/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[19/6/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Jury]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Boston Jury]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[10]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Boston]]></first_name>
+		<last_name><![CDATA[Jury]]></last_name>
+		<email><![CDATA[stephanie.j.jury@gmail.com]]></email>
+		<ethnicity><![CDATA[NZ European]]></ethnicity>
+		<date_of_birth><![CDATA[12/4/2014]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(822) 183-4873]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Steph Jury]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[221834873]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[stephanie.j.jury@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[64 Nugget Ave]]></address>
+		<suburb><![CDATA[Hobsonville]]></suburb>
+		<registration_date><![CDATA[1/7/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[1/7/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Tuivanu]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Patrick Tuivanu]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Patrick]]></first_name>
+		<last_name><![CDATA[Tuivanu]]></last_name>
+		<email><![CDATA[Sapphirematafai@hotmail.co.nz]]></email>
+		<ethnicity><![CDATA[Samoan]]></ethnicity>
+		<date_of_birth><![CDATA[20/2/2014]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(021) 198-8718]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Saphire Matafai Tuivanu]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[211988718]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[Sapphirematafai@hotmail.co.nz]]></parent_guardians_email_address>
+		<address><![CDATA[61 endeavour st]]></address>
+		<suburb><![CDATA[Blockhousebay]]></suburb>
+		<registration_date><![CDATA[22/7/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[22/7/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[McKeown]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Blake McKeown]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Blake]]></first_name>
+		<last_name><![CDATA[McKeown]]></last_name>
+		<email><![CDATA[voordouw@xtra.co.nz]]></email>
+		<ethnicity><![CDATA[Pakeha]]></ethnicity>
+		<date_of_birth><![CDATA[26/12/2013]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(021) 228-7641]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Joe Voordouw]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[274949004]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[voordouw@xtra.co.nz]]></parent_guardians_email_address>
+		<address><![CDATA[114 Matua Road]]></address>
+		<suburb><![CDATA[Huapai]]></suburb>
+		<registration_date><![CDATA[22/7/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[22/7/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Creedon]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Rachel Creedon]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[10]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Rachel]]></first_name>
+		<last_name><![CDATA[Creedon]]></last_name>
+		<email><![CDATA[r.creedon@hotmail.com]]></email>
+		<ethnicity><![CDATA[Pakeha]]></ethnicity>
+		<date_of_birth><![CDATA[18/4/2014]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(021) 130-1802]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Rachel Creedon]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[211301802]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[r.creedon@hotmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[4b Blacklock Ave]]></address>
+		<suburb><![CDATA[Henderson]]></suburb>
+		<registration_date><![CDATA[22/7/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[22/7/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Mu]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Wrickson Mu]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Wrickson]]></first_name>
+		<last_name><![CDATA[Mu]]></last_name>
+		<email><![CDATA[rickymu@outlook.co.nz]]></email>
+		<ethnicity><![CDATA[Samoan]]></ethnicity>
+		<date_of_birth><![CDATA[25/5/2013]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(022) 017-6078]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Ricky mu]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[220176078]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[rickymu@outlook.co.nz]]></parent_guardians_email_address>
+		<address><![CDATA[3c baumea rise]]></address>
+		<suburb><![CDATA[Massey]]></suburb>
+		<registration_date><![CDATA[30/7/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[30/7/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Haenga-Liddle]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Legacy Haenga-Liddle]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[10]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Legacy]]></first_name>
+		<last_name><![CDATA[Haenga-Liddle]]></last_name>
+		<email><![CDATA[n/a]]></email>
+		<ethnicity><![CDATA[Māori]]></ethnicity>
+		<date_of_birth><![CDATA[20/7/2014]]></date_of_birth>
+		<medical_information><![CDATA[n/a]]></medical_information>
+		<phone_number><![CDATA[(022) 061-8706]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Kyla Haenga]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[224283230]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[kylacapri@outlook.co.nz]]></parent_guardians_email_address>
+		<address><![CDATA[29 Sylvan Crescent]]></address>
+		<suburb><![CDATA[Te Atatu South]]></suburb>
+		<registration_date><![CDATA[3/8/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[3/8/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Elliott]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Izzi Elliott]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Izzi]]></first_name>
+		<last_name><![CDATA[Elliott]]></last_name>
+		<email><![CDATA[amaiaen@gmail.com]]></email>
+		<ethnicity><![CDATA[Middle Eastern/Latin American/African]]></ethnicity>
+		<date_of_birth><![CDATA[21/7/2013]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(022) 089-9812]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Anise Elliott]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[220899812]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[Amaiaen@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[119 Woodlands Park Road]]></address>
+		<suburb><![CDATA[Auckland]]></suburb>
+		<registration_date><![CDATA[7/8/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[7/8/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Dunn]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Marcus Dunn]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[10]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Marcus]]></first_name>
+		<last_name><![CDATA[Dunn]]></last_name>
+		<email><![CDATA[pauldunn55@hotmail.com]]></email>
+		<ethnicity><![CDATA[Pakeha]]></ethnicity>
+		<date_of_birth><![CDATA[21/8/2014]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(022) 027-0146]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Paul]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[Dunn]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[pauldunn55@hotmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[27 Sandys Parade]]></address>
+		<suburb><![CDATA[Auckland]]></suburb>
+		<registration_date><![CDATA[10/9/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[10/9/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Heta]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Jay Heta]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[9]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Jay]]></first_name>
+		<last_name><![CDATA[Heta]]></last_name>
+		<email><![CDATA[Gage.cash@gmail.com]]></email>
+		<ethnicity><![CDATA[Māori,Samoan,Niuean]]></ethnicity>
+		<date_of_birth><![CDATA[19/6/2015]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(022) 584-4920]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Gage cash]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[225844920]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[Gage.cash@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[1 Penfold place]]></address>
+		<suburb><![CDATA[Henderson]]></suburb>
+		<registration_date><![CDATA[2/10/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[2/10/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Sunish]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Jayden Sunish]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Jayden]]></first_name>
+		<last_name><![CDATA[Sunish]]></last_name>
+		<email><![CDATA[jaydensunish@gmail.com]]></email>
+		<ethnicity><![CDATA[Indian]]></ethnicity>
+		<date_of_birth><![CDATA[28/2/2014]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(027) 407-1736]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Sunish Thankachan]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[274071736]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[sunishthankachan@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[10/45A Swanson Road]]></address>
+		<suburb><![CDATA[Henderson]]></suburb>
+		<registration_date><![CDATA[2/10/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[2/10/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Kahui]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Te Kaharau Kahui]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[10]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Te Kaharau]]></first_name>
+		<last_name><![CDATA[Kahui]]></last_name>
+		<email><![CDATA[janinephillips811@gmail.com]]></email>
+		<ethnicity><![CDATA[Māori]]></ethnicity>
+		<date_of_birth><![CDATA[17/8/2014]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(022) 226-4798]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Janine]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[222264798]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[]]></parent_guardians_email_address>
+		<address><![CDATA[9 Thornlow Street]]></address>
+		<suburb><![CDATA[Glendene]]></suburb>
+		<registration_date><![CDATA[7/10/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[7/10/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Wiri-Mangu]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Khavarn Wiri-Mangu]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[10]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Khavarn]]></first_name>
+		<last_name><![CDATA[Wiri-Mangu]]></last_name>
+		<email><![CDATA[Tmangu01@gmail.com]]></email>
+		<ethnicity><![CDATA[Māori]]></ethnicity>
+		<date_of_birth><![CDATA[12/9/2014]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(022) 560-5769]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Tyrane]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[225605769]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[Tmangu01@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[77 sunvue rd]]></address>
+		<suburb><![CDATA[Glen eden]]></suburb>
+		<registration_date><![CDATA[7/10/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[7/10/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Adams]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Daz Adams]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[9]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Daz]]></first_name>
+		<last_name><![CDATA[Adams]]></last_name>
+		<email><![CDATA[dazzyboyricobaby@gmail.com]]></email>
+		<ethnicity><![CDATA[Māori]]></ethnicity>
+		<date_of_birth><![CDATA[16/1/2016]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[2102617135]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Evelyn]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[2102617135]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[dazzyboyricobaby@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[3 Marinich Drive]]></address>
+		<suburb><![CDATA[Ranui]]></suburb>
+		<registration_date><![CDATA[9/10/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[9/10/2024]]></date_registered>
+		<notes><![CDATA[checked]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Elliott]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Yaz Elliott]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Yaz]]></first_name>
+		<last_name><![CDATA[Elliott]]></last_name>
+		<email><![CDATA[amaiaen@gmail.com]]></email>
+		<ethnicity><![CDATA[Middle Eastern/Latin American/African]]></ethnicity>
+		<date_of_birth><![CDATA[18/11/2013]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(022) 089-9812]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Anise]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[220899812]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[amaiaen@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[119 Woodlands Park Road]]></address>
+		<suburb><![CDATA[Waima]]></suburb>
+		<registration_date><![CDATA[13/11/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[13/11/2024]]></date_registered>
+		<notes><![CDATA[checked]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Goodhue]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Louis Goodhue]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[9]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Louis]]></first_name>
+		<last_name><![CDATA[Goodhue]]></last_name>
+		<email><![CDATA[shdepugh@gmail.com]]></email>
+		<ethnicity><![CDATA[NZ European,Māori]]></ethnicity>
+		<date_of_birth><![CDATA[3/5/2015]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[2108616011]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Serena De'pugh]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[2108616011]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[shdepugh@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[24 Huruhuru Road Massey]]></address>
+		<suburb><![CDATA[Auckland]]></suburb>
+		<registration_date><![CDATA[29/11/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[29/11/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Paewai]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Cortez Paewai]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[10]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Cortez]]></first_name>
+		<last_name><![CDATA[Paewai]]></last_name>
+		<email><![CDATA[danipaewai@gmail.com]]></email>
+		<ethnicity><![CDATA[Māori]]></ethnicity>
+		<date_of_birth><![CDATA[13/1/2015]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[2102741539]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Dani Paewai]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[2102741539]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[danipaewai@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[66 Pohutukawa parade]]></address>
+		<suburb><![CDATA[Riverhead]]></suburb>
+		<registration_date><![CDATA[6/12/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[6/12/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Sinisa]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Risaac Sinisa]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[10]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Risaac]]></first_name>
+		<last_name><![CDATA[Sinisa]]></last_name>
+		<email><![CDATA[louvdion@gmail.com]]></email>
+		<ethnicity><![CDATA[Tongan]]></ethnicity>
+		<date_of_birth><![CDATA[16/10/2014]]></date_of_birth>
+		<medical_information><![CDATA[None]]></medical_information>
+		<phone_number><![CDATA[21562552]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Sami Sinisa]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[21562552]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[louvdion@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[27 Boyd Avenue]]></address>
+		<suburb><![CDATA[Royal Oak]]></suburb>
+		<registration_date><![CDATA[19/12/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[19/12/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Moore]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[TJ Moore]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[TJ]]></first_name>
+		<last_name><![CDATA[Moore]]></last_name>
+		<email><![CDATA[vtuivaiti06@gmail.com]]></email>
+		<ethnicity><![CDATA[Samoan]]></ethnicity>
+		<date_of_birth><![CDATA[1/8/2013]]></date_of_birth>
+		<medical_information><![CDATA[asthma]]></medical_information>
+		<phone_number><![CDATA[2102933257]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Vincent Tuivaiti]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[2102933257]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[vtuivaiti06@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[35 Jabuka Street]]></address>
+		<suburb><![CDATA[Glen Eden]]></suburb>
+		<registration_date><![CDATA[19/12/2024]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[19/12/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Hansen]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Kylie Hansen]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Kylie]]></first_name>
+		<last_name><![CDATA[Hansen]]></last_name>
+		<email><![CDATA[kylieanddamien@gmail.com]]></email>
+		<ethnicity><![CDATA[NZ European,Samoan]]></ethnicity>
+		<date_of_birth><![CDATA[29/10/2013]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(021) 078-8154]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Kylie Hansen]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[210788154]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[kylieanddamien@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[83 Donovan Street]]></address>
+		<suburb><![CDATA[AUCKLAND]]></suburb>
+		<registration_date><![CDATA[1/1/2025]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[1/1/2025]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Taylor]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Liam Taylor]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Liam]]></first_name>
+		<last_name><![CDATA[Taylor]]></last_name>
+		<email><![CDATA[steve.taylor@relationshipmatters.org.nz]]></email>
+		<ethnicity><![CDATA[NZ European]]></ethnicity>
+		<date_of_birth><![CDATA[12/7/2013]]></date_of_birth>
+		<medical_information><![CDATA[Nil]]></medical_information>
+		<phone_number><![CDATA[(021) 259-2506]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Stephen Taylor]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[212592506]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[steve.taylor@relationshipmatters.org.nz]]></parent_guardians_email_address>
+		<address><![CDATA[15 Withers Rd, Glen Eden,]]></address>
+		<suburb><![CDATA[Auckland]]></suburb>
+		<registration_date><![CDATA[14/1/2025]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[14/1/2025]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Lane]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Romeo Lane]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[9]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Romeo]]></first_name>
+		<last_name><![CDATA[Lane]]></last_name>
+		<email><![CDATA[christinalanee274@gmail.com]]></email>
+		<ethnicity><![CDATA[Samoan,Tongan]]></ethnicity>
+		<date_of_birth><![CDATA[16/1/2016]]></date_of_birth>
+		<medical_information><![CDATA[None]]></medical_information>
+		<phone_number><![CDATA[(022) 189-2404]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Christina Lane]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[221892404]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[christinalanee274@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[39 Garelja Road, Henderson]]></address>
+		<suburb><![CDATA[Auckland]]></suburb>
+		<registration_date><![CDATA[22/1/2025]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[22/1/2025]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Kim]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Joontae Kim]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Joontae]]></first_name>
+		<last_name><![CDATA[Kim]]></last_name>
+		<email><![CDATA[karma521@naver.com]]></email>
+		<ethnicity><![CDATA[Korean]]></ethnicity>
+		<date_of_birth><![CDATA[3/3/2014]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[2108805226]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Junghyun Lee]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[2108805226]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[karma521@naver.com]]></parent_guardians_email_address>
+		<address><![CDATA[90 Mcleod road, Te Atatu South]]></address>
+		<suburb><![CDATA[Auckland]]></suburb>
+		<registration_date><![CDATA[23/1/2025]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[23/1/2025]]></date_registered>
+		<notes><![CDATA[checked]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Wiremu]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Casey Wiremu]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[9]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Casey]]></first_name>
+		<last_name><![CDATA[Wiremu]]></last_name>
+		<email><![CDATA[Caseywiremu@gmail.com]]></email>
+		<ethnicity><![CDATA[Māori]]></ethnicity>
+		<date_of_birth><![CDATA[10/4/2015]]></date_of_birth>
+		<medical_information><![CDATA[NA]]></medical_information>
+		<phone_number><![CDATA[(022) 097-1508]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Demi wiremu]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[226497449]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[demiwiremu@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[2/1759 great north road avondale]]></address>
+		<suburb><![CDATA[Avondale]]></suburb>
+		<registration_date><![CDATA[27/1/2025]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[3/12/2024]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Adams]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Daz Adams]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[9]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Daz]]></first_name>
+		<last_name><![CDATA[Adams]]></last_name>
+		<email><![CDATA[Ricobabybpy5319@gmail.com]]></email>
+		<ethnicity><![CDATA[Māori]]></ethnicity>
+		<date_of_birth><![CDATA[16/1/2016]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[2102617135]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Evelyn kinita]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[2102617135]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[Ricobabybpy5319@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[3 Marinich drive]]></address>
+		<suburb><![CDATA[Ranui]]></suburb>
+		<registration_date><![CDATA[6/2/2025]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[6/2/2025]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Donaldson]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Quinten Donaldson]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[10]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Quinten]]></first_name>
+		<last_name><![CDATA[Donaldson]]></last_name>
+		<email><![CDATA[jessie.anne.donaldson@gmail.com]]></email>
+		<ethnicity><![CDATA[Pakeha]]></ethnicity>
+		<date_of_birth><![CDATA[24/5/2014]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(021) 204-9100]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Jessie Donaldson]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[212049100]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[jessie.anne.donaldson@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[54 Whitmore Road]]></address>
+		<suburb><![CDATA[Mt Roskill]]></suburb>
+		<registration_date><![CDATA[11/2/2025]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[11/2/2025]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Harris]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Hayes Harris]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Hayes]]></first_name>
+		<last_name><![CDATA[Harris]]></last_name>
+		<email><![CDATA[Keely.payne11@gmail.com]]></email>
+		<ethnicity><![CDATA[Māori,Tongan]]></ethnicity>
+		<date_of_birth><![CDATA[2/6/2013]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(022) 590-2870]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Keely]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[225902870]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[Keely.payne11@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[5 pooks road]]></address>
+		<suburb><![CDATA[Ranui]]></suburb>
+		<registration_date><![CDATA[12/2/2025]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[12/2/2025]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Vaeono]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Marcel Vaeono]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[10]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Marcel]]></first_name>
+		<last_name><![CDATA[Vaeono]]></last_name>
+		<email><![CDATA[gus_vaeono@yahoo.com]]></email>
+		<ethnicity><![CDATA[Samoan]]></ethnicity>
+		<date_of_birth><![CDATA[9/7/2014]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(022) 424-9223]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Gus Vaeono]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[224249223]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[gus_vaeono@yahoo.com]]></parent_guardians_email_address>
+		<address><![CDATA[43a Clayburn St]]></address>
+		<suburb><![CDATA[Glen Eden]]></suburb>
+		<registration_date><![CDATA[15/2/2025]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[15/2/2025]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Bell]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Jaxon Bell]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[10]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Jaxon]]></first_name>
+		<last_name><![CDATA[Bell]]></last_name>
+		<email><![CDATA[Shawntel.c.bell@gmail.com]]></email>
+		<ethnicity><![CDATA[Samoan,Pakeha]]></ethnicity>
+		<date_of_birth><![CDATA[6/9/2014]]></date_of_birth>
+		<medical_information><![CDATA[Asthma]]></medical_information>
+		<phone_number><![CDATA[(021) 280-0457]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Shawntel Bell]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[212800457]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[Shawntel.c.bell@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[1/51 Neil Avenue]]></address>
+		<suburb><![CDATA[Te Atatu Peninsula]]></suburb>
+		<registration_date><![CDATA[17/2/2025]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[17/2/2025]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Vaeono]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Marcel Vaeono]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[10]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Marcel]]></first_name>
+		<last_name><![CDATA[Vaeono]]></last_name>
+		<email><![CDATA[224249223]]></email>
+		<ethnicity><![CDATA[Samoan]]></ethnicity>
+		<date_of_birth><![CDATA[9/7/2014]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(022) 424-9223]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Gus]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[224249223]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[gus_vaeono@yahoo.com]]></parent_guardians_email_address>
+		<address><![CDATA[43a Clayburn rd]]></address>
+		<suburb><![CDATA[Glen Eden]]></suburb>
+		<registration_date><![CDATA[25/2/2025]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[25/2/2025]]></date_registered>
+		<notes><![CDATA[checked]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Duffy]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Jeziel Duffy]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Jeziel]]></first_name>
+		<last_name><![CDATA[Duffy]]></last_name>
+		<email><![CDATA[moanaduffy25@gmail.com]]></email>
+		<ethnicity><![CDATA[Samoan]]></ethnicity>
+		<date_of_birth><![CDATA[16/3/2014]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[2109094502]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Moana Duffy]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[2109094502]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[moanaduffy25@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[77a Manhattan Heights , Glendene]]></address>
+		<suburb><![CDATA[Henderson]]></suburb>
+		<registration_date><![CDATA[27/2/2025]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[27/2/2025]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Edwards]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Christian Edwards]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[10]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Christian]]></first_name>
+		<last_name><![CDATA[Edwards]]></last_name>
+		<email><![CDATA[chantaljanine1@gmail.com]]></email>
+		<ethnicity><![CDATA[African]]></ethnicity>
+		<date_of_birth><![CDATA[5/2/2015]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[2108644083]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Chantal Edwards]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[2108644083]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[chantaljanine1@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[22 Felgrove Street]]></address>
+		<suburb><![CDATA[Glendene]]></suburb>
+		<registration_date><![CDATA[10/3/2025]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[10/3/2025]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Waitai]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Tangaroa Waitai]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[10]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Tangaroa]]></first_name>
+		<last_name><![CDATA[Waitai]]></last_name>
+		<email><![CDATA[jolzfoster@gmail.com]]></email>
+		<ethnicity><![CDATA[Maori]]></ethnicity>
+		<date_of_birth><![CDATA[27/11/2014]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(022) 592-5090]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Jolene]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[225925090]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[]]></parent_guardians_email_address>
+		<address><![CDATA[29 Anich rd]]></address>
+		<suburb><![CDATA[Massey]]></suburb>
+		<registration_date><![CDATA[17/3/2025]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[17/3/2025]]></date_registered>
+		<notes><![CDATA[checked]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Waitai]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Tane Waitai]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Tane]]></first_name>
+		<last_name><![CDATA[Waitai]]></last_name>
+		<email><![CDATA[jolzfoster@gmail.com]]></email>
+		<ethnicity><![CDATA[Maori]]></ethnicity>
+		<date_of_birth><![CDATA[15/8/2013]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(022) 592-5090]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Jolene mansell]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[225925090]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[jolzfoster@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[29 Anich rd]]></address>
+		<suburb><![CDATA[Massey]]></suburb>
+		<registration_date><![CDATA[17/3/2025]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[17/3/2025]]></date_registered>
+		<notes><![CDATA[checked]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Pulu]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Samuel Pulu]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[11]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Samuel]]></first_name>
+		<last_name><![CDATA[Pulu]]></last_name>
+		<email><![CDATA[angel8ee@gmail.com]]></email>
+		<ethnicity><![CDATA[Māori]]></ethnicity>
+		<date_of_birth><![CDATA[5/8/2013]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(021) 173-3325]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Angelique Bianchi]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[211733325]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[angel8ee@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[21 Spence Rd, Henderson, Henderson]]></address>
+		<suburb><![CDATA[Auckland]]></suburb>
+		<registration_date><![CDATA[17/3/2025]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[17/3/2025]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Ae]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Andy Ae]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[10]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Andy]]></first_name>
+		<last_name><![CDATA[Ae]]></last_name>
+		<email><![CDATA[juneandrew81@gmail.com]]></email>
+		<ethnicity><![CDATA[Samoan]]></ethnicity>
+		<date_of_birth><![CDATA[26/12/2014]]></date_of_birth>
+		<medical_information><![CDATA[N/A]]></medical_information>
+		<phone_number><![CDATA[2041782408]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[June]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[2041782408]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[juneandrew81@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[22 Sabot Place]]></address>
+		<suburb><![CDATA[Massey]]></suburb>
+		<registration_date><![CDATA[21/3/2025]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[21/3/2025]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+	<node>
+		<username><![CDATA[Tekinene Vave]]></username>
+		<role><![CDATA[]]></role>
+		<display_name><![CDATA[Richard Tekinene Vave]]></display_name>
+		<class><![CDATA[]]></class>
+		<sessions_attended><![CDATA[]]></sessions_attended>
+		<age><![CDATA[9]]></age>
+		<gender><![CDATA[Male]]></gender>
+		<first_name><![CDATA[Richard]]></first_name>
+		<last_name><![CDATA[Tekinene Vave]]></last_name>
+		<email><![CDATA[p.kananoaga@gmail.com]]></email>
+		<ethnicity><![CDATA[Tuavaluan]]></ethnicity>
+		<date_of_birth><![CDATA[27/5/2015]]></date_of_birth>
+		<medical_information><![CDATA[]]></medical_information>
+		<phone_number><![CDATA[(021) 165-2605]]></phone_number>
+		<intervention_competition><![CDATA[]]></intervention_competition>
+		<parent_guardian_name><![CDATA[Lagatili Kananoaga]]></parent_guardian_name>
+		<parent_guardian_phone_number><![CDATA[220171375]]></parent_guardian_phone_number>
+		<parent_guardians_email_address><![CDATA[l.kananoaga@gmail.com]]></parent_guardians_email_address>
+		<address><![CDATA[7 Edwin Freeman Place]]></address>
+		<suburb><![CDATA[Ranui]]></suburb>
+		<registration_date><![CDATA[26/3/2025]]></registration_date>
+		<admin__notes_about_person><![CDATA[]]></admin__notes_about_person>
+		<date_registered><![CDATA[26/3/2025]]></date_registered>
+		<notes><![CDATA[]]></notes>
+	</node>
+</data>

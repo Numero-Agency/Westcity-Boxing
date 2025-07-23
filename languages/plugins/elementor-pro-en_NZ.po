@@ -1,0 +1,1201 @@
+# Translation of Elementor Pro in English (New Zealand)
+# This file is distributed under the same license as the Elementor Pro package.
+msgid ""
+msgstr ""
+"PO-Revision-Date: 2024-07-06 19:26:45+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: GlotPress/4.0.1\n"
+"Language: en_NZ\n"
+"Project-Id-Version: Elementor Pro\n"
+
+#: elementor-pro/modules/conversion-center/widgets/link-in-bio-var-7.php:184
+msgid "Upload your card in .vcf format"
+msgstr ""
+
+#. translators: %s: Widget title.
+
+#: elementor-pro/core/editor/promotion.php:59
+msgid "Upgrade to Elementor Pro Advanced to get the %s widget as well as additional professional and ecommerce widgets."
+msgstr ""
+
+#: elementor-pro/core/editor/editor.php:47
+msgid "Explore Add-ons"
+msgstr ""
+
+#: elementor-pro/assets/js/gutenberg-woocommerce-notice.js:1889
+msgid "This page uses the WooCommerce Cart Block. Before editing the page with Elementor and using the Elementor Cart widget, please check out this article."
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:3152
+msgid "t be saved.\", "
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:9752
+msgid "Connected Successfully"
+msgstr ""
+
+#: elementor-pro/assets/js/display-conditions.js:2395
+msgid "Enter a value"
+msgstr ""
+
+#: elementor-pro/assets/js/display-conditions.js:2393
+msgid "Select a time"
+msgstr ""
+
+#: elementor-pro/assets/js/display-conditions.js:2390
+msgid "Select an option"
+msgstr ""
+
+#: elementor-pro/assets/js/display-conditions.js:1789
+msgid "OR"
+msgstr ""
+
+#: elementor-pro/assets/js/display-conditions.js:1729
+msgid "Add condition group"
+msgstr ""
+
+#: elementor-pro/assets/js/display-conditions.js:471
+msgid "It will only appear on your website when all the conditions are met."
+msgstr ""
+
+#: elementor-pro/assets/js/display-conditions.js:465
+msgid "Set one or more conditions for this element"
+msgstr ""
+
+#: elementor-pro/assets/js/display-conditions.js:164
+msgid "Upgrade Now"
+msgstr ""
+
+#: elementor-pro/assets/js/display-conditions.js:160
+msgid "Upgrade to Elementor Pro Advanced to get the Display Conditions feature as well as additional professional and ecommerce widgets"
+msgstr ""
+
+#: elementor-pro/assets/js/loop-filter-editor.d1bae86a5ed21c0e9981.bundle.js:182
+msgid "OK"
+msgstr ""
+
+#: elementor-pro/assets/js/loop-filter-editor.d1bae86a5ed21c0e9981.bundle.js:176
+msgid "We are experiencing technical difficulties on our end. Please try again to reconnect."
+msgstr ""
+
+#: elementor-pro/assets/js/loop-filter-editor.d1bae86a5ed21c0e9981.bundle.js:133
+msgid "No taxonomies found"
+msgstr ""
+
+#: elementor-pro/assets/js/loop-filter-editor.d1bae86a5ed21c0e9981.bundle.js:84
+#: elementor-pro/assets/js/loop-filter-editor.d1bae86a5ed21c0e9981.bundle.js:139
+msgid "Select a taxonomy"
+msgstr ""
+
+#: elementor-pro/assets/js/loop-filter-editor.d1bae86a5ed21c0e9981.bundle.js:63
+#: elementor-pro/assets/js/off-canvas-editor.537e5e064206eea190cc.bundle.js:80
+msgid "Select a widget"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:5106
+msgid "No data"
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:3767
+#: elementor-pro/core/app/modules/site-editor/assets/js/pages/import.js:90
+msgid "Do not show this message again"
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:3750
+#: elementor-pro/core/app/modules/site-editor/assets/js/pages/import.js:77
+msgid "Continue"
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:3748
+#: elementor-pro/core/app/modules/site-editor/assets/js/pages/import.js:75
+msgid "Uploading JSON or ZIP files from unknown sources can be harmful and put your site at risk. For maximum safety, upload only JSON or ZIP files from trusted sources."
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:3747
+#: elementor-pro/core/app/modules/site-editor/assets/js/pages/import.js:74
+msgid "Warning: JSON or ZIP files may be unsafe"
+msgstr ""
+
+#: elementor-pro/modules/nested-carousel/widgets/nested-carousel.php:56
+msgid "Slide #3"
+msgstr ""
+
+#: elementor-pro/modules/nested-carousel/widgets/nested-carousel.php:50
+msgid "Slide #2"
+msgstr ""
+
+#: elementor-pro/modules/nested-carousel/widgets/nested-carousel.php:44
+msgid "Slide #1"
+msgstr ""
+
+#: elementor-pro/modules/mega-menu/widgets/mega-menu.php:89
+msgid "Item #3"
+msgstr ""
+
+#: elementor-pro/modules/mega-menu/widgets/mega-menu.php:83
+msgid "Item #2"
+msgstr ""
+
+#: elementor-pro/modules/mega-menu/widgets/mega-menu.php:77
+msgid "Item #1"
+msgstr ""
+
+#: elementor-pro/modules/announcements/module.php:32
+msgid ""
+"<p>Your Elementor Pro subscription has expired. Renew it now to regain access to the Pro features that elevate your website.</p>\n"
+"\t\t\t\t<ul>\n"
+"\t\t\t\t\t<li>Manage and edit every part of your website, including pages, templates, headers, footers, and more.</li>\n"
+"\t\t\t\t\t<li>Increase engagement and conversion with Elementor’s marketing features including Forms, and Popups.</li>\n"
+"\t\t\t\t\t<li>Update your website’s content and design using Elementor Pro’s professional widgets and features for any need.</li>\n"
+"\t\t\t\t\t<li>Keep your website secure and compatible by updating your Elementor Pro website to the latest version.</li>\n"
+"\t\t\t\t</ul>"
+msgstr ""
+
+#: elementor-pro/modules/announcements/module.php:31
+msgid "Keep Your Website’s Shine On"
+msgstr ""
+
+#: elementor-pro/core/editor/editor.php:46
+msgid "Extend Elementor With Add-ons"
+msgstr ""
+
+#: elementor-pro/assets/js/notes/notes.js:349
+msgid "(deleted user)"
+msgstr ""
+
+#: elementor-pro/assets/js/notes/notes-app.js:1480
+msgid "Give access to Notes"
+msgstr ""
+
+#: elementor-pro/assets/js/notes/notes-app.js:1054
+msgid "Reply"
+msgstr ""
+
+#: elementor-pro/assets/js/notes/notes-app.js:748
+msgid "Type a note. Use @ to mention..."
+msgstr ""
+
+#: elementor-pro/assets/js/notes/notes-app.js:748
+msgid "Type your reply. Use @ to mention..."
+msgstr ""
+
+#: elementor-pro/assets/js/notes/notes-app.js:693
+msgid "Copy Link"
+msgstr ""
+
+#: elementor-pro/assets/js/notes/notes-app.js:459
+msgid "Mark as read"
+msgstr ""
+
+#: elementor-pro/assets/js/notes/notes-app.js:459
+msgid "Mark as unread"
+msgstr ""
+
+#: elementor-pro/assets/js/notes/notes-app.js:279
+msgid "Leave a Note"
+msgstr ""
+
+#: elementor-pro/assets/js/4abfbfd970d6f7680bc7.bundle.js:146
+msgid "Start typing its name"
+msgstr ""
+
+#: elementor-pro/assets/js/4abfbfd970d6f7680bc7.bundle.js:84
+msgid "Discard"
+msgstr ""
+
+#: elementor-pro/assets/js/4abfbfd970d6f7680bc7.bundle.js:77
+msgid "Would you like to save the changes you've made?"
+msgstr ""
+
+#: elementor-pro/assets/js/4abfbfd970d6f7680bc7.bundle.js:76
+msgid "Save Changes"
+msgstr ""
+
+#: elementor-pro/modules/query-control/controls/template-query.php:68
+msgid "Edit template"
+msgstr ""
+
+#: elementor-pro/modules/query-control/controls/template-query.php:60
+msgid "Create template"
+msgstr ""
+
+#: elementor-pro/modules/woocommerce/widgets/products-base.php:547
+msgid "Automatically align buttons"
+msgstr ""
+
+#: elementor-pro/assets/js/loop-filter-editor.d1bae86a5ed21c0e9981.bundle.js:175
+msgid "Something went wrong"
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:7431
+msgid "Take me there"
+msgstr ""
+
+#. translators: 1: User display name, 2: Page name, 3: Site name.
+
+#: elementor-pro/modules/notes/notifications/user-resolved-notification.php:28
+msgid "%1$s resolved a note on %2$s at %3$s"
+msgstr ""
+
+#. translators: 1: User display name, 2: Page name, 3: Site name.
+
+#: elementor-pro/modules/notes/notifications/user-replied-notification.php:28
+msgid "%1$s replied to a note on %2$s at %3$s"
+msgstr ""
+
+#. translators: 1: User display name, 2: Page name, 3: Site name.
+
+#: elementor-pro/modules/notes/notifications/user-mentioned-notification.php:28
+msgid "%1$s mentioned you on %2$s at %3$s"
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:4147
+#: elementor-pro/assets/js/notes/notes.js:1041
+#: elementor-pro/assets/js/notes/notes.js:1086
+#: elementor-pro/assets/js/packages/editor-notes/editor-notes.strings.js:1
+msgid "Notes"
+msgstr ""
+
+#: elementor-pro/assets/js/loop-filter-editor.d1bae86a5ed21c0e9981.bundle.js:71
+msgid "Loop Grid"
+msgstr ""
+
+#. translators: %s: Widget title.
+
+#: elementor-pro/core/editor/promotion.php:39
+msgid "Use %s widget and dozens more pro features to extend your toolbox and build sites faster and better."
+msgstr ""
+
+#. translators: %s: Widget title.
+
+#: elementor-pro/core/editor/promotion.php:34
+msgid "Renew your Elementor Pro subscription to get %s and dozens more Pro widgets to expand your web-creation toolbox."
+msgstr ""
+
+#. translators: %s: Widget title.
+
+#: elementor-pro/core/editor/promotion.php:31
+#: elementor-pro/core/editor/promotion.php:57
+msgid "%s Widget"
+msgstr ""
+
+#: elementor-pro/core/editor/promotion.php:44
+msgid "Renew now"
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:7267
+msgid "<h3>Sorry, something went wrong.</h3><br>To define a purchase summary page for your site, head over to Site Settings."
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:7266
+msgid "<h3>Set up a purchase summary page</h3><br>This page shows payment and order details. To set one up, go to Site Settings."
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:7265
+msgid "You've updated your summary page."
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:7264
+msgid "Changes you make here will override your WooCommerce default purchase summary page."
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:7263
+msgid "Want to save this as your purchase summary page?"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:5141
+msgid "User Agent:"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:5139
+msgid "User IP:"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:5137
+msgid "User Name:"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:5135
+msgid "Update Date:"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:5133
+msgid "Create Date:"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:5125
+msgid "Page:"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:4915
+msgid "No submissions found."
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:4906
+msgid "Filter by date"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:4887
+msgid "Filter by form"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:4877
+msgid "All Forms"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:4784
+msgid "Submission Date"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:4768
+msgid "Actions Status"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:4764
+msgid "Main"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:4717
+#: elementor-pro/assets/js/form-submission-admin.js:4732
+msgid "Mark as Unread"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:4710
+#: elementor-pro/assets/js/form-submission-admin.js:4725
+msgid "Mark as Read"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:4701
+#: elementor-pro/assets/js/form-submission-admin.js:4746
+#: elementor-pro/assets/js/form-submission-admin.js:5154
+msgid "Delete Permanently"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:4686
+#: elementor-pro/assets/js/form-submission-admin.js:4754
+msgid "Restore"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:2590
+msgid "Show more details"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:2528
+msgid "Search..."
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:2378
+msgid "Filter by Page"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:2309
+#: elementor-pro/assets/js/form-submission-admin.js:2352
+msgid "All Pages"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:2229
+msgid "of"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:2210
+msgid "items"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:2114
+msgid "Dismiss this notice."
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:2108
+msgid "Undo"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:1955
+msgid "No form actions."
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:1830
+msgid "End Date"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:1819
+msgid "Start Date"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:1756
+msgid "Last 30 days"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:1749
+msgid "Last 7 days"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:1742
+msgid "Yesterday"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:1735
+msgid "Today"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:1728
+msgid "All Time"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:1585
+msgid "Bulk actions"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:1578
+msgid "Select bulk action"
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:7403
+msgid "No thanks"
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:7258
+msgid "<h3>Sorry, something went wrong.</h3><br>To define a my account page for your site, head over to Site Settings."
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:7257
+msgid "<h3>Set up a My Account page</h3><br>Without it, customers can't update their billing details, review past orders, etc. To set up My Account, go to Site Settings."
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:7256
+msgid "You've updated your my account page."
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:7254
+msgid "Want to save this as your my account page?"
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:7249
+msgid "<h3>Sorry, something went wrong.</h3><br>To define a cart page for your site, head over to Site Settings."
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:7248
+msgid "<h3>Set up a cart page</h3><br>The cart page shows an order summary. To set one up, go to Site Settings."
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:7247
+msgid "You've updated your cart page."
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:7245
+msgid "Want to save this as your cart page?"
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:7240
+msgid "<h3>Sorry, something went wrong.</h3><br>To define a checkout page for your site, head over to Site Settings."
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:7239
+msgid "<h3>Set up a checkout page</h3><br>Without a checkout page, visitors can't complete transactions on your site. To set one up, go to Site Settings."
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:7238
+msgid "You've updated your checkout page."
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:7237
+#: elementor-pro/assets/js/editor.js:7246
+#: elementor-pro/assets/js/editor.js:7255
+msgid "Changes you make here will override your existing WooCommerce settings."
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:7236
+msgid "Want to save this as your checkout page?"
+msgstr ""
+
+#: elementor-pro/assets/js/custom-code.js:1324
+msgid "Set the conditions that determine where your code snippet is used throughout your site."
+msgstr ""
+
+#: elementor-pro/assets/js/custom-code.js:1322
+msgid "Where Do You Want to Display Your Code?"
+msgstr ""
+
+#: elementor-pro/assets/js/display-conditions.js:482
+msgid "Learn more"
+msgstr ""
+
+#: elementor-pro/assets/js/custom-code.js:2604
+msgid "Manage and create all of your custom code here.<br />Organize all of your custom code and incorporate code snippets in your site. Add tracking codes, meta titles, and other scripts. Set display conditions, locations, and priority all from one place."
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:4195
+#: elementor-pro/core/app/modules/site-editor/assets/js/site-editor.js:69
+msgid "Switch to table view"
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:4160
+#: elementor-pro/core/app/modules/site-editor/assets/js/site-editor.js:47
+msgid "Theme Builder could not be loaded"
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:4132
+#: elementor-pro/core/app/modules/site-editor/assets/js/site-editor.js:23
+msgid "import"
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:4073
+#: elementor-pro/core/app/modules/site-editor/assets/js/part-actions/dialogs-and-buttons.js:54
+msgid "Rename"
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:4063
+#: elementor-pro/core/app/modules/site-editor/assets/js/part-actions/dialogs-and-buttons.js:38
+msgid "Export"
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:3989
+#: elementor-pro/core/app/modules/site-editor/assets/js/part-actions/dialog-rename.js:33
+msgid "Change"
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:3988
+#: elementor-pro/core/app/modules/site-editor/assets/js/part-actions/dialog-rename.js:32
+msgid "Rename Site Part"
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:3928
+#: elementor-pro/assets/js/form-submission-admin.js:4739
+#: elementor-pro/assets/js/form-submission-admin.js:5154
+#: elementor-pro/core/app/modules/site-editor/assets/js/part-actions/dialog-delete.js:25
+msgid "Move to Trash"
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:3926
+#: elementor-pro/core/app/modules/site-editor/assets/js/part-actions/dialog-delete.js:23
+msgid "Are you sure you want to move this item to trash:"
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:3925
+#: elementor-pro/core/app/modules/site-editor/assets/js/part-actions/dialog-delete.js:22
+msgid "Move Item To Trash"
+msgstr ""
+
+#: elementor-pro/core/app/modules/site-editor/assets/js/pages/templates.js:11
+msgid "Your Site's Global Parts"
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:3770
+#: elementor-pro/core/app/modules/site-editor/assets/js/pages/import.js:98
+msgid "or"
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:3769
+#: elementor-pro/core/app/modules/site-editor/assets/js/pages/import.js:97
+msgid "Drag & Drop your .JSON or .zip template file"
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:3768
+#: elementor-pro/core/app/modules/site-editor/assets/js/pages/import.js:96
+msgid "Import Template To Your Library"
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:3729
+#: elementor-pro/core/app/modules/site-editor/assets/js/pages/import.js:48
+msgid "Your template was imported"
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:3653
+#: elementor-pro/core/app/modules/site-editor/assets/js/pages/conditions/conditions.js:30
+msgid "Set the conditions that determine where your template is used throughout your site."
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:3651
+#: elementor-pro/core/app/modules/site-editor/assets/js/pages/conditions/conditions.js:27
+msgid "Where Do You Want to Display Your Template?"
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:3647
+#: elementor-pro/core/app/modules/site-editor/assets/js/pages/conditions/conditions.js:24
+msgid "Import template"
+msgstr ""
+
+#: elementor-pro/core/app/modules/site-editor/assets/js/pages/conditions/conditions.js:14
+msgid "Not Found"
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:3218
+#: elementor-pro/core/app/modules/site-editor/assets/js/pages/add-new.js:46
+msgid "Start customizing every part of your site"
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:3122 elementor-pro/assets/js/app.js:3574
+#: elementor-pro/assets/js/app.js:3743
+#: elementor-pro/assets/js/custom-code.js:1087
+#: elementor-pro/core/app/modules/site-editor/assets/js/organisms/site-templates.js:71
+#: elementor-pro/core/app/modules/site-editor/assets/js/pages/conditions/conditions-rows.js:52
+#: elementor-pro/core/app/modules/site-editor/assets/js/pages/import.js:66
+msgid "Go Back"
+msgstr ""
+
+#: elementor-pro/core/app/modules/site-editor/assets/js/organisms/site-templates.js:61
+msgid "No Templates found. Want to create one?"
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:2858
+#: elementor-pro/core/app/modules/site-editor/assets/js/molecules/site-template-footer.js:12
+msgid "Edit Conditions"
+msgstr ""
+
+#: elementor-pro/core/app/modules/site-editor/assets/js/context/conditions.js:280
+#: elementor-pro/core/app/modules/site-editor/assets/js/context/templates.js:136
+msgid "Error:"
+msgstr ""
+
+#: elementor-pro/modules/woocommerce/widgets/checkout.php:245
+#: elementor-pro/modules/woocommerce/widgets/checkout.php:3080
+#: elementor-pro/modules/woocommerce/widgets/checkout.php:3151
+msgid "Note: This label and placeholder are taken from the Billing section. You can change it there."
+msgstr ""
+
+#: elementor-pro/modules/woocommerce/widgets/checkout.php:233
+#: elementor-pro/modules/woocommerce/widgets/checkout.php:3139
+msgid "Note: This content cannot be changed due to local regulations."
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:5162
+msgid "Update"
+msgstr ""
+
+#: elementor-pro/assets/js/display-conditions.js:2393
+msgid "Select a date"
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:3124 elementor-pro/assets/js/app.js:3576
+#: elementor-pro/assets/js/app.js:3739
+#: elementor-pro/assets/js/custom-code.js:1089
+#: elementor-pro/core/app/modules/site-editor/assets/js/organisms/site-templates.js:73
+#: elementor-pro/core/app/modules/site-editor/assets/js/pages/conditions/conditions-rows.js:54
+#: elementor-pro/core/app/modules/site-editor/assets/js/pages/import.js:62
+#: elementor-pro/modules/announcements/module.php:51
+msgid "Learn More"
+msgstr ""
+
+#: elementor-pro/modules/posts/data/controller.php:39
+msgid "Posts widget doesn't exist"
+msgstr ""
+
+#: elementor-pro/modules/posts/data/controller.php:28
+msgid "Document doesn't exist"
+msgstr ""
+
+#. translators: %s: Days left to trial expiration.
+
+#: elementor-pro/license/notices/trial-period-notice.php:44
+msgid "Find the plan that matches your needs and enjoy Pro widgets, templates, and support for a whole year."
+msgstr ""
+
+#: elementor-pro/license/notices/trial-expired-notice.php:32
+msgid "Want to continue using Pro to build your website? Choose the plan that's right for you!"
+msgstr ""
+
+#: elementor-pro/core/editor/promotion.php:61
+msgid "Upgrade now"
+msgstr ""
+
+#: elementor-pro/core/app/modules/site-editor/module.php:116
+msgid "Entering the Theme Builder through WP Dashboard > Templates > Theme Builder opens the New theme builder by default. But don’t worry, you can always view the WP styled version of the screen with a simple click of a button."
+msgstr ""
+
+#: elementor-pro/core/app/modules/site-editor/module.php:115
+msgid "Default to New Theme Builder"
+msgstr ""
+
+#: elementor-pro/modules/forms/submissions/data/endpoints/restore.php:117
+msgid "Submission not found or not in trash."
+msgstr ""
+
+#: elementor-pro/modules/forms/submissions/data/endpoints/export.php:81
+msgid "There is nothing to export."
+msgstr ""
+
+#: elementor-pro/modules/forms/submissions/data/controller.php:291
+#: elementor-pro/modules/forms/submissions/data/controller.php:347
+msgid "Submission not found."
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:4068
+#: elementor-pro/assets/js/form-submission-admin.js:4600
+#: elementor-pro/assets/js/form-submission-admin.js:4693
+#: elementor-pro/core/app/modules/site-editor/assets/js/part-actions/dialogs-and-buttons.js:46
+msgid "Trash"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:4597
+msgid "Read"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:4594
+msgid "Unread"
+msgstr ""
+
+#: elementor-pro/modules/custom-code/module.php:207
+msgid "%s custom code restored."
+msgid_plural "%s custom code restored."
+msgstr[0] ""
+msgstr[1] ""
+
+#: elementor-pro/modules/custom-code/module.php:206
+msgid "%s custom code moved to trash."
+msgid_plural "%s custom codes moved to trash."
+msgstr[0] ""
+msgstr[1] ""
+
+#: elementor-pro/modules/custom-code/module.php:205
+msgid "%s custom code permanently deleted."
+msgid_plural "%s custom codes permanently deleted."
+msgstr[0] ""
+msgstr[1] ""
+
+#: elementor-pro/modules/custom-code/module.php:204
+msgid "%s custom code cannot be not updated, someone else is editing it."
+msgid_plural "%s custom codes cannot be not updated, someone else is editing them."
+msgstr[0] ""
+msgstr[1] ""
+
+#: elementor-pro/modules/custom-code/module.php:203
+msgid "%s custom code updated."
+msgid_plural "%s custom codes updated."
+msgstr[0] ""
+msgstr[1] ""
+
+#: elementor-pro/modules/custom-code/module.php:191
+msgid "Custom code draft updated."
+msgstr ""
+
+#. translators: %s: The scheduled date.
+
+#: elementor-pro/modules/custom-code/module.php:188
+msgid "Custom code scheduled for %s."
+msgstr ""
+
+#: elementor-pro/modules/custom-code/module.php:185
+msgid "Custom code submitted."
+msgstr ""
+
+#: elementor-pro/modules/custom-code/module.php:184
+msgid "Custom code saved."
+msgstr ""
+
+#: elementor-pro/modules/custom-code/module.php:183
+msgid "Custom code published."
+msgstr ""
+
+#: elementor-pro/modules/custom-code/module.php:182
+msgid "Revision restored."
+msgstr ""
+
+#: elementor-pro/modules/custom-code/module.php:178
+#: elementor-pro/modules/custom-code/module.php:181
+msgid "Custom code updated."
+msgstr ""
+
+#. translators: %s: Body closing tag.
+
+#: elementor-pro/modules/custom-code/custom-code-metabox.php:403
+msgid "Custom code"
+msgstr ""
+
+#: elementor-pro/core/app/modules/site-editor/data/endpoints/templates-conditions.php:78
+msgid "Cannot save those conditions."
+msgstr ""
+
+#: elementor-pro/core/app/modules/site-editor/data/endpoints/templates-conditions.php:48
+msgid "Error while saving conditions."
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:6488
+msgid "View Live Site"
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:6482
+msgid "Open Site Editor"
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:2349
+#: elementor-pro/assets/js/custom-code.js:560
+#: elementor-pro/core/app/modules/site-editor/assets/js/context/services/conditions-config.js:123
+msgid "No instances"
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:3879
+msgid "Loop"
+msgstr ""
+
+#: elementor-pro/assets/js/admin.js:198
+msgid "Upload an icon set to publish."
+msgstr ""
+
+#: elementor-pro/assets/js/admin.js:412
+msgid "Choose a font to publish."
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:3834
+#: elementor-pro/core/app/modules/site-editor/assets/js/pages/template-type.js:24
+msgid "Add New"
+msgstr ""
+
+#: elementor-pro/assets/js/table-of-contents.d228157a74585ba6b08c.bundle.js:274
+msgid "No headings were found on this page."
+msgstr ""
+
+#: elementor-pro/core/admin/admin.php:181
+msgid "Reinstall"
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:4100
+msgid "Motion Effects"
+msgstr ""
+
+#. translators: 1: Link opening tag, 2: Link closing tag.
+
+#: elementor-pro/modules/assets-manager/asset-types/icons/font-awesome-pro.php:128
+msgid "Validate Kit ID"
+msgstr ""
+
+#: elementor-pro/modules/assets-manager/asset-types/icons/custom-icons.php:33
+msgid "Icon Set"
+msgstr ""
+
+#: elementor-pro/license/admin.php:527
+#: elementor-pro/modules/announcements/module.php:45
+msgid "Renew Now"
+msgstr ""
+
+#: elementor-pro/core/app/modules/site-editor/assets/js/pages/conditions/conditions.js:32
+msgid "For example, choose 'Entire Site' to display the template across your site."
+msgstr ""
+
+#: elementor-pro/assets/js/custom-code.js:1247
+#: elementor-pro/core/app/modules/site-editor/assets/js/context/conditions.js:284
+#: elementor-pro/core/app/modules/site-editor/assets/js/context/templates.js:140
+msgid "Loading"
+msgstr ""
+
+#: elementor-pro/core/app/modules/site-editor/module.php:177
+msgid "Add New Theme Template"
+msgstr ""
+
+#: elementor-pro/core/app/modules/site-editor/module.php:148
+msgid "Theme Builder"
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:3598
+#: elementor-pro/assets/js/custom-code.js:1111
+#: elementor-pro/assets/js/display-conditions.js:1538
+#: elementor-pro/assets/js/editor.js:6789
+#: elementor-pro/core/app/modules/site-editor/assets/js/pages/conditions/conditions-rows.js:79
+msgid "Save & Close"
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:6375
+msgid "Apply current template to these pages."
+msgstr ""
+
+#: elementor-pro/assets/js/custom-code.js:1318
+#: elementor-pro/assets/js/editor.js:6368
+msgid "Conditions"
+msgstr ""
+
+#: elementor-pro/assets/js/custom-code.js:1261
+#: elementor-pro/assets/js/editor.js:6782
+msgid "Publish Settings"
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:5208
+msgid "Requirements that have to be met for the popup to open."
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:5203
+msgid "What action the user needs to do for the popup to open."
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:5207
+#: elementor-pro/assets/js/packages/editor-documents-extended/editor-documents-extended.strings.js:2
+msgid "Advanced Rules"
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:5202
+#: elementor-pro/assets/js/packages/editor-documents-extended/editor-documents-extended.strings.js:1
+msgid "Triggers"
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:5043
+msgid "Popups"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:5056
+msgid "Loading..."
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:4780
+msgid "ID"
+msgstr "ID"
+
+#. translators: %s: Discount percent.
+
+#: elementor-pro/assets/js/app.js:1663
+#: elementor-pro/core/app/assets/js/ui/connect-button.js:45
+#: elementor-pro/core/editor/promotion.php:48
+#: elementor-pro/license/admin.php:519
+msgid "Connect & Activate"
+msgstr ""
+
+#: elementor-pro/modules/woocommerce/wc-templates/cart/mini-cart.php:57
+msgid "Remove this item"
+msgstr ""
+
+#. translators: %d: The number of allowed files.
+
+#: elementor-pro/modules/forms/fields/upload.php:332
+msgid "You can upload only %d file."
+msgid_plural "You can upload up to %d files."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %s: Allowed data letters (see:
+#. http:php.net/manual/en/function.date.php).
+#. translators: %s: Allowed time letters (see:
+#. http:php.net/manual/en/function.time.php).
+
+#: elementor-pro/modules/theme-elements/widgets/post-info.php:137
+#: elementor-pro/modules/theme-elements/widgets/post-info.php:177
+msgid "Use the letters: %s"
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:2965 elementor-pro/assets/js/app.js:3730
+#: elementor-pro/core/app/modules/site-editor/assets/js/molecules/site-template-thumbnail.js:13
+#: elementor-pro/core/app/modules/site-editor/assets/js/pages/import.js:49
+msgid "Preview"
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:3588
+#: elementor-pro/assets/js/custom-code.js:1101
+#: elementor-pro/assets/js/display-conditions.js:1729
+#: elementor-pro/core/app/modules/site-editor/assets/js/pages/conditions/conditions-rows.js:68
+msgid "Add Condition"
+msgstr ""
+
+#: elementor-pro/assets/js/display-conditions.js:159
+#: elementor-pro/assets/js/editor.js:6386
+#: elementor-pro/assets/js/packages/editor-documents-extended/editor-documents-extended.strings.js:3
+msgid "Display Conditions"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:1593
+msgid "Apply"
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:3477
+#: elementor-pro/assets/js/custom-code.js:990
+#: elementor-pro/core/app/modules/site-editor/assets/js/pages/conditions/condition-type.js:8
+msgid "Include"
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:3258
+#: elementor-pro/assets/js/custom-code.js:771
+#: elementor-pro/core/app/modules/site-editor/assets/js/pages/conditions/condition-conflicts.js:21
+msgid "Elementor recognized that you have set this location for other templates: "
+msgstr ""
+
+#: elementor-pro/core/app/modules/site-editor/assets/js/molecules/site-template-footer.js:10
+msgid "Instances"
+msgstr ""
+
+#: elementor-pro/modules/custom-code/module.php:180
+msgid "Custom field deleted."
+msgstr ""
+
+#: elementor-pro/modules/custom-code/module.php:179
+msgid "Custom field updated."
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:3564
+#: elementor-pro/assets/js/custom-code.js:1077
+#: elementor-pro/assets/js/notes/notes-app.js:418
+#: elementor-pro/assets/js/notes/notes-app.js:697
+#: elementor-pro/core/app/modules/site-editor/assets/js/pages/conditions/conditions-rows.js:34
+msgid "Delete"
+msgstr ""
+
+#: elementor-pro/modules/assets-manager/asset-types/fonts/custom-fonts.php:40
+msgid "Manage Your Font Files"
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:6795
+msgid "Next"
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:4080
+#: elementor-pro/core/app/modules/site-editor/assets/js/part-actions/dialogs-and-buttons.js:65
+msgid "Toggle"
+msgstr ""
+
+#: elementor-pro/assets/js/off-canvas-editor.537e5e064206eea190cc.bundle.js:87
+msgid "Off-Canvas"
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:2550
+msgid "Linked to Global"
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:3480
+#: elementor-pro/assets/js/custom-code.js:993
+#: elementor-pro/core/app/modules/site-editor/assets/js/pages/conditions/condition-type.js:12
+msgid "Exclude"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:2222
+msgid "Current Page"
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:2768
+#: elementor-pro/core/app/modules/site-editor/assets/js/molecules/back-button.js:10
+msgid "Back"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:4776
+msgid "Page"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:1763
+msgid "Custom"
+msgstr ""
+
+#: elementor-pro/modules/lottie/widgets/lottie.php:259
+#: elementor-pro/modules/motion-fx/controls-group.php:232
+#: elementor-pro/modules/motion-fx/controls-group.php:275
+#: elementor-pro/modules/motion-fx/controls-group.php:322
+#: elementor-pro/modules/motion-fx/controls-group.php:368
+#: elementor-pro/modules/motion-fx/controls-group.php:411
+#: elementor-pro/modules/motion-fx/controls-group.php:457
+msgid "Bottom"
+msgstr ""
+
+#: elementor-pro/modules/pricing/widgets/price-list.php:239
+msgid "Price"
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:3367
+#: elementor-pro/assets/js/custom-code.js:880
+#: elementor-pro/assets/js/editor.js:5258
+#: elementor-pro/assets/js/form-submission-admin.js:4591
+#: elementor-pro/core/app/modules/site-editor/assets/js/pages/conditions/condition-sub-id.js:45
+msgid "All"
+msgstr ""
+
+#: elementor-pro/assets/js/gutenberg-woocommerce-notice.js:1890
+msgid "Read More"
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:778
+msgid "None"
+msgstr ""
+
+#: elementor-pro/modules/lottie/widgets/lottie.php:260
+#: elementor-pro/modules/motion-fx/controls-group.php:233
+#: elementor-pro/modules/motion-fx/controls-group.php:276
+#: elementor-pro/modules/motion-fx/controls-group.php:323
+#: elementor-pro/modules/motion-fx/controls-group.php:369
+#: elementor-pro/modules/motion-fx/controls-group.php:412
+#: elementor-pro/modules/motion-fx/controls-group.php:458
+msgid "Top"
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:225
+#: elementor-pro/assets/js/loop.27d8ba43536f8b76ca41.bundle.js:39
+#: elementor-pro/assets/js/loop.27d8ba43536f8b76ca41.bundle.js:265
+#: elementor-pro/assets/js/preview.js:40
+msgid "Template"
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:3702
+msgid "Edit Template"
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:2895 elementor-pro/assets/js/app.js:3733
+#: elementor-pro/assets/js/custom-code.js:1256
+#: elementor-pro/assets/js/form-submission-admin.js:5088
+#: elementor-pro/assets/js/notes/notes-app.js:684
+#: elementor-pro/core/app/modules/site-editor/assets/js/molecules/site-template-header.js:10
+#: elementor-pro/core/app/modules/site-editor/assets/js/pages/import.js:52
+msgid "Edit"
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:3280
+msgid "You'll be able to add this global widget to multiple areas on your site, and edit it from one single place."
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:3279
+msgid "Save your widget as a global widget"
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:3474
+msgid "This will make the widget stop being global. It'll be reverted into being just a regular widget."
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:2616
+#: elementor-pro/assets/js/editor.js:3473
+msgid "Unlink Widget"
+msgstr ""
+
+#: elementor-pro/assets/js/app.js:3752 elementor-pro/assets/js/app.js:3931
+#: elementor-pro/assets/js/app.js:3993 elementor-pro/assets/js/editor.js:3481
+#: elementor-pro/assets/js/form-submission-admin.js:5088
+#: elementor-pro/assets/js/notes/notes-app.js:137
+#: elementor-pro/assets/js/notes/notes-app.js:288
+#: elementor-pro/assets/js/notes/notes-app.js:1065
+#: elementor-pro/core/app/modules/site-editor/assets/js/pages/import.js:79
+#: elementor-pro/core/app/modules/site-editor/assets/js/part-actions/dialog-delete.js:28
+#: elementor-pro/core/app/modules/site-editor/assets/js/part-actions/dialog-rename.js:37
+msgid "Cancel"
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:3480
+msgid "Unlink"
+msgstr ""
+
+#: elementor-pro/assets/js/4abfbfd970d6f7680bc7.bundle.js:83
+#: elementor-pro/assets/js/editor.js:7402
+#: elementor-pro/assets/js/notes/notes-app.js:126
+msgid "Save"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:4772
+msgid "Form"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:5119
+msgid "Form:"
+msgstr ""
+
+#: elementor-pro/assets/js/form-submission-admin.js:2570
+msgid "Unknown"
+msgstr ""
+
+#: elementor-pro/assets/js/editor.js:668
+msgid "Custom CSS"
+msgstr ""
+
+#: elementor-pro/modules/pricing/widgets/price-list.php:248
+msgid "Color"
+msgstr ""
+
+#: elementor-pro/modules/woocommerce/widgets/products-base.php:550
+msgid "No"
+msgstr "No"
+
+#: elementor-pro/modules/woocommerce/widgets/products-base.php:549
+msgid "Yes"
+msgstr "Yes"
+
+#: elementor-pro/assets/js/form-submission-admin.js:4676
+msgid "View"
+msgstr ""

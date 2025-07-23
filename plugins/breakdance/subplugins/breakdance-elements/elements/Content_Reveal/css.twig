@@ -1,0 +1,14 @@
+%%SELECTOR%% {
+  {% if content.content.hide_by != 'lines' %}
+  --bde-content-reveal-height: {{ content.content.max_height.style }};
+  {% endif %}
+  
+  --bde-content-reveal-gradient: {{ design.overlay.gradient.value ?? design.overlay.gradient }};
+  --bde-content-reveal-duration: {{ design.content.transition.style }};
+  --bde-content-reveal-button-space: {{ design.spacing.before_button.style }};
+  --bde-content-reveal-alignment: {{ design.overlay.vertical_alignment }};
+  {{ macros.spacing_margin_y(design.spacing.container) }}
+  max-width: {{ design.content.max_width.style }};
+}
+
+{{ macros.atomV1ButtonCss(design.overlay.button, 'bde-content-reveal__button', '%%SELECTOR%%', breakpoint, globalSettings) }}

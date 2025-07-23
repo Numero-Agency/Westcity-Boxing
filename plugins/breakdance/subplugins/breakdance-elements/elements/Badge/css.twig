@@ -1,0 +1,13 @@
+%%SELECTOR%% {
+  {{ macros.spacing_margin_y(design.spacing) }}
+  {{ macros.backgroundColor(design.badge.background) }}
+  {{ macros.spacing_padding_all(design.badge.padding) }}
+  
+  {% if design.badge.border %}
+  border: 1px solid {{ design.badge.border }};
+  {% endif %}
+ 
+  {{ macros.typography(design.typography, globalSettings) }}
+  
+  border-radius: {{ design.badge.radius.style }};
+}

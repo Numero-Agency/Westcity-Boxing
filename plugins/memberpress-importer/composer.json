@@ -1,0 +1,29 @@
+{
+    "name": "caseproof/memberpress-importer",
+    "description": "Allows you to import Users, Products, Subscriptions, Transactions, Coupons and Rules from a csv file.",
+    "authors": [
+        {
+            "name": "Team Caseproof",
+            "email": "developers@caseproof.com"
+        }
+    ],
+    "repositories": {
+        "caseproof": {
+            "type": "composer",
+            "url": "https://pkgs.cspf.co"
+        }
+    },
+    "require-dev": {
+        "caseproof/core-cli": "^1.0",
+        "wp-cli/i18n-command": "^2.6"
+    },
+    "scripts": {
+        "build": "./vendor/bin/core-cli build",
+        "translate": "wp i18n make-pot . i18n/memberpress-importer.pot --exclude=tmp"
+    },
+    "config": {
+        "platform": {
+            "php": "7.4.33"
+        }
+    }
+}

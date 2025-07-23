@@ -1,0 +1,7 @@
+%%SELECTOR%% {
+  {{ macros.spacing_margin_y(design.spacing) }}
+  
+  {% if design.effect.duration.style %}
+    --hoverSwapperTransitionDuration: {{ design.effect.duration.style }};
+  {% endif %}
+}

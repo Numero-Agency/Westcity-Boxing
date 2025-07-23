@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<bundle name="MemberPress CoachKit">
+    <domain name="memberpress-coachkit">
+        <project name="MemberPress CoachKit" slug="memberpress-coachkit">
+            <source>
+                <directory>.</directory>
+            </source>
+            <target>
+                <directory base="WP_LANG_DIR">plugins</directory>
+            </target>
+            <template locked="true">
+                <file>i18n/memberpress-coachkit.pot</file>
+            </template>
+        </project>
+    </domain>
+    <exclude>
+        <directory>vendor</directory>
+        <directory>tests</directory>
+        <directory>script</directory>
+        <directory>node_modules</directory>
+    </exclude>
+</bundle>

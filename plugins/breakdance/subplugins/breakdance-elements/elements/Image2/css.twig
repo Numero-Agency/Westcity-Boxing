@@ -1,0 +1,46 @@
+ %%SELECTOR%% {
+  {{ macros.spacing_margin_y(design.spacing) }}
+  max-width: {{ design.image.max_width.style }};
+  {{ macros.borders(design.borders) }}
+   
+  {% if design.image.width.style %}
+    width: {{ design.image.width.style }};
+    {% if not design.image.height.style %}
+      height: auto;
+    {% endif %}
+  {% endif %}
+ 
+  {% if design.image.height.style %}
+    height: {{ design.image.height.style }};
+    {% if not design.image.width.style %}
+      width: auto;
+    {% endif %}
+  {% endif %}
+
+  {% if design.image.height.style or design.image.aspect_ratio %}
+    object-fit: {{ design.image.object_fit }};
+    {% if design.image.object_position %}
+      object-position: {{ design.image.object_position.x }}% {{ design.image.object_position.y }}%;
+    {% endif %}
+  {% endif %}
+   
+  {% if design.image.aspect_ratio %}
+    {% if design.image.aspect_ratio == 'custom' and design.image.custom_ratio.width and design.image.custom_ratio.height %}
+       aspect-ratio: {{ design.image.custom_ratio.width }} / {{ design.image.custom_ratio.height }};
+    {% else %}
+      aspect-ratio: {{ design.image.aspect_ratio }};
+    {% endif %}
+  {% endif %}
+   
+  {{ macros.filters(design.effects.filters) }}
+  opacity: {{ design.effects.opacity }};
+  mix-blend-mode: {{ design.effects.blend_mode }};
+   
+  transition-duration: {{ design.effects.transition_duration.style }};
+
+}
+
+%%SELECTOR%%:hover {
+  opacity: {{ design.effects.opacity_hover }};
+  {{ macros.filtersHover(design.effects.filters) }}
+}

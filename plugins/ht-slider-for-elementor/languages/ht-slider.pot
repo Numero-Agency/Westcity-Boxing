@@ -1,0 +1,1756 @@
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: HT Slider for Elementor\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-07-14 09:54+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: \n"
+"Language: \n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Loco https://localise.biz/\n"
+"X-Loco-Version: 2.8.0; wp-6.8.1; php-8.2.26\n"
+"X-Domain: ht-slider"
+
+#: include/helpers_function.php:198
+msgid " (Pro)"
+msgstr ""
+
+#. 1: Plugin name 2: Elementor 3: Required Elementor version
+#. 1: Plugin name 2: PHP 3: Required PHP version
+#: include/class.htslider.php:136 include/class.htslider.php:152
+#, php-format
+msgid "\"%1$s\" requires \"%2$s\" version %3$s or greater."
+msgstr ""
+
+#: include/addons/htslider_addons.php:253
+#: include/addons/htslider_addons.php:260
+msgid "#"
+msgstr ""
+
+#. %1$s: strong tag start
+#. %2$s: strong tag end
+#: include/class.htslider.php:107
+#, php-format
+msgid ""
+"%1$sHTSlider Addons for Elementor%2$s requires %1$s\"Elementor\"%2$s plugin "
+"to be active. Please activate Elementor to continue."
+msgstr ""
+
+#. %1$s: strong tag start
+#. %2$s: strong tag end
+#: include/class.htslider.php:120
+#, php-format
+msgid ""
+"%1$sHTSlider Addons for Elementor%2$s requires %1$s\"Elementor\"%2$s plugin "
+"to be installed and activated. Please install Elementor to continue."
+msgstr ""
+
+#. %s: Template Count
+#: include/admin/templates_list.php:37
+#, php-format
+msgid "%s Templates"
+msgstr ""
+
+#. %s: Template Title
+#: include/admin/templates_list.php:111
+#, php-format
+msgid "%s."
+msgstr ""
+
+#: include/admin/templates_list.php:33
+msgid "80 Templates are Free"
+msgstr ""
+
+#: include/admin/Class_Recommended_Plugins.php:246
+msgid "Activate"
+msgstr ""
+
+#: include/class.htslider.php:109
+msgid "Activate Elementor"
+msgstr ""
+
+#: include/admin/Class_Recommended_Plugins.php:130
+#: include/admin/Class_Recommended_Plugins.php:257
+msgid "Activated"
+msgstr ""
+
+#: include/admin/Class_Recommended_Plugins.php:129
+msgid "Activating.."
+msgstr ""
+
+#: include/addons/elementor_widgets.php:967
+#: include/addons/htslider_addons.php:2015
+#: include/addons/htslider_scroll_navigation.php:636
+msgid "Active"
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:290
+msgid "Active Slide"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:177
+#: include/addons/htslider_addons.php:538
+msgid "Add Column gap Ex. 15px"
+msgstr ""
+
+#: include/custom-post-type.php:83
+msgid "Add New Item"
+msgstr ""
+
+#: include/custom-post-type.php:20 include/custom-post-type.php:21
+msgid "Add New Slider"
+msgstr ""
+
+#: include/custom-post-type.php:88
+msgid "Add or remove items"
+msgstr ""
+
+#: include/addons/htslider_addons.php:520
+msgid "Add the expected height for slider initial load"
+msgstr ""
+
+#: include/addons/htslider_addons.php:916
+#: include/addons/htslider_scroll_navigation.php:489
+#: include/addons/htslider_scroll_navigation.php:711
+msgid "Alignment"
+msgstr ""
+
+#: include/custom-post-type.php:79
+msgid "All Item Categories"
+msgstr ""
+
+#: include/custom-post-type.php:19
+msgid "All Sliders"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:144
+msgid ""
+"Are you getting frustrated with WooCommerce’s current way of presenting the "
+"variants for your products? Well, say goodbye to dropdowns and start showing "
+"the product variations in a whole new light with Swatchly."
+msgstr ""
+
+#: include/addons/htslider_addons.php:1374
+msgid "Arrow"
+msgstr ""
+
+#: include/addons/htslider_addons.php:1385
+msgid "Arrow Position"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:470
+msgid "Arrow Size"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:122
+msgid "Ascending"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:262
+msgid "Autoplay animation speed"
+msgstr ""
+
+#: include/addons/htslider_addons.php:741
+msgid "Autoplay Speed"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:249
+msgid "Autoplay speed"
+msgstr ""
+
+#: include/admin/templates_list.php:57
+msgid "Back to Library"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:639
+#: include/addons/htslider_addons.php:204
+#: include/addons/htslider_addons.php:890
+#: include/addons/htslider_addons.php:1109
+#: include/addons/htslider_addons.php:1590
+#: include/addons/htslider_addons.php:1650
+#: include/addons/htslider_addons.php:1941
+#: include/addons/htslider_addons.php:2035
+#: include/addons/htslider_scroll_navigation.php:184
+#: include/addons/htslider_scroll_navigation.php:536
+#: include/addons/htslider_scroll_navigation.php:644
+#: include/addons/htslider_scroll_navigation.php:921
+#: include/addons/htslider_scroll_navigation.php:976
+msgid "Background"
+msgstr ""
+
+#: include/addons/htslider_addons.php:1255
+msgid "Background  Color"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:559
+#: include/addons/elementor_widgets.php:892
+#: include/addons/elementor_widgets.php:973
+#: include/addons/htslider_addons.php:832
+msgid "Background Color"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:573
+#: include/addons/elementor_widgets.php:653
+#: include/addons/elementor_widgets.php:906
+#: include/addons/elementor_widgets.php:990
+#: include/addons/htslider_addons.php:1118
+#: include/addons/htslider_addons.php:1293
+#: include/addons/htslider_addons.php:1347
+#: include/addons/htslider_addons.php:1600
+#: include/addons/htslider_addons.php:1660
+#: include/addons/htslider_addons.php:1951
+#: include/addons/htslider_addons.php:2045
+#: include/addons/htslider_scroll_navigation.php:546
+#: include/addons/htslider_scroll_navigation.php:654
+#: include/addons/htslider_scroll_navigation.php:931
+#: include/addons/htslider_scroll_navigation.php:986
+msgid "Border"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:581
+#: include/addons/elementor_widgets.php:661
+#: include/addons/elementor_widgets.php:914
+#: include/addons/elementor_widgets.php:998
+#: include/addons/htslider_addons.php:1126
+#: include/addons/htslider_addons.php:1301
+#: include/addons/htslider_addons.php:1355
+#: include/addons/htslider_addons.php:1608
+#: include/addons/htslider_addons.php:1668
+#: include/addons/htslider_addons.php:1959
+#: include/addons/htslider_addons.php:2053
+#: include/addons/htslider_scroll_navigation.php:554
+#: include/addons/htslider_scroll_navigation.php:662
+#: include/addons/htslider_scroll_navigation.php:939
+#: include/addons/htslider_scroll_navigation.php:994
+msgid "Border Radius"
+msgstr ""
+
+#: include/addons/htslider_addons.php:795
+#: include/addons/htslider_scroll_navigation.php:450
+msgid "Bottom"
+msgstr ""
+
+#: include/addons/htslider_addons.php:1182
+msgid "Bottom (Pro)"
+msgstr ""
+
+#: include/addons/htslider_addons.php:1718
+msgid "Bottom Center"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:709
+msgid "Bottom Center (Pro)"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:398
+#: include/addons/htslider_addons.php:1391
+#: include/addons/htslider_addons.php:1719
+msgid "Bottom Left"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:710
+msgid "Bottom Left (Pro)"
+msgstr ""
+
+#: include/addons/htslider_addons.php:1720
+msgid "Bottom Right"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:711
+msgid "Bottom Right (Pro)"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:593
+#: include/addons/elementor_widgets.php:673
+#: include/addons/htslider_addons.php:1137
+#: include/addons/htslider_addons.php:1619
+#: include/addons/htslider_addons.php:1679
+msgid "Box Shadow"
+msgstr ""
+
+#: include/addons/htslider_addons.php:1215
+msgid "Button"
+msgstr ""
+
+#: include/addons/htslider_addons.php:156
+msgid "Button Text"
+msgstr ""
+
+#: include/admin/templates_list.php:44
+msgid "Buy HTSlider Pro Version"
+msgstr ""
+
+#: include/admin/Class_Recommended_Plugins.php:126
+#: include/admin/Class_Recommended_Plugins.php:234
+#: include/admin/Class_Recommended_Plugins.php:288
+#: include/admin/templates_list.php:97
+msgid "Buy Now"
+msgstr ""
+
+#: include/admin/Class_Recommended_Plugins.php:274
+msgid "By "
+msgstr ""
+
+#: include/helpers_function.php:63
+msgid "Categories"
+msgstr ""
+
+#: include/addons/htslider_addons.php:924
+#: include/addons/htslider_addons.php:1181
+#: include/addons/htslider_scroll_navigation.php:421
+#: include/addons/htslider_scroll_navigation.php:446
+#: include/addons/htslider_scroll_navigation.php:497
+#: include/addons/htslider_scroll_navigation.php:719
+msgid "Center"
+msgstr ""
+
+#: include/addons/htslider_addons.php:1199
+msgid "Center (Pro)"
+msgstr ""
+
+#: include/addons/htslider_addons.php:699
+msgid "Center Mode"
+msgstr ""
+
+#: include/addons/htslider_addons.php:712
+msgid "Center Padding"
+msgstr ""
+
+#: include/custom-post-type.php:89
+msgid "Choose from the most used"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:543
+#: include/addons/elementor_widgets.php:623
+#: include/addons/htslider_addons.php:875
+#: include/addons/htslider_addons.php:960
+#: include/addons/htslider_addons.php:1002
+#: include/addons/htslider_addons.php:1043
+#: include/addons/htslider_addons.php:1244
+#: include/addons/htslider_addons.php:1323
+#: include/addons/htslider_addons.php:1335
+#: include/addons/htslider_addons.php:1576
+#: include/addons/htslider_addons.php:1636
+#: include/addons/htslider_scroll_navigation.php:381
+#: include/addons/htslider_scroll_navigation.php:905
+#: include/addons/htslider_scroll_navigation.php:960
+msgid "Color"
+msgstr ""
+
+#: include/addons/htslider_addons.php:1558
+#: include/addons/htslider_scroll_navigation.php:888
+msgid "Colors and Border"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:175
+#: include/addons/htslider_addons.php:536
+msgid "Column Gap"
+msgstr ""
+
+#: include/addons/htslider_addons.php:661
+msgid "Column width according to Content"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:180
+msgid ""
+"Contact Form7 Extensions plugin is a fantastic WordPress plugin that "
+"enriches the functionalities of Contact Form 7.This all-in-one WordPress "
+"plugin will help you turn any contact page into a well-organized, engaging "
+"tool for communicating with your website visitors by providing tons of "
+"advanced features like drag and drop file upload, repeater field, trigger "
+"error for already submitted forms, popup form response, country flags and "
+"dial codes with a telephone input field and acceptance field, etc. in "
+"addition to its basic features."
+msgstr ""
+
+#: include/addons/htslider_addons.php:118
+#: include/addons/htslider_scroll_navigation.php:172
+msgid "Content"
+msgstr ""
+
+#: include/addons/htslider_addons.php:1072
+msgid "Content Box"
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:413
+msgid "Content Box Horizontal Position"
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:462
+msgid "Content Box Max Width"
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:438
+msgid "Content Box Vertical Position"
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:159
+msgid "Content Source"
+msgstr ""
+
+#: include/addons/htslider_addons.php:54
+msgid "Content Sourse"
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:371
+msgid "Content Style"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:328
+msgid "Coupon Zen"
+msgstr ""
+
+#: include/admin/templates_list.php:14
+msgid "Create a new slider from this template"
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:163
+msgid "Custom"
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:263
+msgid "Custom (Pro)"
+msgstr ""
+
+#: include/addons/htslider_addons.php:58
+#: include/addons/htslider_scroll_navigation.php:58
+msgid "Custom Content"
+msgstr ""
+
+#: include/addons/htslider_addons.php:1723
+msgid "Custom Position"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:399
+#: include/addons/elementor_widgets.php:714
+#: include/addons/htslider_addons.php:1392
+msgid "Custom Position (Pro)"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:322
+msgid "DataCaptia"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:396
+#: include/addons/htslider_addons.php:1389
+msgid "Default"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:121
+msgid "Descending"
+msgstr ""
+
+#: include/addons/htslider_addons.php:252
+#: include/addons/htslider_addons.php:259
+msgid "Details"
+msgstr ""
+
+#: include/helpers_function.php:138
+msgid "div"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:258
+msgid "Docus Pro"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:316
+msgid "Docus – YouTube Video Playlist"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:705
+#: include/addons/htslider_addons.php:1714
+msgid "Dots Show In"
+msgstr ""
+
+#: include/custom-post-type.php:23 include/custom-post-type.php:84
+msgid "Edit Item"
+msgstr ""
+
+#: include/admin/template-library.php:217
+msgid "Edit Template"
+msgstr ""
+
+#: include/class.htslider.php:138
+msgid "Elementor"
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:164
+msgid "Elementor Template (Pro)"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:261
+msgid ""
+"Embedding a YouTube playlist into your website plays a vital role to curate "
+"your content into several categories and make your web content more engaging "
+"and popular by keeping the visitors on your website for a longer period."
+msgstr ""
+
+#: include/addons/elementor_widgets.php:231
+msgid "Enable mouse dragging"
+msgstr ""
+
+#: include/addons/htslider_addons.php:146
+#: include/addons/htslider_addons.php:1028
+msgid "Excerpt"
+msgstr ""
+
+#. %1$s: HT Advanced Slider
+#. %2$s: HT Posts Slider
+#: include/addons/elementor_widgets.php:58
+#, php-format
+msgid ""
+"Explore the  %1$s and %2$s widgets to showcase content from various posts"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:62
+msgid "Extensions For CF7"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:177
+msgid "Extensions For CF7 Pro"
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:346
+msgid "External Menu for Navigation"
+msgstr ""
+
+#: include/addons/htslider_addons.php:650
+msgid "Fade"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:292
+msgid "Faster YouTube Embed"
+msgstr ""
+
+#: include/custom-post-type.php:29
+msgid "Featured Image"
+msgstr ""
+
+#: include/custom-post-type.php:37
+msgid "Filter items list"
+msgstr ""
+
+#: include/addons/htslider_addons.php:1531
+msgid "Font Size"
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:226
+#, php-format
+msgid ""
+"Free version is limited to 4 slides. Get unlimited slides in the Pro version."
+" %1$s"
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:262
+msgid "Full Screen"
+msgstr ""
+
+#: include/class.htslider.php:199
+msgid "Go Pro"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:231
+msgid "Google Place Review"
+msgstr ""
+
+#: include/helpers_function.php:131
+msgid "H1"
+msgstr ""
+
+#: include/helpers_function.php:132
+msgid "H2"
+msgstr ""
+
+#: include/helpers_function.php:133
+msgid "H3"
+msgstr ""
+
+#: include/helpers_function.php:134
+msgid "H4"
+msgstr ""
+
+#: include/helpers_function.php:135
+msgid "H5"
+msgstr ""
+
+#: include/helpers_function.php:136
+msgid "H6"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:50
+msgid "HashBar"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:189
+msgid ""
+"HashBar is a WordPress Notification / Alert / Offer Bar plugin which allows "
+"you to create unlimited notification bars to notify your customers. This "
+"plugin has option to show email subscription form (sometimes it increases up "
+"to 500% email subscriber), Offer text and buttons about your promotions. "
+"This plugin has the options to add unlimited background colors and images to "
+"make your notification bar more professional."
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:186
+msgid "HashBar Pro"
+msgstr ""
+
+#: include/admin/Class_Recommended_Plugins.php:231
+msgid "HasTheme"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:494
+#: include/addons/elementor_widgets.php:925
+#: include/addons/elementor_widgets.php:1010
+#: include/addons/htslider_addons.php:806
+#: include/addons/htslider_addons.php:1466
+#: include/addons/htslider_addons.php:1969
+#: include/addons/htslider_addons.php:2064
+#: include/addons/htslider_scroll_navigation.php:258
+#: include/addons/htslider_scroll_navigation.php:565
+#: include/addons/htslider_scroll_navigation.php:734
+msgid "Height"
+msgstr ""
+
+#: include/addons/htslider_addons.php:781
+msgid "Hide"
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:872
+msgid "Hide Arrow"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:371
+msgid "Hide Preloader"
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:250
+msgid "Horizontal (Pro)"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:722
+#: include/addons/htslider_addons.php:1194
+#: include/addons/htslider_addons.php:1731
+#: include/addons/htslider_scroll_navigation.php:843
+msgid "Horizontal Position"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:616
+#: include/addons/htslider_addons.php:1316
+#: include/addons/htslider_addons.php:1629
+#: include/addons/htslider_scroll_navigation.php:953
+msgid "Hover"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:249
+msgid "HT Click To Call"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:56
+msgid "HT Contact Form 7"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:274
+msgid "HT Easy GA4 ( Google Analytics 4 )"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:286
+msgid "HT Feed"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:44
+msgid "HT Mega"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:132
+msgid "HT Mega Pro"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:74
+msgid "HT Menu"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:213
+msgid "HT Menu Pro"
+msgstr ""
+
+#. Author of the plugin
+msgid "HT Plugins"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:80
+msgid "HT Script"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:204
+msgid "HT Script Pro"
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:13
+msgid "HT Scroll Navigation Slider"
+msgstr ""
+
+#: include/class.htslider.php:78 include/class.htslider.php:168
+#: include/addons/htslider_addons.php:59
+#: include/addons/htslider_scroll_navigation.php:59
+msgid "HT Slider"
+msgstr ""
+
+#. Name of the plugin
+msgid "HT Slider for Elementor"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:222
+msgid "HT Slider Pro For Elementor"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:225
+msgid ""
+"HT Slider Pro is a plugin to create a slider for WordPress websites easily "
+"using the Elementor page builder. 80+ prebuild slides/templates are included "
+"in this plugin. There is the option to create a post slider, WooCommerce "
+"product slider, Video slider, image slider, etc. Fullscreen, full width and "
+"box layout option are included."
+msgstr ""
+
+#: include/admin/templates_list.php:27
+msgid "HT Slider Template Library"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:340
+msgid "HT Social Share"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:68
+msgid "HT WPForms"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:252
+msgid ""
+"HT – Click to Call is a lightweight WordPress plugin that allows you to add "
+"a floating click to call button on your website. It will offer your website "
+"visitors an opportunity to call your business immediately at the right "
+"moment, especially when they are interested in your products or services and "
+"seeking more information."
+msgstr ""
+
+#: include/addons/htslider_addons.php:13
+msgid "HT: Advanced Slider"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:13
+msgid "HT: Slider"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:135
+msgid ""
+"HTMega is an absolute addon for elementor that includes 80+ elements & 360 "
+"Blocks with unlimited variations. HT Mega brings limitless possibilities. "
+"Embellish your site with the elements of HT Mega."
+msgstr ""
+
+#: include/addons/htslider_addons.php:129
+#: include/addons/htslider_addons.php:139
+msgid "HTML tag supported"
+msgstr ""
+
+#: include/class.htslider.php:153
+msgid "HTSlider Addons"
+msgstr ""
+
+#: include/class.htslider.php:137
+msgid "HTSlider Addons for Elementor"
+msgstr ""
+
+#: include/helpers_function.php:57
+msgid "HTSlider Slider"
+msgstr ""
+
+#: include/addons/htslider_addons.php:167
+msgid "https://example.com"
+msgstr ""
+
+#. Author URI of the plugin
+msgid "https://profiles.wordpress.org/htplugins/"
+msgstr ""
+
+#. URI of the plugin
+msgid "https://theplugindemo.com/ht-slider/"
+msgstr ""
+
+#: include/addons/htslider_addons.php:572
+msgid "Icon"
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:787
+msgid "Icon Size"
+msgstr ""
+
+#: include/addons/htslider_addons.php:568
+msgid "Icon Type"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:234
+msgid ""
+"If you are searching for a modern and excellent google places review "
+"WordPress plugin to showcase reviews from Google Maps and strengthen trust "
+"between you and your site visitors, look no further than HT Google Place "
+"Review"
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:68
+#, php-format
+msgid ""
+"If you choose HT Slider, make sure you have created slides using the HT "
+"Slider post type. You can create slides by clicking %shere%s."
+msgstr ""
+
+#: include/addons/htslider_addons.php:573
+msgid "Image (Pro)"
+msgstr ""
+
+#: include/addons/htslider_addons.php:180
+#: include/addons/htslider_addons.php:194
+msgid "Image Position"
+msgstr ""
+
+#: include/addons/htslider_addons.php:187
+msgid "Image Position only for Slide Layout Two"
+msgstr ""
+
+#: include/admin/templates_list.php:101
+msgid "Import"
+msgstr ""
+
+#: include/admin/templates_list.php:75
+msgid "Import to Library"
+msgstr ""
+
+#: include/admin/templates_list.php:76
+msgid "Import to Slider"
+msgstr ""
+
+#: include/addons/htslider_addons.php:1927
+#: include/addons/htslider_addons.php:2021
+msgid "Index Color"
+msgstr ""
+
+#: include/addons/htslider_addons.php:216
+msgid "Individual Style"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:407
+#: include/addons/elementor_widgets.php:830
+#: include/addons/htslider_addons.php:1400
+#: include/addons/htslider_addons.php:1852
+msgid "Inner Gap"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:207
+msgid ""
+"Insert Headers and Footers Code allows you to insert Google Analytics, "
+"Facebook Pixel, custom CSS, custom HTML, JavaScript code to your website "
+"header and footer without modifying your theme code.This plugin has the "
+"option to add any custom code to your theme in one place, no need to edit "
+"the theme code. It will save your time and remove the hassle for the theme "
+"update."
+msgstr ""
+
+#: include/custom-post-type.php:33
+msgid "Insert into item"
+msgstr ""
+
+#: include/class.htslider.php:122
+msgid "Install Elementor"
+msgstr ""
+
+#: include/admin/Class_Recommended_Plugins.php:252
+msgid "Install Now"
+msgstr ""
+
+#: include/admin/Class_Recommended_Plugins.php:128
+msgid "Installing.."
+msgstr ""
+
+#: include/custom-post-type.php:17
+msgid "Item Archives"
+msgstr ""
+
+#: include/custom-post-type.php:35 include/custom-post-type.php:94
+msgid "Items list"
+msgstr ""
+
+#: include/custom-post-type.php:36 include/custom-post-type.php:95
+msgid "Items list navigation"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:104
+msgid "JustTables"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:162
+msgid ""
+"JustTables is an incredible WordPress plugin that lets you showcase all your "
+"WooCommerce products in a sortable and filterable table view. It allows your "
+"customers to easily navigate through different attributes of the products "
+"and compare them on a single page. This plugin will be of great help if you "
+"are looking for an easy solution that increases the chances of landing a "
+"sale on your online store."
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:159
+msgid "JustTables Pro"
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:309
+msgid "Keyboard Scroll"
+msgstr ""
+
+#: include/addons/htslider_addons.php:184
+#: include/addons/htslider_addons.php:920
+#: include/addons/htslider_scroll_navigation.php:417
+#: include/addons/htslider_scroll_navigation.php:493
+#: include/addons/htslider_scroll_navigation.php:715
+msgid "Left"
+msgstr ""
+
+#: include/addons/htslider_addons.php:1198
+msgid "left"
+msgstr ""
+
+#: include/addons/htslider_addons.php:1722
+msgid "Left Center"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:713
+msgid "Left Center (Pro)"
+msgstr ""
+
+#: include/addons/htslider_addons.php:165
+msgid "Link"
+msgstr ""
+
+#: include/addons/htslider_addons.php:251
+#: include/addons/htslider_addons.php:258
+msgid ""
+"Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quod consequatur "
+"enim corrupti"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:869
+#: include/addons/htslider_addons.php:972
+#: include/addons/htslider_addons.php:1013
+#: include/addons/htslider_addons.php:1054
+#: include/addons/htslider_addons.php:1144
+#: include/addons/htslider_addons.php:1280
+#: include/addons/htslider_addons.php:1905
+msgid "Margin"
+msgstr ""
+
+#: include/addons/htslider_addons.php:518
+msgid "Minimum Height"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:329
+#: include/addons/htslider_addons.php:462
+msgid "Mobile Phone"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:362
+#: include/addons/htslider_addons.php:504
+msgid "Mobile Resolution"
+msgstr ""
+
+#: include/admin/Class_Recommended_Plugins.php:296
+msgid "More Details"
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:300
+msgid "Mouse Wheel"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:110
+msgid "Multi Currency"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:168
+msgid "Multi Currency Pro for WooCommerce"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:171
+msgid ""
+"Multi-Currency Pro for WooCommerce is a prominent currency switcher plugin "
+"for WooCommerce. This plugin allows your website or online store visitors to "
+"switch to their preferred currency or their country’s currency."
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:701
+msgid "Navigation"
+msgstr ""
+
+#: include/custom-post-type.php:22
+msgid "New Item"
+msgstr ""
+
+#: include/custom-post-type.php:82
+msgid "New Item Category"
+msgstr ""
+
+#: include/admin/template-library.php:195
+msgid "New Template"
+msgstr ""
+
+#: include/addons/htslider_addons.php:604
+msgid "Next Icon"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:152
+msgid "Next icon"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:215
+#: include/addons/elementor_widgets.php:227
+#: include/addons/htslider_addons.php:685
+msgid "No"
+msgstr ""
+
+#: include/custom-post-type.php:93
+msgid "No items"
+msgstr ""
+
+#: include/helpers_function.php:327 include/helpers_function.php:334
+msgid "No saved templates found!"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:464
+#: include/addons/elementor_widgets.php:885
+#: include/addons/htslider_addons.php:1229
+#: include/addons/htslider_addons.php:1569
+#: include/addons/htslider_addons.php:1921
+#: include/addons/htslider_scroll_navigation.php:528
+#: include/addons/htslider_scroll_navigation.php:899
+msgid "Normal"
+msgstr ""
+
+#: include/custom-post-type.php:92
+msgid "Not Found"
+msgstr ""
+
+#: include/custom-post-type.php:27
+msgid "Not found"
+msgstr ""
+
+#: include/custom-post-type.php:28
+msgid "Not found in Trash"
+msgstr ""
+
+#: include/addons/htslider_addons.php:70
+msgid "Off"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:434
+#: include/addons/elementor_widgets.php:776
+#: include/addons/htslider_addons.php:1431
+#: include/addons/htslider_addons.php:1789
+msgid "Offset X"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:803
+#: include/addons/htslider_addons.php:1820
+msgid "Offset Y"
+msgstr ""
+
+#: include/addons/htslider_addons.php:69
+msgid "On"
+msgstr ""
+
+#: include/addons/htslider_addons.php:674
+msgid "On this Switcher to Verticle Slide"
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:610
+#: include/addons/htslider_scroll_navigation.php:672
+msgid "Opacity"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:117
+msgid "Order"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:268
+msgid "Others"
+msgstr ""
+
+#: include/helpers_function.php:137
+msgid "p"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:600
+#: include/addons/elementor_widgets.php:856
+#: include/addons/htslider_addons.php:1156
+#: include/addons/htslider_addons.php:1268
+#: include/addons/htslider_addons.php:1520
+#: include/addons/htslider_addons.php:1892
+#: include/addons/htslider_scroll_navigation.php:401
+msgid "Padding"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:685
+#: include/addons/htslider_addons.php:1694
+#: include/addons/htslider_scroll_navigation.php:517
+msgid "Pagination"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:697
+#: include/addons/htslider_addons.php:1706
+msgid "Pagination Position"
+msgstr ""
+
+#: include/custom-post-type.php:80
+msgid "Parent Item"
+msgstr ""
+
+#: include/custom-post-type.php:18 include/custom-post-type.php:81
+msgid "Parent Item:"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:219
+#: include/addons/htslider_addons.php:689
+msgid "Pause on Hover?"
+msgstr ""
+
+#: include/class.htslider.php:154
+msgid "PHP"
+msgstr ""
+
+#: include/admin/templates_list.php:15
+msgctxt "placeholder"
+msgid "Enter a Slider Title"
+msgstr ""
+
+#: include/admin/Class_Recommended_Plugins.php:399
+msgid "Plugin Not Found"
+msgstr ""
+
+#: include/admin/Class_Recommended_Plugins.php:419
+msgid "Plugin Successfully Activated"
+msgstr ""
+
+#: include/custom-post-type.php:90
+msgid "Popular Items"
+msgstr ""
+
+#: include/addons/htslider_addons.php:790
+#: include/addons/htslider_addons.php:1167
+msgid "Position"
+msgstr ""
+
+#: include/addons/htslider_addons.php:294
+msgid "Post Option"
+msgstr ""
+
+#: include/custom-post-type.php:13
+msgctxt "Post Type General Name"
+msgid "Slider"
+msgstr ""
+
+#: include/custom-post-type.php:14
+msgctxt "Post Type Singular Name"
+msgid "Slider"
+msgstr ""
+
+#: include/admin/Class_Recommended_Plugins.php:127
+#: include/admin/templates_list.php:104
+msgid "Preview"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:304
+msgid "Preview Link Generator"
+msgstr ""
+
+#: include/addons/htslider_addons.php:588
+msgid "Previous Icon"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:140
+msgid "Previous icon"
+msgstr ""
+
+#: include/admin/templates_list.php:114
+msgid "Pro"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:141
+msgid "Product Variation Swatches"
+msgstr ""
+
+#: include/addons/htslider_addons.php:767
+#: include/addons/htslider_addons.php:778
+msgid "Progress Bar"
+msgstr ""
+
+#: include/addons/htslider_addons.php:847
+msgid "Progress Color"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:310
+msgid "QuickSwish"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:280
+msgid "Really Simple Google Tag Manager"
+msgstr ""
+
+#: include/admin/Class_Recommended_Plugins.php:68
+msgid "Recommendations"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:31
+msgid "Recommended"
+msgstr ""
+
+#: include/custom-post-type.php:31
+msgid "Remove featured image"
+msgstr ""
+
+#: include/addons/htslider_addons.php:185
+#: include/addons/htslider_addons.php:928
+#: include/addons/htslider_scroll_navigation.php:425
+#: include/addons/htslider_scroll_navigation.php:501
+#: include/addons/htslider_scroll_navigation.php:723
+msgid "Right"
+msgstr ""
+
+#: include/addons/htslider_addons.php:1200
+msgid "Right (Pro)"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:397
+#: include/addons/htslider_addons.php:1390
+#: include/addons/htslider_addons.php:1721
+msgid "Right Center"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:712
+msgid "Right Center (Pro)"
+msgstr ""
+
+#: include/custom-post-type.php:26
+msgid "Search Item"
+msgstr ""
+
+#: include/custom-post-type.php:91
+msgid "Search Items"
+msgstr ""
+
+#: include/helpers_function.php:10 include/helpers_function.php:30
+msgid "Select"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:94
+#: include/addons/htslider_addons.php:331
+#: include/addons/htslider_scroll_navigation.php:122
+msgid "Select Category"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:80
+#: include/addons/htslider_addons.php:317
+#: include/addons/htslider_scroll_navigation.php:108
+msgid "Select Slides"
+msgstr ""
+
+#: include/helpers_function.php:322
+msgid "Select Template"
+msgstr ""
+
+#: include/custom-post-type.php:87
+msgid "Separate items with commas"
+msgstr ""
+
+#: include/custom-post-type.php:30
+msgid "Set featured image"
+msgstr ""
+
+#: include/class.htslider.php:195
+msgid "Settings"
+msgstr ""
+
+#: include/addons/htslider_addons.php:780
+msgid "Show"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:72
+#: include/addons/htslider_addons.php:309
+#: include/addons/htslider_scroll_navigation.php:100
+msgid "Show By Category"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:71
+#: include/addons/htslider_addons.php:308
+#: include/addons/htslider_scroll_navigation.php:99
+msgid "Show By ID"
+msgstr ""
+
+#: include/addons/htslider_addons.php:633
+msgid "Show Dots Index"
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:318
+msgid "Simulate Touch"
+msgstr ""
+
+#: include/addons/htslider_addons.php:263
+msgid "Single Slide"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:334
+msgid "Sirve – Simple Directory Listing"
+msgstr ""
+
+#: include/addons/htslider_addons.php:649
+msgid "Slide"
+msgstr ""
+
+#: include/addons/htslider_addons.php:753
+msgid "Slide Animation Speed"
+msgstr ""
+
+#: include/addons/htslider_addons.php:727
+msgid "Slide Auto Play"
+msgstr ""
+
+#: include/addons/htslider_addons.php:646
+msgid "Slide Effect"
+msgstr ""
+
+#: include/addons/htslider_addons.php:377
+msgid "Slide Items (Desktop)"
+msgstr ""
+
+#: include/addons/htslider_addons.php:91
+msgid "Slide Layout"
+msgstr ""
+
+#: include/custom-post-type.php:15 include/custom-post-type.php:16
+#: include/custom-post-type.php:41 include/addons/elementor_widgets.php:46
+#: include/addons/htslider_addons.php:47 include/addons/htslider_addons.php:67
+msgid "Slider"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:194
+#: include/addons/htslider_addons.php:556
+msgid "Slider Arrow"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:238
+msgid "Slider auto play"
+msgstr ""
+
+#: include/custom-post-type.php:78
+msgid "Slider Category"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:384
+msgid "Slider Controller Style"
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:245
+msgid "Slider Direction"
+msgstr ""
+
+#: include/addons/htslider_addons.php:620
+msgid "Slider Dots"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:204
+msgid "Slider dots"
+msgstr ""
+
+#: include/addons/htslider_addons.php:250
+msgid "Slider Item 1"
+msgstr ""
+
+#: include/addons/htslider_addons.php:257
+msgid "Slider Item 2"
+msgstr ""
+
+#: include/addons/htslider_addons.php:489
+msgid "Slider Item To Scroll"
+msgstr ""
+
+#: include/addons/htslider_addons.php:392
+#: include/addons/htslider_addons.php:434
+msgid "Slider Item to Scroll"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:274
+#: include/addons/elementor_widgets.php:307
+#: include/addons/elementor_widgets.php:350
+msgid "Slider item to scroll"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:164
+#: include/addons/elementor_widgets.php:295
+#: include/addons/elementor_widgets.php:338
+#: include/addons/htslider_addons.php:244
+#: include/addons/htslider_addons.php:419
+#: include/addons/htslider_addons.php:474
+#: include/addons/htslider_scroll_navigation.php:147
+msgid "Slider Items"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:108
+msgid "Slider Limit"
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:327
+msgid "Slider Navigation"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:392
+msgid "Slider Navigation Style"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:133
+#: include/addons/htslider_addons.php:359
+msgid "Slider Option"
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:239
+msgid "Slider Options"
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:337
+msgid "Slider Pagination"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:67
+#: include/addons/htslider_addons.php:304
+msgid "Slider Show By"
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:281
+msgid "Slider Visible Item"
+msgstr ""
+
+#: include/addons/htslider_addons.php:81
+msgid "Slides Content"
+msgstr ""
+
+#: include/addons/htslider_addons.php:368
+msgid "Slides Items"
+msgstr ""
+
+#: include/addons/htslider_addons.php:345
+#: include/addons/htslider_scroll_navigation.php:136
+msgid "Slides Limit"
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:85
+msgid "Slides Query"
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:95
+msgid "Slides Show By"
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:47
+msgid "Slides Source"
+msgstr ""
+
+#: include/addons/htslider_addons.php:864
+msgid "Slides Style"
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:54
+msgid "Source Type"
+msgstr ""
+
+#: include/helpers_function.php:139
+msgid "span"
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:272
+msgid "Speed"
+msgstr ""
+
+#: include/addons/htslider_addons.php:95
+msgid "Style 1"
+msgstr ""
+
+#: include/addons/htslider_addons.php:96
+msgid "Style 2 (Pro)"
+msgstr ""
+
+#: include/addons/htslider_addons.php:987
+msgid "Sub Title"
+msgstr ""
+
+#: include/addons/htslider_addons.php:135
+msgid "Sub title"
+msgstr ""
+
+#: include/addons/htslider_addons.php:281
+msgid "Sub Title HTML Tag"
+msgstr ""
+
+#: include/addons/htslider_addons.php:249
+#: include/addons/htslider_addons.php:256
+msgid "Sub title item "
+msgstr ""
+
+#. %s: Template Title
+#: include/admin/templates_list.php:72
+#, php-format
+msgid "Successfully %s has been imported."
+msgstr ""
+
+#: include/addons/elementor_widgets.php:286
+#: include/addons/htslider_addons.php:407
+msgid "Tablet"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:319
+#: include/addons/htslider_addons.php:449
+msgid "Tablet Resolution"
+msgstr ""
+
+#: include/custom-post-type.php:76
+msgctxt "Taxonomy General Name"
+msgid "Slider Categories"
+msgstr ""
+
+#: include/custom-post-type.php:77
+msgctxt "Taxonomy Singular Name"
+msgid "Slider Category"
+msgstr ""
+
+#: include/admin/template-library.php:161
+msgid "Templates in this package"
+msgstr ""
+
+#: include/admin/template-library.php:51 include/admin/template-library.php:52
+msgid "Templates Library"
+msgstr ""
+
+#: include/addons/htslider_addons.php:574
+msgid "Text (Pro)"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:363
+#: include/addons/htslider_addons.php:505
+msgid "The resolution to mobile."
+msgstr ""
+
+#: include/addons/elementor_widgets.php:320
+#: include/addons/htslider_addons.php:450
+msgid "The resolution to tablet."
+msgstr ""
+
+#. Description of the plugin
+msgid "The Slider is a elementor addons for WordPress."
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:1092
+msgid "There are no slides in this query"
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:1073
+#: include/addons/htslider_scroll_navigation.php:1077
+msgid "There are no slides in this query."
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:1120
+msgid "There is no slide added"
+msgstr ""
+
+#: include/addons/htslider_addons.php:125
+#: include/addons/htslider_addons.php:945
+msgid "Title"
+msgstr ""
+
+#: include/addons/htslider_addons.php:270
+msgid "Title HTML Tag"
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:357
+msgid ""
+"To integrate the external menu with the navigation slider, utilize the link "
+"structure <b>#htslider-scroll-slide-1</b> for navigating to a specific slide."
+" "
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:875
+msgid "Toggle this switch to hide the arrow button on responsive devices."
+msgstr ""
+
+#: include/addons/htslider_addons.php:794
+#: include/addons/htslider_scroll_navigation.php:442
+msgid "Top"
+msgstr ""
+
+#: include/addons/htslider_addons.php:1180
+msgid "Top (Pro)"
+msgstr ""
+
+#: include/addons/htslider_addons.php:953
+#: include/addons/htslider_addons.php:995
+#: include/addons/htslider_addons.php:1036
+#: include/addons/htslider_addons.php:1237
+msgid "Typography"
+msgstr ""
+
+#: include/custom-post-type.php:24 include/custom-post-type.php:85
+msgid "Update Item"
+msgstr ""
+
+#: include/class.htslider.php:271 include/class.htslider.php:272
+msgid "Upgrade to Pro"
+msgstr ""
+
+#. %1$s: strong and a tag start
+#. %2$s: strong and a tag end
+#. %1$s: anchor start tag
+#. %2$s: anchor end tag
+#: include/helpers_function.php:165 include/addons/htslider_addons.php:229
+#, php-format
+msgid "Upgrade to pro version to use this feature %1$s Pro Version %2$s"
+msgstr ""
+
+#: include/custom-post-type.php:34
+msgid "Uploaded to this item"
+msgstr ""
+
+#: include/custom-post-type.php:32
+msgid "Use as featured image"
+msgstr ""
+
+#: include/addons/htslider_addons.php:659
+msgid "Variable Width"
+msgstr ""
+
+#: include/addons/htslider_scroll_navigation.php:249
+msgid "Vertical"
+msgstr ""
+
+#: include/addons/htslider_addons.php:672
+msgid "Vertical Mode"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:750
+#: include/addons/htslider_addons.php:1176
+#: include/addons/htslider_addons.php:1761
+#: include/addons/htslider_scroll_navigation.php:815
+msgid "Vertical Position"
+msgstr ""
+
+#: include/addons/htslider_addons.php:105
+msgid "View"
+msgstr ""
+
+#: include/custom-post-type.php:25 include/custom-post-type.php:86
+msgid "View Item"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:240
+msgid "Was This Helpful?"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:243
+msgid ""
+"Was this helpful? is a WordPress plugin that allows you to take visitors' "
+"feedback on your post/pages or any article. A visitor can share his feedback "
+"by like/dislike/yes/no"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:92
+msgid "WC Builder"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:298
+msgid "WC Sales Notification"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:98
+msgid "Whols"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:153
+msgid ""
+"Whols is an outstanding WordPress plugin for WooCommerce that allows store "
+"owners to set wholesale prices for the products of their online stores. This "
+"plugin enables you to show special wholesale prices to the wholesaler. Users "
+"can easily request to become a wholesale customer by filling out a simple "
+"online registration form. Once the registration is complete, the owner of "
+"the store will be able to review the request and approve the request either "
+"manually or automatically."
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:150
+msgid "Whols Pro"
+msgstr ""
+
+#: include/addons/elementor_widgets.php:519
+#: include/addons/elementor_widgets.php:945
+#: include/addons/elementor_widgets.php:1030
+#: include/addons/htslider_addons.php:1082
+#: include/addons/htslider_addons.php:1493
+#: include/addons/htslider_addons.php:1991
+#: include/addons/htslider_addons.php:2086
+#: include/addons/htslider_scroll_navigation.php:588
+#: include/addons/htslider_scroll_navigation.php:761
+msgid "Width"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:38
+msgid "WooLentor"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:126
+msgid ""
+"WooLentor is one of the most popular WooCommerce Elementor Addons on "
+"WordPress.org. It has been downloaded more than 672,148 times and 60,000 "
+"stores are using WooLentor plugin. Why not you?"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:123
+msgid "WooLentor Pro"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:216
+msgid "WordPress Mega Menu Builder for Elementor"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:86
+msgid "WP Plugin Manager"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:195
+msgid "WP Plugin Manager Pro"
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:198
+msgid ""
+"WP Plugin Manager Pro is a specialized WordPress Plugin that helps you to "
+"deactivate unnecessary WordPress Plugins page wise and boosts the speed of "
+"your WordPress site to improve the overall site performance."
+msgstr ""
+
+#: include/addons/elementor_widgets.php:216
+#: include/addons/elementor_widgets.php:228
+#: include/addons/htslider_addons.php:686
+msgid "Yes"
+msgstr ""
+
+#: include/admin/template-library.php:181
+msgid "You are not permitted to import the template."
+msgstr ""
+
+#: include/admin/recommendation-plugins.php:117
+msgid "You May Also Like"
+msgstr ""

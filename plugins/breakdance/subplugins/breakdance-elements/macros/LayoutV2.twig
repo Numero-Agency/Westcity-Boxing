@@ -1,0 +1,119 @@
+{% macro layoutV2(designLayoutProperties, breakpoint, isBaseBreakpoint, selector) %}
+
+  {{ selector }} {
+    {% if designLayoutProperties.layout == 'vertical' %}
+      {% if isBaseBreakpoint %}
+        display: flex;
+        flex-direction: column;
+      {% endif %}
+      align-items: {{ designLayoutProperties.v_align }};
+      justify-content: {{ designLayoutProperties.v_vertical_align }};
+      gap: {{ designLayoutProperties.v_gap.style }};
+      
+      {% if designLayoutProperties.v_align == 'flex-start' %}
+        text-align: left;
+      {% elseif designLayoutProperties.v_align == 'center' %}
+        text-align: center;
+      {% elseif designLayoutProperties.v_align == 'flex-end' %}
+        text-align: right;
+      {% endif %}
+      
+    {% elseif designLayoutProperties.layout == 'horizontal' %}
+      {% if isBaseBreakpoint %}
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap; {# should we allow wrapping for horizontal layouts? #}
+      {% endif %}
+      justify-content: {{ designLayoutProperties.h_align }};
+      align-items: {{ designLayoutProperties.h_vertical_align }};
+      gap: {{ designLayoutProperties.h_gap.style }};
+
+      {% if breakpoint == designLayoutProperties.h_vertical_at %}
+        flex-direction: column;
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        align-items: {{ designLayoutProperties.h_alignment_when_vertical }}
+      {% endif %}
+
+    {% endif %}
+  }
+
+  {% if designLayoutProperties.layout == 'grid' %}
+    {% if isBaseBreakpoint %}
+      {{ selector }} {
+        --bde-grid-gap: var(--bde-column-gap);
+        display: grid;
+        grid-template-columns: repeat(var(--bde-grid-items-per-row, 4), minmax(0, 1fr));
+        gap: var(--bde-grid-gap);
+        align-items: var(--bde-grid-align-items, stretch);
+        justify-items: var(--bde-grid-justify-items, stretch);
+      }
+
+      {% if not designLayoutProperties.advanced.use_original_item_dimensions %}
+        {{ selector }} > * {
+          width: auto !important;
+          height: auto !important;
+        } /* won't this break Fancy Container */
+      {% endif %}
+
+    {% endif %}
+
+    {{ selector }} {
+      --bde-grid-items-per-row: {{ designLayoutProperties.g_items_per_row }};
+      --bde-grid-gap: {{ designLayoutProperties.g_space_between_items.style }};    
+      --bde-grid-align-items: {{ designLayoutProperties.advanced.item_vertical_alignment }};
+      --bde-grid-justify-items: {{ designLayoutProperties.advanced.item_horizontal_alignment }};
+    }
+
+    {% if isBuilder and isBaseBreakpoint %}
+      {{ selector }}.breakdance--empty-container {
+        --bde-grid-items-per-row: 1 !important;
+      }
+    {% endif %}
+
+  {% endif %}
+
+  {% if designLayoutProperties.layout == 'advanced' %}
+    {{ selector }} {
+
+      {% if designLayoutProperties.a_display == 'flex' %}
+        {% if isBaseBreakpoint %}
+          display: flex;
+        {% endif %}
+      
+        flex-direction: {{ designLayoutProperties.a_f_flex_direction }};
+        align-items: {{ designLayoutProperties.a_f_align_items }};
+        justify-content: {{ designLayoutProperties.a_f_justify_content }};
+        flex-wrap: {{ designLayoutProperties.a_f_flex_wrap }};
+        align-content: {{ designLayoutProperties.a_f_align_content }};
+        gap: {{ designLayoutProperties.a_f_gap.style }};
+        row-gap: {{ designLayoutProperties.a_f_row_gap.style }};
+        text-align: {{ designLayoutProperties.a_f_text_align }};
+      {% endif %}
+
+      {% if designLayoutProperties.a_display == 'grid' %}
+        {% if isBaseBreakpoint %}
+          display: grid;
+        {% endif %}
+      
+        grid: {{ designLayoutProperties.a_g_grid|replace({"<br>":"\n"}) }};
+        grid-template: {{ designLayoutProperties.a_g_grid_template|replace({"<br>":"\n"})  }};
+        gap: {{ designLayoutProperties.a_g_gap.style }};
+        row-gap: {{ designLayoutProperties.a_g_row_gap.style }};
+        justify-items: {{ designLayoutProperties.a_g_justify_items }};
+        align-items: {{ designLayoutProperties.a_g_align_items }};
+        justify-content: {{ designLayoutProperties.a_g_justify_content}};
+        align-content: {{ designLayoutProperties.a_g_align_content }};
+        grid-auto-columns: {{ designLayoutProperties.a_g_grid_auto_columns.style }};
+        grid-auto-rows: {{ designLayoutProperties.a_g_grid_auto_rows.style }};
+        grid-auto-flow: {{ designLayoutProperties.a_g_grid_auto_flow }};
+        text-align: {{ designLayoutProperties.a_g_text_align }};
+
+      {% endif %}
+      
+    }
+  {% endif %}
+
+
+{% endmacro %}
+

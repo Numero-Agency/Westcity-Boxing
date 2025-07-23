@@ -1,0 +1,84 @@
+# Copyright (C) 2025 Caseproof, LLC
+# This file is distributed under the same license as the MemberPress Elementor Content Protection plugin.
+msgid ""
+msgstr ""
+"Project-Id-Version: MemberPress Elementor Content Protection 1.0.9\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/memberpress-elementor\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2025-05-20T03:38:30+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.11.0\n"
+"X-Domain: memberpress-elementor\n"
+
+#. Plugin Name of the plugin
+#: memberpress-elementor.php
+msgid "MemberPress Elementor Content Protection"
+msgstr ""
+
+#. Plugin URI of the plugin
+#: memberpress-elementor.php
+msgid "https://memberpress.com/"
+msgstr ""
+
+#. Description of the plugin
+#: memberpress-elementor.php
+msgid "Elementor integration to protect content with MemberPress."
+msgstr ""
+
+#. Author of the plugin
+#: memberpress-elementor.php
+msgid "Caseproof, LLC"
+msgstr ""
+
+#. Author URI of the plugin
+#: memberpress-elementor.php
+msgid "https://caseproof.com/"
+msgstr ""
+
+#: MpElementor.php:54
+msgid "Default"
+msgstr ""
+
+#: MpElementor.php:55
+msgid "Hide"
+msgstr ""
+
+#: MpElementor.php:56
+msgid "Display Message"
+msgstr ""
+
+#: MpElementor.php:60
+msgid "None"
+msgstr ""
+
+#: MpElementor.php:69
+msgid "Content Restriction"
+msgstr ""
+
+#: MpElementor.php:74
+msgid "MemberPress Rule"
+msgstr ""
+
+#: MpElementor.php:75
+msgid "Select a Rule to determine member access."
+msgstr ""
+
+#: MpElementor.php:82
+msgid "Unauthorized Content"
+msgstr ""
+
+#: MpElementor.php:83
+msgid "What should be shown to unauthorized users."
+msgstr ""
+
+#: MpElementor.php:91
+msgid "Custom message for unauthorized users."
+msgstr ""
+
+#: MpElementor.php:168
+msgid "You do not have permission to view this content."
+msgstr ""

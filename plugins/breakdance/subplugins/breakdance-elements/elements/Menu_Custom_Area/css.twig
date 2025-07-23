@@ -1,0 +1,71 @@
+{% set disableAt = design.advanced.disable_desktop_styles_at|default('breakpoint_tablet_landscape') %}
+{% set breakpointWidth = get_breakpoint_max_width(disableAt) %}
+{% set needsBreakpoint = disableAt != 'breakpoint_base' and disableAt != 'never' %}
+
+{% if needsBreakpoint %}
+  @media (min-width: {{ breakpointWidth + 1 }}px) {
+{% endif %}
+  %%SELECTOR%% .bde-custom-area-link {
+    width: {{ design.container.width.style }};
+    min-height: {{ design.container.min_height.style }};
+    {{ macros.backgroundColor(design.container.background) }}
+    {{ macros.spacing_padding_all(design.container.padding) }}
+    {{ macros.borders(design.container.borders) }}
+    {{ macros.spacing_margin_y(design.spacing) }}
+  }
+
+  {{ macros.layoutV2(design.layout_v2, breakpoint, isBaseBreakpoint, '%%SELECTOR%% .bde-custom-area-link') }}
+
+  {{ macros.atomV1MenuDropdownCss('%%SELECTOR%%', design.dropdown) }}
+  {{ macros.atomV1MenuColumnCss('%%SELECTOR%% .breakdance-dropdown', design.dropdown.columns, globalSettings) }}
+  {{ macros.atomV1MenuDropdownLinkCss('%%SELECTOR%% .breakdance-dropdown', design.dropdown.links, globalSettings) }}
+  {{ macros.atomV1MenuAdditionalSectionCss('%%SELECTOR%% .breakdance-dropdown', design.dropdown.additional_section, globalSettings) }}
+{% if needsBreakpoint %}
+  }
+{% endif %}
+
+{% if design.advanced.inherit_link_styles %}
+  %%SELECTOR%% .bde-custom-area-link *,
+  %%SELECTOR%% .breakdance-menu-item:hover .bde-custom-area-link a {
+    color: inherit;
+    text-decoration: inherit;
+  }
+{% endif %}
+
+{% if design.advanced.icons_inherit_link_styles %}
+  %%SELECTOR%% .bde-custom-area-link .breakdance-icon-atom > svg:not(.breakdance-icon-atom-svg-gradient),
+  %%SELECTOR%% .breakdance-menu-item:hover .bde-custom-area-link .breakdance-icon-atom > svg:not(.breakdance-icon-atom-svg-gradient) {
+    stroke: currentcolor;
+    fill: currentcolor;
+  }
+{% endif %}
+
+{% if isBuilder %}
+  /* Empty Container When Inside Custom Area */
+  %%SELECTOR%% .breakdance-empty-container {
+    min-width: 100px;
+    min-height: auto;
+  }
+
+  %%SELECTOR%% .breakdance-empty-container__add-element {
+    width: 26px;
+    height: 26px;
+  }
+
+  %%SELECTOR%% .breakdance-dropdown .breakdance-empty-container__add-element {
+    margin: 0;
+  }
+
+  %%SELECTOR%% .breakdance-empty-container__add-element .breakdance-icon {
+    width: 14px!important;
+    height: 14px!important;
+  }
+
+  /*
+   * Smaller loader for this element
+   */
+  .bde-menu-custom-area.breakdance-element-is-updating:empty {
+    width: 100px;
+    min-height: 40px;
+  }
+{% endif %}

@@ -1,0 +1,2029 @@
+# Copyright (C) 2024 Caseproof, LLC
+# This file is distributed under the same license as the MemberPress CoachKit plugin.
+msgid ""
+msgstr ""
+"Project-Id-Version: MemberPress CoachKit 1.0.12\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/memberpress-coachkit\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2024-12-18T18:28:56+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.9.0\n"
+"X-Domain: memberpress-coachkit\n"
+
+#. Plugin Name of the plugin
+msgid "MemberPress CoachKit"
+msgstr ""
+
+#. Plugin URI of the plugin
+msgid "http://www.memberpress.com/"
+msgstr ""
+
+#. Description of the plugin
+msgid "Coaching features for MemberPress."
+msgstr ""
+
+#. Author of the plugin
+msgid "Caseproof, LLC"
+msgstr ""
+
+#. Author URI of the plugin
+msgid "http://caseproof.com/"
+msgstr ""
+
+#: app/controllers/ActivityCtrl.php:137
+#: app/views/theme/default/single-student.php:31
+#: app/views/theme/partials/enrollments-table.php:5
+msgid "Started"
+msgstr ""
+
+#: app/controllers/ActivityCtrl.php:138
+#: app/controllers/ProgramCtrl.php:137
+#: app/models/Enrollment.php:87
+#: app/views/theme/default/single-student.php:29
+msgid "Program"
+msgstr ""
+
+#: app/controllers/ActivityCtrl.php:139
+#: app/views/theme/default/single-student.php:33
+#: app/views/theme/partials/enrollments-table.php:7
+msgid "Progress"
+msgstr ""
+
+#: app/controllers/ActivityCtrl.php:156
+#: app/controllers/AppCtrl.php:794
+#: app/controllers/AppCtrl.php:795
+#: app/views/admin/enrollment/table.php:8
+msgid "Activity"
+msgstr ""
+
+#: app/controllers/ActivityCtrl.php:186
+#: app/controllers/ActivityCtrl.php:202
+#: app/controllers/CoachCtrl.php:216
+#: app/controllers/CoachCtrl.php:263
+#: app/controllers/CoachCtrl.php:299
+#: app/controllers/StudentCtrl.php:315
+#: app/controllers/StudentCtrl.php:362
+#: app/controllers/StudentCtrl.php:398
+#: app/controllers/StudentCtrl.php:439
+#: app/controllers/StudentCtrl.php:477
+#: app/controllers/StudentCtrl.php:489
+#: app/controllers/StudentCtrl.php:517
+#: app/controllers/StudentCtrl.php:525
+#: app/controllers/StudentCtrl.php:545
+msgid "Cheating huh?"
+msgstr ""
+
+#: app/controllers/AppCtrl.php:120
+msgctxt "ui"
+msgid "MemberPress Coach"
+msgstr ""
+
+#: app/controllers/AppCtrl.php:126
+msgctxt "ui"
+msgid "MemberPress Student"
+msgstr ""
+
+#: app/controllers/AppCtrl.php:659
+msgid "Problem adding student to cohort"
+msgstr ""
+
+#: app/controllers/AppCtrl.php:765
+#: app/views/admin/settings/readylaunch.php:10
+msgid "Coaching"
+msgstr ""
+
+#: app/controllers/AppCtrl.php:784
+msgid "CoachKit"
+msgstr ""
+
+#: app/controllers/AppCtrl.php:785
+msgid "MP CoachKit™"
+msgstr ""
+
+#: app/controllers/AppCtrl.php:805
+#: app/controllers/AppCtrl.php:806
+#: app/controllers/CoachCtrl.php:132
+#: app/controllers/ProgramCtrl.php:136
+#: app/controllers/StudentCtrl.php:176
+#: app/views/theme/default/notifications.php:58
+#: app/views/theme/partials/students-table.php:6
+msgid "Programs"
+msgstr ""
+
+#: app/controllers/AppCtrl.php:876
+msgctxt "ui"
+msgid "ReadyLaunch™️ CoachKit™️ Footer"
+msgstr ""
+
+#: app/controllers/AppCtrl.php:877
+msgid "Widgets in this area will be shown under the main content of ReadyLaunch Coaching pages."
+msgstr ""
+
+#: app/controllers/CheckInCtrl.php:193
+msgid "MemberPress Checkins Worker"
+msgstr ""
+
+#: app/controllers/CoachCtrl.php:129
+#: app/controllers/StudentCtrl.php:173
+#: app/lib/ActivityTable.php:46
+#: app/lib/CoachesTable.php:41
+#: app/lib/StudentsTable.php:41
+msgid "Id"
+msgstr ""
+
+#: app/controllers/CoachCtrl.php:131
+#: app/controllers/StudentCtrl.php:175
+#: app/lib/ActivityTable.php:43
+#: app/lib/CoachesTable.php:38
+#: app/lib/StudentsTable.php:38
+#: app/models/Coach.php:299
+#: app/models/Coach.php:300
+#: app/models/Student.php:322
+#: app/models/Student.php:323
+#: app/views/admin/coaches/new-coach.php:33
+#: app/views/admin/students/new-student.php:33
+#: app/views/theme/partials/students-table.php:5
+msgid "Email"
+msgstr ""
+
+#: app/controllers/CoachCtrl.php:133
+#: app/controllers/StudentCtrl.php:177
+#: app/views/theme/partials/students-table.php:7
+msgid "Last Active"
+msgstr ""
+
+#: app/controllers/CoachCtrl.php:134
+#: app/views/admin/coaches/edit-coach.php:22
+msgid "Active %s"
+msgstr ""
+
+#: app/controllers/CoachCtrl.php:222
+#: app/controllers/StudentCtrl.php:321
+msgid "Please select a user to proceed."
+msgstr ""
+
+#: app/controllers/CoachCtrl.php:227
+#: app/controllers/StudentCtrl.php:326
+msgid "User is already a %s"
+msgstr ""
+
+#: app/controllers/CoachCtrl.php:244
+#: app/controllers/StudentCtrl.php:343
+msgid "added as %s."
+msgstr ""
+
+#. translators:
+#: app/controllers/CoachCtrl.php:246
+#: app/controllers/CoachCtrl.php:285
+#: app/controllers/StudentCtrl.php:345
+#: app/views/theme/default/single-student.php:134
+msgid "Edit"
+msgstr ""
+
+#. translators:
+#: app/controllers/CoachCtrl.php:285
+msgid "successfully added as"
+msgstr ""
+
+#: app/controllers/CoachCtrl.php:308
+msgid "%s already assigned to Cohort"
+msgstr ""
+
+#: app/controllers/CoachCtrl.php:318
+msgid "%s successfully assigned to Cohort"
+msgstr ""
+
+#: app/controllers/Emails.php:63
+msgid "You do not have access."
+msgstr ""
+
+#: app/controllers/Emails.php:67
+msgid "Email couldn't be set to default"
+msgstr ""
+
+#: app/controllers/Emails.php:120
+msgid "You do not have access to send a test email."
+msgstr ""
+
+#: app/controllers/Emails.php:124
+msgid "Can't send your email ... refresh the page and try it again."
+msgstr ""
+
+#: app/controllers/Emails.php:153
+msgid "John"
+msgstr ""
+
+#: app/controllers/Emails.php:154
+msgid "Doe"
+msgstr ""
+
+#: app/controllers/Emails.php:155
+#: app/emails/MessageReceivedEmail.php:38
+#: app/emails/ProgramStartedEmail.php:43
+msgid "John Doe"
+msgstr ""
+
+#: app/controllers/Emails.php:157
+msgid "111 Cool Avenue"
+msgstr ""
+
+#: app/controllers/Emails.php:158
+msgid "New York, NY 10005"
+msgstr ""
+
+#: app/controllers/Emails.php:159
+msgid "United States"
+msgstr ""
+
+#: app/controllers/Emails.php:160
+msgid "User Meta Field: $1"
+msgstr ""
+
+#: app/controllers/Emails.php:161
+#: app/controllers/Emails.php:163
+msgid "Bronze Edition"
+msgstr ""
+
+#: app/controllers/Emails.php:168
+#: app/controllers/Emails.php:175
+msgid "Credit Card (Stripe)"
+msgstr ""
+
+#: app/controllers/Emails.php:176
+msgid "%s / month"
+msgstr ""
+
+#: app/controllers/Emails.php:188
+msgid "Subscription Expiring"
+msgstr ""
+
+#: app/controllers/Emails.php:189
+msgid "Subscription Expiring in 2 Days"
+msgstr ""
+
+#: app/controllers/Emails.php:194
+msgid "Tax"
+msgstr ""
+
+#: app/controllers/Emails.php:213
+msgid "Your test email was successfully sent."
+msgstr ""
+
+#: app/controllers/MessageCtrl.php:71
+#: app/controllers/MessageCtrl.php:247
+#: app/controllers/MessageCtrl.php:304
+msgid "Sorry you cannot post messages in this room"
+msgstr ""
+
+#: app/controllers/MessageCtrl.php:148
+msgid "No contact selected"
+msgstr ""
+
+#: app/controllers/MessageCtrl.php:159
+msgid "Sorry you cannot create room"
+msgstr ""
+
+#: app/controllers/MessageCtrl.php:167
+#: app/controllers/MessageCtrl.php:196
+msgid "Room exists already"
+msgstr ""
+
+#: app/controllers/MessageCtrl.php:186
+msgid "One or more participants are not available for messaging"
+msgstr ""
+
+#: app/controllers/MessageCtrl.php:218
+msgid "Room created"
+msgstr ""
+
+#: app/controllers/MessageCtrl.php:241
+msgid "File size exceeds the maximum allowed size"
+msgstr ""
+
+#: app/controllers/MessageCtrl.php:314
+#: app/controllers/MessageCtrl.php:320
+#: app/controllers/MessageCtrl.php:324
+msgid "Error getting attachment"
+msgstr ""
+
+#: app/controllers/ProgramCtrl.php:138
+#: app/views/admin/coaches/table.php:8
+#: app/views/admin/program/coaching-product-content.php:60
+#: app/views/admin/students/table.php:8
+msgid "Add New"
+msgstr ""
+
+#: app/controllers/ProgramCtrl.php:139
+msgid "Add New Program"
+msgstr ""
+
+#: app/controllers/ProgramCtrl.php:140
+msgid "Edit Program"
+msgstr ""
+
+#: app/controllers/ProgramCtrl.php:141
+msgid "New Program"
+msgstr ""
+
+#: app/controllers/ProgramCtrl.php:142
+msgid "View Program"
+msgstr ""
+
+#: app/controllers/ProgramCtrl.php:143
+msgid "Search Programs"
+msgstr ""
+
+#: app/controllers/ProgramCtrl.php:144
+msgid "No Programs found"
+msgstr ""
+
+#: app/controllers/ProgramCtrl.php:145
+msgid "No Programs found in Trash"
+msgstr ""
+
+#: app/controllers/ProgramCtrl.php:146
+msgid "Parent Program:"
+msgstr ""
+
+#: app/controllers/ProgramCtrl.php:194
+msgid "You are not allowed to trash programs."
+msgstr ""
+
+#: app/controllers/ProgramCtrl.php:210
+msgid "Program Tabs"
+msgstr ""
+
+#: app/controllers/ProgramCtrl.php:220
+#: app/controllers/ProgramCtrl.php:789
+#: app/views/theme/readylaunch/sidebar.php:72
+#: app/views/theme/readylaunch/sidebar.php:153
+msgid "Cohorts"
+msgstr ""
+
+#: app/controllers/ProgramCtrl.php:505
+msgid "Student Limit cannot be lower than current enrollments"
+msgstr ""
+
+#: app/controllers/ProgramCtrl.php:511
+#: app/controllers/ProgramCtrl.php:723
+msgid "Appointment URL is not a valid url"
+msgstr ""
+
+#: app/controllers/ProgramCtrl.php:597
+#: app/controllers/ProgramCtrl.php:645
+msgid "You're not authorised to do this"
+msgstr ""
+
+#: app/controllers/ProgramCtrl.php:602
+msgid "You cannot track progress at this time"
+msgstr ""
+
+#: app/controllers/ProgramCtrl.php:613
+#: app/controllers/ProgramCtrl.php:663
+msgid "You already completed this milestone"
+msgstr ""
+
+#: app/controllers/ProgramCtrl.php:618
+msgid "Error completing milestone"
+msgstr ""
+
+#: app/controllers/ProgramCtrl.php:630
+msgid "Successfully completed milestone"
+msgstr ""
+
+#: app/controllers/ProgramCtrl.php:652
+msgid "Date cannot be found"
+msgstr ""
+
+#: app/controllers/ProgramCtrl.php:667
+msgid "Error completing habit"
+msgstr ""
+
+#: app/controllers/ProgramCtrl.php:679
+msgid "Successfully completed habit"
+msgstr ""
+
+#: app/controllers/ProgramCtrl.php:732
+msgid "Group appointments saved"
+msgstr ""
+
+#: app/controllers/ProgramCtrl.php:778
+msgid "Sorry, but you cannot edit programs"
+msgstr ""
+
+#: app/controllers/ProgramCtrl.php:790
+#: app/views/theme/default/enrollments.php:9
+#: app/views/theme/default/nav.php:16
+#: app/views/theme/default/single-student.php:22
+#: app/views/theme/partials/enrollments-table.php:4
+#: app/views/theme/readylaunch/sidebar.php:44
+#: app/views/theme/readylaunch/sidebar.php:125
+msgid "Enrollments"
+msgstr ""
+
+#: app/controllers/ProgramCtrl.php:791
+msgid "Date"
+msgstr ""
+
+#: app/controllers/ProgramCtrl.php:852
+#: app/views/admin/program/publish-metabox.php:33
+#: app/views/admin/program/publish-metabox.php:34
+msgid "Publish"
+msgstr ""
+
+#: app/controllers/StudentCtrl.php:100
+#: app/controllers/StudentCtrl.php:293
+#: app/helpers/CoachHelper.php:66
+msgid "Showing %1$d-%2$d of %3$d programs"
+msgstr ""
+
+#: app/controllers/StudentCtrl.php:155
+#: app/controllers/StudentCtrl.php:246
+msgid "Showing %1$d-%2$d of %3$d users"
+msgstr ""
+
+#: app/controllers/StudentCtrl.php:178
+msgid "Created"
+msgstr ""
+
+#: app/controllers/StudentCtrl.php:195
+#: app/views/theme/readylaunch/sidebar.php:53
+msgid "Students"
+msgstr ""
+
+#. translators:
+#: app/controllers/StudentCtrl.php:384
+msgid "successfully added as a student."
+msgstr ""
+
+#. translators:
+#: app/controllers/StudentCtrl.php:384
+msgid "Edit Student"
+msgstr ""
+
+#: app/controllers/StudentCtrl.php:407
+msgid "Problem adding %s to Cohort."
+msgstr ""
+
+#: app/controllers/StudentCtrl.php:425
+msgid "%s successfully added to Cohort."
+msgstr ""
+
+#: app/controllers/StudentCtrl.php:462
+msgid "Note successfully created"
+msgstr ""
+
+#: app/controllers/StudentCtrl.php:502
+msgid "Note successfully updated"
+msgstr ""
+
+#: app/controllers/StudentCtrl.php:535
+msgid "Note successfully deleted"
+msgstr ""
+
+#: app/emails/EnrollmentCapEmail.php:23
+msgid "<b>Enrollment Limit</b> Notice"
+msgstr ""
+
+#: app/emails/EnrollmentCapEmail.php:24
+msgid "This email is sent to a user when payment completes for one of your memberships in her behalf."
+msgstr ""
+
+#: app/emails/EnrollmentCapEmail.php:34
+msgid "** Enrollment Limit Notice for {$membership_name}"
+msgstr ""
+
+#: app/emails/EnrollmentCapEmail.php:41
+#: app/emails/ProgramCompletedEmail.php:38
+#: app/emails/ProgramHabitEmail.php:34
+#: app/emails/ProgramMilestoneEmail.php:29
+#: app/emails/ProgramStartedEmail.php:41
+msgid "Financial Freedom Blueprint"
+msgstr ""
+
+#: app/emails/EnrollmentCapEmail.php:42
+msgid "Money Masters"
+msgstr ""
+
+#: app/emails/EnrollmentCapEmail.php:43
+#: app/emails/ProgramCompletedEmail.php:39
+#: app/emails/ProgramStartedEmail.php:42
+msgid "Gold Membership"
+msgstr ""
+
+#: app/emails/MessageReceivedEmail.php:20
+msgid "<b>Direct Message Received</b> Notice"
+msgstr ""
+
+#: app/emails/MessageReceivedEmail.php:21
+msgid "This email is sent to a user when a new direct message (DM) is received ."
+msgstr ""
+
+#: app/emails/MessageReceivedEmail.php:31
+msgid "** New Direct Message Received"
+msgstr ""
+
+#: app/emails/ProgramCompletedEmail.php:20
+msgid "<b>Program Completed</b> Notice"
+msgstr ""
+
+#: app/emails/ProgramCompletedEmail.php:21
+msgid "This email is sent when a user completes a program."
+msgstr ""
+
+#: app/emails/ProgramCompletedEmail.php:31
+msgid "** Program Completed: {$program_name}"
+msgstr ""
+
+#: app/emails/ProgramHabitEmail.php:17
+msgid "<b>Habit Check-in</b> Notice"
+msgstr ""
+
+#: app/emails/ProgramHabitEmail.php:18
+#: app/emails/ProgramMilestoneEmail.php:13
+msgid "This email is sent to the user when triggered."
+msgstr ""
+
+#: app/emails/ProgramHabitEmail.php:25
+msgid "**  Complete Your Habit Check-in: {$title}"
+msgstr ""
+
+#: app/emails/ProgramHabitEmail.php:32
+msgid "Daily Expense Tracking"
+msgstr ""
+
+#: app/emails/ProgramHabitEmail.php:33
+msgid "Have you tracked expenses today?"
+msgstr ""
+
+#: app/emails/ProgramMilestoneEmail.php:12
+msgid "<b>Milestone Check-in</b> Notice"
+msgstr ""
+
+#: app/emails/ProgramMilestoneEmail.php:20
+msgid "**  Complete Your Milestone Check-in: {$title}"
+msgstr ""
+
+#: app/emails/ProgramMilestoneEmail.php:27
+msgid "Financial Assessment and Goal Setting"
+msgstr ""
+
+#: app/emails/ProgramMilestoneEmail.php:28
+msgid "What challenges have you encountered while assessing your finances?"
+msgstr ""
+
+#: app/emails/ProgramStartedEmail.php:23
+msgid "<b>Program Started</b> Notice"
+msgstr ""
+
+#: app/emails/ProgramStartedEmail.php:24
+msgid "This email is sent when a user enrolls in a program."
+msgstr ""
+
+#: app/emails/ProgramStartedEmail.php:34
+msgid "** Program Started: {$program_name}"
+msgstr ""
+
+#: app/helpers/AppHelper.php:47
+msgid "Client"
+msgstr ""
+
+#: app/helpers/AppHelper.php:48
+msgid "Clients"
+msgstr ""
+
+#: app/helpers/AppHelper.php:49
+msgid "Coach"
+msgstr ""
+
+#: app/helpers/AppHelper.php:50
+msgid "Coaches"
+msgstr ""
+
+#: app/helpers/AppHelper.php:81
+msgid "Unknown"
+msgstr ""
+
+#: app/helpers/AppHelper.php:251
+#: app/helpers/AppHelper.php:252
+#: app/lib/CoachesTable.php:194
+#: app/lib/StudentsTable.php:197
+#: app/lib/StudentsTable.php:198
+msgid "Never"
+msgstr ""
+
+#: app/lib/Activity.php:408
+#: app/lib/Activity.php:410
+msgid "started"
+msgstr ""
+
+#: app/lib/Activity.php:408
+#: app/lib/Activity.php:410
+#: app/lib/Activity.php:468
+#: app/lib/Activity.php:470
+msgid "program"
+msgstr ""
+
+#: app/lib/Activity.php:443
+#: app/lib/Activity.php:445
+#: app/lib/Activity.php:454
+#: app/lib/Activity.php:456
+msgid "completed"
+msgstr ""
+
+#: app/lib/Activity.php:443
+#: app/lib/Activity.php:445
+msgid "habit"
+msgstr ""
+
+#: app/lib/Activity.php:454
+#: app/lib/Activity.php:456
+msgid "milestone"
+msgstr ""
+
+#: app/lib/Activity.php:468
+#: app/lib/Activity.php:470
+msgid "unenrolled from"
+msgstr ""
+
+#: app/lib/Activity.php:482
+#: app/lib/Utils.php:222
+msgid "ago"
+msgstr ""
+
+#: app/lib/ActivityTable.php:42
+#: app/lib/CoachesTable.php:37
+#: app/lib/StudentsTable.php:37
+#: app/views/admin/coaches/new-coach.php:41
+#: app/views/admin/students/new-student.php:41
+msgid "Username"
+msgstr ""
+
+#: app/lib/ActivityTable.php:44
+#: app/lib/CoachesTable.php:39
+#: app/lib/StudentsTable.php:39
+#: app/models/Coach.php:297
+#: app/models/Student.php:320
+#: app/views/admin/coaches/new-coach.php:17
+#: app/views/admin/students/new-student.php:17
+msgid "First Name"
+msgstr ""
+
+#: app/lib/ActivityTable.php:45
+#: app/lib/CoachesTable.php:40
+#: app/lib/StudentsTable.php:40
+#: app/models/Coach.php:298
+#: app/models/Student.php:321
+#: app/views/admin/coaches/new-coach.php:25
+#: app/views/admin/students/new-student.php:25
+msgid "Last Name"
+msgstr ""
+
+#: app/lib/BaseCptCtrl.php:38
+msgid "%1$s updated. <a href=\"%2$s\">View %3$s</a>"
+msgstr ""
+
+#: app/lib/BaseCptCtrl.php:44
+msgid "%1$s updated."
+msgstr ""
+
+#: app/lib/BaseCptCtrl.php:47
+msgid "Custom field updated."
+msgstr ""
+
+#: app/lib/BaseCptCtrl.php:48
+msgid "Custom field deleted."
+msgstr ""
+
+#: app/lib/BaseCptCtrl.php:49
+msgid "%s updated."
+msgstr ""
+
+#: app/lib/BaseCptCtrl.php:50
+msgid "%1$s restored to revision from %2$s"
+msgstr ""
+
+#: app/lib/BaseCptCtrl.php:54
+msgid "%1$s published. <a href=\"%2$s\">View %3$s</a>"
+msgstr ""
+
+#: app/lib/BaseCptCtrl.php:60
+msgid "%1$s published."
+msgstr ""
+
+#: app/lib/BaseCptCtrl.php:63
+msgid "%s saved."
+msgstr ""
+
+#: app/lib/BaseCptCtrl.php:67
+msgid "%1$s submitted. <a target=\"_blank\" href=\"%2$s\">Preview %3$s</a>"
+msgstr ""
+
+#: app/lib/BaseCptCtrl.php:73
+msgid "%1$s scheduled for: <strong>%2$s</strong>. <a target=\"_blank\" href=\"%3$s\">Preview %4$s</a>"
+msgstr ""
+
+#: app/lib/BaseCptCtrl.php:80
+msgid "%1$s draft updated. <a target=\"_blank\" href=\"%2$s\">Preview %3$s</a>"
+msgstr ""
+
+#: app/lib/BaseCptCtrl.php:86
+msgid "%s submitted."
+msgstr ""
+
+#: app/lib/BaseCptCtrl.php:88
+msgid "%1$s scheduled for: <strong>%2$s</strong>."
+msgstr ""
+
+#: app/lib/BaseCptCtrl.php:92
+msgid "%s draft updated."
+msgstr ""
+
+#: app/lib/BaseCptModel.php:206
+#: app/lib/BaseCtaxModel.php:186
+msgid "This was unable to be deleted."
+msgstr ""
+
+#: app/lib/BaseCtaxModel.php:132
+#: app/lib/BaseCtaxModel.php:153
+msgid "%1$s was unable to be saved: %2$s"
+msgstr ""
+
+#: app/lib/BaseModel.php:304
+#: app/lib/BaseModel.php:310
+#: app/lib/Validate.php:12
+#: app/lib/Validate.php:18
+#: app/lib/Validate.php:24
+msgid "%s must not be empty"
+msgstr ""
+
+#: app/lib/BaseModel.php:316
+#: app/lib/Validate.php:30
+msgid "%s must be true or false"
+msgstr ""
+
+#: app/lib/BaseModel.php:322
+#: app/lib/Validate.php:36
+msgid "%s must be an array"
+msgstr ""
+
+#: app/lib/BaseModel.php:328
+#: app/lib/Validate.php:42
+msgid "%1$s must be %2$s NOT %3$s"
+msgstr ""
+
+#: app/lib/BaseModel.php:328
+#: app/lib/Validate.php:42
+msgid "or"
+msgstr ""
+
+#: app/lib/BaseModel.php:334
+#: app/lib/Validate.php:48
+msgid "%1$s (%2$s) must be a valid url"
+msgstr ""
+
+#: app/lib/BaseModel.php:340
+#: app/lib/Validate.php:54
+msgid "%1$s (%2$s) must be a valid representation of currency"
+msgstr ""
+
+#: app/lib/BaseModel.php:346
+#: app/lib/Validate.php:60
+msgid "%1$s (%2$s) must be a valid number"
+msgstr ""
+
+#: app/lib/BaseModel.php:352
+#: app/lib/Validate.php:66
+msgid "%1$s (%2$s) must be a valid email"
+msgstr ""
+
+#: app/lib/BaseModel.php:358
+#: app/lib/Validate.php:72
+msgid "%1$s (%2$s) must be a valid phone number"
+msgstr ""
+
+#: app/lib/BaseModel.php:364
+#: app/lib/Validate.php:78
+msgid "%1$s (%2$s) must be a valid IP Address"
+msgstr ""
+
+#: app/lib/BaseModel.php:370
+#: app/lib/Validate.php:84
+msgid "%1$s (%2$s) must be a valid date"
+msgstr ""
+
+#: app/lib/BaseModel.php:377
+#: app/lib/Validate.php:91
+msgid "%1$s (%2$s) must be a valid timestamp"
+msgstr ""
+
+#: app/lib/BaseModel.php:383
+#: app/lib/Validate.php:97
+msgid "%1$s (%2$s) must match the regex pattern: %3$s"
+msgstr ""
+
+#: app/lib/Config.php:16
+msgid "A config file for %s wasn\\'t found"
+msgstr ""
+
+#: app/lib/CtrlFactory.php:29
+msgid "Ctrl: %s wasn't found"
+msgstr ""
+
+#: app/lib/ModelFactory.php:15
+msgid "A model for %s wasn't found"
+msgstr ""
+
+#: app/lib/ModelFactory.php:23
+#: app/lib/ModelFactory.php:25
+#: app/lib/ModelFactory.php:27
+msgid "There was no %1$s with an id of %2$d found"
+msgstr ""
+
+#: app/lib/Utils.php:239
+msgid ""
+"*** MemberPress CoachKit Error\n"
+"==========\n"
+"%s\n"
+"==========\n"
+""
+msgstr ""
+
+#: app/models/Coach.php:330
+#: app/models/Student.php:353
+msgid "User exists already"
+msgstr ""
+
+#: app/models/Coach.php:337
+#: app/models/Student.php:360
+msgid "Error saving %s: %s"
+msgstr ""
+
+#: app/models/Enrollment.php:86
+msgid "Group"
+msgstr ""
+
+#: app/models/Enrollment.php:88
+msgid "Start Date"
+msgstr ""
+
+#: app/models/Enrollment.php:137
+msgid "Error creating enrollment"
+msgstr ""
+
+#: app/models/Message.php:193
+msgid "Error creating message"
+msgstr ""
+
+#: app/models/Note.php:64
+msgid "Sender"
+msgstr ""
+
+#: app/models/Note.php:65
+msgid "Note"
+msgstr ""
+
+#: app/models/Note.php:89
+msgid "Error creating note"
+msgstr ""
+
+#: app/models/Room.php:65
+msgid "uuid"
+msgstr ""
+
+#: app/models/Room.php:66
+msgid "type"
+msgstr ""
+
+#: app/models/RoomParticipants.php:60
+msgid "room_id"
+msgstr ""
+
+#: app/models/RoomParticipants.php:61
+msgid "user_id"
+msgstr ""
+
+#: app/models/Student.php:417
+msgid "Starts on"
+msgstr ""
+
+#: app/models/StudentProgress.php:81
+msgid "Enrollment"
+msgstr ""
+
+#: app/models/StudentProgress.php:112
+msgid "Error creating student progress"
+msgstr ""
+
+#: app/models/StudentProgress.php:515
+#: app/views/theme/partials/enrollment-milestones.php:18
+msgid "Complete"
+msgstr ""
+
+#: app/models/StudentProgress.php:516
+#: app/views/admin/program/publish-metabox.php:56
+msgid "In Progress"
+msgstr ""
+
+#: app/views/admin/activity/row.php:15
+#: app/views/admin/coaches/edit-coach.php:72
+#: app/views/admin/students/edit-student.php:51
+#: app/views/theme/default/single-student.php:45
+#: app/views/theme/partials/students-table.php:16
+msgid "Off Track"
+msgstr ""
+
+#: app/views/admin/coaches/add-coach.php:4
+#: app/views/admin/students/add-student.php:4
+#: app/views/admin/students/new-student.php:4
+msgid "Add %s"
+msgstr ""
+
+#: app/views/admin/coaches/add-coach.php:23
+msgid "Add New %s"
+msgstr ""
+
+#: app/views/admin/coaches/add-coach.php:29
+#: app/views/admin/coaches/new-coach.php:67
+#: app/views/admin/students/add-student.php:30
+#: app/views/admin/students/enroll-student-form.php:31
+msgctxt "ui"
+msgid "Add"
+msgstr ""
+
+#: app/views/admin/coaches/assign-coach-form.php:4
+msgid "Assign %s to Cohort"
+msgstr ""
+
+#: app/views/admin/coaches/assign-coach-form.php:26
+msgctxt "ui"
+msgid "Assign"
+msgstr ""
+
+#: app/views/admin/coaches/edit-coach.php:3
+#: app/views/admin/students/edit-student.php:8
+msgid "Edit User"
+msgstr ""
+
+#: app/views/admin/coaches/edit-coach.php:14
+#: app/views/theme/partials/new-chat-dropdown.php:7
+msgctxt "ui"
+msgid "Cohorts"
+msgstr ""
+
+#: app/views/admin/coaches/edit-coach.php:20
+#: app/views/admin/students/edit-student.php:27
+msgctxt "ui"
+msgid "Name"
+msgstr ""
+
+#: app/views/admin/coaches/edit-coach.php:21
+msgctxt "ui"
+msgid "Assigned"
+msgstr ""
+
+#: app/views/admin/coaches/edit-coach.php:28
+msgid "No cohorts found."
+msgstr ""
+
+#: app/views/admin/coaches/edit-coach.php:35
+#: app/views/admin/students/edit-student.php:45
+msgctxt "ui"
+msgid "Show more details"
+msgstr ""
+
+#: app/views/admin/coaches/edit-coach.php:48
+msgid "Top 5 Active %s"
+msgstr ""
+
+#: app/views/admin/coaches/edit-coach.php:55
+#: app/views/admin/groups/group-modal.php:86
+#: app/views/admin/students/edit-student.php:28
+msgctxt "ui"
+msgid "Status"
+msgstr ""
+
+#: app/views/admin/coaches/edit-coach.php:56
+msgctxt "ui"
+msgid "Last Update"
+msgstr ""
+
+#: app/views/admin/coaches/edit-coach.php:57
+#: app/views/admin/students/edit-student.php:31
+msgctxt "ui"
+msgid "Progress"
+msgstr ""
+
+#: app/views/admin/coaches/edit-coach.php:63
+msgid "No students found."
+msgstr ""
+
+#: app/views/admin/coaches/new-coach.php:4
+msgid "New %s"
+msgstr ""
+
+#: app/views/admin/coaches/new-coach.php:53
+#: app/views/admin/students/new-student.php:53
+msgid "Send login information"
+msgstr ""
+
+#: app/views/admin/coaches/new-coach.php:61
+msgid "Add Existing %s"
+msgstr ""
+
+#: app/views/admin/coaches/program-list.php:36
+#: app/views/admin/students/program-list.php:50
+msgid "No programs found"
+msgstr ""
+
+#: app/views/admin/coaches/row.php:22
+#: app/views/admin/students/row.php:22
+msgid "View member's profile"
+msgstr ""
+
+#: app/views/admin/coaches/search-box.php:2
+#: app/views/admin/students/search-box.php:2
+msgid "Filter by"
+msgstr ""
+
+#: app/views/admin/coaches/search-box.php:5
+#: app/views/admin/students/search-box.php:21
+msgid "All Programs"
+msgstr ""
+
+#: app/views/admin/coaches/search-box.php:11
+#: app/views/admin/students/search-box.php:27
+msgid "Go"
+msgstr ""
+
+#: app/views/admin/coaches/users-list.php:17
+#: app/views/admin/students/users-list.php:17
+msgid "No users found"
+msgstr ""
+
+#: app/views/admin/common/mp-header.php:4
+msgid "Support"
+msgstr ""
+
+#: app/views/admin/common/table_controls.php:13
+#: app/views/admin/common/table_controls.php:16
+msgid "Search"
+msgstr ""
+
+#: app/views/admin/enrollment/table.php:10
+#: app/views/admin/enrollment/table.php:28
+#: app/views/admin/students/search-box.php:5
+msgid "All %s"
+msgstr ""
+
+#: app/views/admin/enrollment/table.php:22
+msgid "%s Progress"
+msgstr ""
+
+#: app/views/admin/enrollment/table.php:37
+msgctxt "ui"
+msgid "All Programs"
+msgstr ""
+
+#: app/views/admin/enrollment/table.php:71
+msgctxt "ui"
+msgid "Recent Activities"
+msgstr ""
+
+#: app/views/admin/enrollment/table.php:77
+msgctxt "ui"
+msgid "All Updates"
+msgstr ""
+
+#: app/views/admin/enrollment/table.php:95
+#: app/views/theme/default/messages.php:84
+msgctxt "ui"
+msgid "Load More"
+msgstr ""
+
+#: app/views/admin/groups/group-modal.php:4
+msgctxt "ui"
+msgid "Cohort"
+msgstr ""
+
+#: app/views/admin/groups/group-modal.php:13
+#: app/views/admin/groups/row.php:25
+msgctxt "ui"
+msgid "Cohort Name"
+msgstr ""
+
+#: app/views/admin/groups/group-modal.php:21
+msgctxt "ui"
+msgid "Enrollment cap"
+msgstr ""
+
+#: app/views/admin/groups/group-modal.php:22
+msgctxt "ui"
+msgid "Limit no. of %s in Program"
+msgstr ""
+
+#: app/views/admin/groups/group-modal.php:27
+msgctxt "ui"
+msgid "Type"
+msgstr ""
+
+#: app/views/admin/groups/group-modal.php:32
+msgctxt "ui"
+msgid "Dynamic"
+msgstr ""
+
+#: app/views/admin/groups/group-modal.php:38
+msgctxt "ui"
+msgid "Fixed"
+msgstr ""
+
+#: app/views/admin/groups/group-modal.php:48
+msgctxt "ui"
+msgid "%s Limit"
+msgstr ""
+
+#: app/views/admin/groups/group-modal.php:55
+msgctxt "ui"
+msgid "Start Date"
+msgstr ""
+
+#: app/views/admin/groups/group-modal.php:60
+msgctxt "ui"
+msgid "End Date"
+msgstr ""
+
+#: app/views/admin/groups/group-modal.php:67
+msgctxt "ui"
+msgid "Starts whenever %s enrolls into cohort"
+msgstr ""
+
+#: app/views/admin/groups/group-modal.php:77
+msgctxt "ui"
+msgid "Select %s"
+msgstr ""
+
+#: app/views/admin/groups/group-modal.php:88
+msgctxt "ui"
+msgid "Select Status"
+msgstr ""
+
+#: app/views/admin/groups/group-modal.php:89
+msgctxt "ui"
+msgid "Open"
+msgstr ""
+
+#: app/views/admin/groups/group-modal.php:93
+msgctxt "ui"
+msgid "Closed"
+msgstr ""
+
+#: app/views/admin/groups/group-modal.php:102
+msgctxt "ui"
+msgid "Allow %s Appointments"
+msgstr ""
+
+#: app/views/admin/groups/group-modal.php:109
+msgctxt "ui"
+msgid "URL"
+msgstr ""
+
+#: app/views/admin/groups/group-modal.php:117
+#: app/views/admin/habits/metabox-download.php:17
+#: app/views/admin/habits/metabox-download.php:29
+#: app/views/admin/milestone/metabox-course.php:16
+#: app/views/admin/milestone/metabox-course.php:23
+#: app/views/admin/milestone/metabox-download.php:17
+#: app/views/admin/milestone/metabox-download.php:29
+msgctxt "ui"
+msgid "Delete"
+msgstr ""
+
+#: app/views/admin/groups/group-modal.php:119
+msgctxt "ui"
+msgid "Are you sure you want to delete?"
+msgstr ""
+
+#: app/views/admin/groups/group-modal.php:121
+msgctxt "ui"
+msgid "No"
+msgstr ""
+
+#: app/views/admin/groups/group-modal.php:122
+msgctxt "ui"
+msgid "Yes"
+msgstr ""
+
+#: app/views/admin/groups/group-modal.php:133
+msgctxt "ui"
+msgid "Update"
+msgstr ""
+
+#: app/views/admin/groups/group-modal.php:133
+msgctxt "ui"
+msgid "Save"
+msgstr ""
+
+#: app/views/admin/groups/list.php:5
+msgctxt "ui"
+msgid "New Cohort"
+msgstr ""
+
+#: app/views/admin/groups/row.php:5
+msgid "Cohort"
+msgstr ""
+
+#: app/views/admin/groups/row.php:12
+msgid "Conflict Detected"
+msgstr ""
+
+#: app/views/admin/groups/row.php:13
+msgid "Please ensure that the cohort's start date and end date are in sync with the accumulated periods represented by the milestones"
+msgstr ""
+
+#: app/views/admin/habits/empty.php:7
+msgctxt "ui"
+msgid "No habits"
+msgstr ""
+
+#: app/views/admin/habits/empty.php:8
+msgctxt "ui"
+msgid "Get started by creating a new habit."
+msgstr ""
+
+#: app/views/admin/habits/empty.php:12
+#: app/views/admin/program/program-tabs.php:28
+msgctxt "ui"
+msgid "New Habit"
+msgstr ""
+
+#: app/views/admin/habits/habit-row.php:5
+msgid "Habit "
+msgstr ""
+
+#: app/views/admin/habits/habit-row.php:9
+#: app/views/admin/milestone/milestone-row.php:9
+msgctxt "ui"
+msgid "Remove"
+msgstr ""
+
+#: app/views/admin/habits/habit-row.php:15
+msgctxt "ui"
+msgid "Habit Name"
+msgstr ""
+
+#: app/views/admin/habits/habit-row.php:22
+msgctxt "ui"
+msgid "Repeat"
+msgstr ""
+
+#: app/views/admin/habits/habit-row.php:24
+msgctxt "ui"
+msgid "day(s)"
+msgstr ""
+
+#: app/views/admin/habits/habit-row.php:24
+msgctxt "ui"
+msgid "Daily"
+msgstr ""
+
+#: app/views/admin/habits/habit-row.php:25
+msgctxt "ui"
+msgid "week(s)"
+msgstr ""
+
+#: app/views/admin/habits/habit-row.php:25
+msgctxt "ui"
+msgid "Weekly"
+msgstr ""
+
+#: app/views/admin/habits/habit-row.php:29
+#: app/views/admin/milestone/milestone-row.php:22
+msgctxt "ui"
+msgid "Goal Due"
+msgstr ""
+
+#: app/views/admin/habits/habit-row.php:31
+msgctxt "ui"
+msgid "Every"
+msgstr ""
+
+#: app/views/admin/habits/habit-row.php:34
+msgctxt "ui"
+msgid "on:"
+msgstr ""
+
+#: app/views/admin/habits/habit-row.php:38
+msgctxt "ui"
+msgid "Repeat Days"
+msgstr ""
+
+#: app/views/admin/habits/habit-row.php:66
+#: app/views/admin/milestone/milestone-row.php:49
+msgctxt "ui"
+msgid "Check In"
+msgstr ""
+
+#: app/views/admin/habits/habit-row.php:74
+#: app/views/admin/milestone/milestone-row.php:57
+msgctxt "ui"
+msgid "Add New"
+msgstr ""
+
+#: app/views/admin/habits/habit-row.php:79
+#: app/views/admin/milestone/milestone-row.php:65
+msgctxt "ui"
+msgid "Download"
+msgstr ""
+
+#: app/views/admin/habits/metabox-download.php:5
+#: app/views/admin/milestone/metabox-download.php:5
+#: app/views/theme/partials/enrollment-habits.php:14
+#: app/views/theme/partials/enrollment-milestones.php:16
+#: app/views/theme/partials/modal-downloads.php:11
+msgid "Downloads"
+msgstr ""
+
+#: app/views/admin/milestone/metabox-checkin.php:5
+msgid "Check In"
+msgstr ""
+
+#: app/views/admin/milestone/metabox-checkin.php:16
+msgctxt "ui"
+msgid "%s Question"
+msgstr ""
+
+#: app/views/admin/milestone/metabox-course.php:5
+#: app/views/theme/partials/enrollment-milestones.php:14
+#: app/views/theme/partials/modal-courses.php:11
+msgid "Courses"
+msgstr ""
+
+#: app/views/admin/milestone/milestone-row.php:5
+msgid "Milestone "
+msgstr ""
+
+#: app/views/admin/milestone/milestone-row.php:15
+msgctxt "ui"
+msgid "Goal Name"
+msgstr ""
+
+#: app/views/admin/milestone/milestone-row.php:26
+msgctxt "ui"
+msgid "Interval"
+msgstr ""
+
+#: app/views/admin/milestone/milestone-row.php:28
+msgctxt "ui"
+msgid "Days"
+msgstr ""
+
+#: app/views/admin/milestone/milestone-row.php:29
+msgctxt "ui"
+msgid "Weeks"
+msgstr ""
+
+#: app/views/admin/milestone/milestone-row.php:30
+msgctxt "ui"
+msgid "Months"
+msgstr ""
+
+#: app/views/admin/milestone/milestone-row.php:34
+msgctxt "ui"
+msgid "Start Goal"
+msgstr ""
+
+#: app/views/admin/milestone/milestone-row.php:37
+msgctxt "ui"
+msgid "After Program Starts"
+msgstr ""
+
+#: app/views/admin/milestone/milestone-row.php:40
+msgctxt "ui"
+msgid "After Previous Milestone is due"
+msgstr ""
+
+#: app/views/admin/milestone/milestone-row.php:62
+msgctxt "ui"
+msgid "Course"
+msgstr ""
+
+#: app/views/admin/modals/checkin.php:4
+#: app/views/admin/modals/course.php:4
+msgctxt "ui"
+msgid "Add Course to Milestone"
+msgstr ""
+
+#: app/views/admin/modals/checkin.php:18
+#: app/views/admin/modals/course.php:38
+msgctxt "ui"
+msgid "Add Course"
+msgstr ""
+
+#: app/views/admin/modals/course.php:25
+msgid "No courses found. Please add a course and try again."
+msgstr ""
+
+#: app/views/admin/modals/download-list.php:20
+msgid "No attachments found. Please add attachments and try again."
+msgstr ""
+
+#: app/views/admin/modals/download.php:4
+#: app/views/admin/modals/download.php:24
+msgctxt "ui"
+msgid "Add Downloads"
+msgstr ""
+
+#: app/views/admin/notices/coaching_page_warning.php:2
+msgid "<b>To use the CoachKit add-on</b>, please set the %1$sCoachKit Page%2$s within your MemberPress Settings."
+msgstr ""
+
+#: app/views/admin/options/coaching-options.php:5
+msgid "Messaging"
+msgstr ""
+
+#: app/views/admin/options/coaching-options.php:13
+msgid "Enable messaging"
+msgstr ""
+
+#: app/views/admin/options/coaching-options.php:20
+msgid "Label Customizations"
+msgstr ""
+
+#: app/views/admin/options/coaching-tab.php:1
+#: app/views/admin/program/coaching-product-tab.php:1
+msgid "CoachKit™"
+msgstr ""
+
+#: app/views/admin/program/coaching-product-content.php:5
+msgid "Programs Pool"
+msgstr ""
+
+#: app/views/admin/program/coaching-product-content.php:11
+msgid "No coaching programs found. Please add coaching programs to continue"
+msgstr ""
+
+#: app/views/admin/program/coaching-product-content.php:13
+msgctxt "ui"
+msgid "Assign new %s to a cohort within each of the Programs listed below."
+msgstr ""
+
+#: app/views/admin/program/coaching-product-content.php:40
+msgid "Select Program"
+msgstr ""
+
+#: app/views/admin/program/coaching-product-content.php:51
+#: app/views/theme/default/single-student.php:135
+msgid "Delete"
+msgstr ""
+
+#: app/views/admin/program/milestone-empty.php:7
+msgctxt "ui"
+msgid "No milestones"
+msgstr ""
+
+#: app/views/admin/program/milestone-empty.php:8
+msgctxt "ui"
+msgid "Get started by creating a new milestone."
+msgstr ""
+
+#: app/views/admin/program/milestone-empty.php:12
+msgctxt "ui"
+msgid "New Milestone"
+msgstr ""
+
+#: app/views/admin/program/program-tabs.php:3
+#: app/views/theme/default/notifications.php:70
+#: app/views/theme/default/single-enrollment.php:62
+msgid "Milestones"
+msgstr ""
+
+#: app/views/admin/program/program-tabs.php:4
+#: app/views/theme/default/notifications.php:76
+#: app/views/theme/default/single-enrollment.php:66
+msgid "Habits"
+msgstr ""
+
+#: app/views/admin/program/publish-metabox.php:9
+msgid "Delete permanently"
+msgstr ""
+
+#: app/views/admin/program/publish-metabox.php:11
+msgid "Move to Trash"
+msgstr ""
+
+#: app/views/admin/program/publish-metabox.php:28
+#: app/views/admin/program/publish-metabox.php:29
+msgctxt "post action/button label"
+msgid "Schedule"
+msgstr ""
+
+#: app/views/admin/program/publish-metabox.php:39
+#: app/views/admin/program/publish-metabox.php:40
+msgid "Submit for Review"
+msgstr ""
+
+#: app/views/admin/program/publish-metabox.php:46
+#: app/views/admin/program/publish-metabox.php:47
+msgid "Update"
+msgstr ""
+
+#: app/views/admin/program/publish-metabox.php:53
+msgid "Program Status"
+msgstr ""
+
+#: app/views/admin/program/publish-metabox.php:54
+msgctxt "ui"
+msgid "This program is actively running with enrolled %s. As a result, updates to this program are restricted, and it can be considered \"Read-Only\" for the time being"
+msgstr ""
+
+#: app/views/admin/students/add-student.php:24
+msgid "Create New User"
+msgstr ""
+
+#: app/views/admin/students/edit-student.php:4
+msgid "Return to activities page"
+msgstr ""
+
+#: app/views/admin/students/edit-student.php:9
+msgid "Assign to Cohort"
+msgstr ""
+
+#: app/views/admin/students/edit-student.php:21
+msgctxt "ui"
+msgid "Enrollments"
+msgstr ""
+
+#: app/views/admin/students/edit-student.php:29
+msgctxt "ui"
+msgid "Started"
+msgstr ""
+
+#: app/views/admin/students/edit-student.php:37
+msgid "No enrollments found."
+msgstr ""
+
+#: app/views/admin/students/edit-student.php:47
+msgid "Delete Enrollment"
+msgstr ""
+
+#: app/views/admin/students/edit-student.php:47
+msgid "Unenroll"
+msgstr ""
+
+#: app/views/admin/students/edit-student.php:72
+msgctxt "ui"
+msgid "Active Memberships"
+msgstr ""
+
+#: app/views/admin/students/edit-student.php:78
+msgctxt "ui"
+msgid "ID"
+msgstr ""
+
+#: app/views/admin/students/edit-student.php:79
+msgctxt "ui"
+msgid "Membership"
+msgstr ""
+
+#: app/views/admin/students/edit-student.php:80
+msgctxt "ui"
+msgid "Term"
+msgstr ""
+
+#: app/views/admin/students/edit-student.php:88
+#: app/views/theme/default/single-student.php:85
+msgid "No active memberships found."
+msgstr ""
+
+#: app/views/admin/students/edit-student.php:114
+msgctxt "ui"
+msgid "Notes"
+msgstr ""
+
+#: app/views/admin/students/edit-student.php:122
+#: app/views/theme/default/single-student.php:115
+msgid "No notes found."
+msgstr ""
+
+#: app/views/admin/students/edit-student.php:173
+msgid "No recent activities"
+msgstr ""
+
+#: app/views/admin/students/enroll-student-form.php:4
+msgid "Add %s to Program"
+msgstr ""
+
+#: app/views/admin/students/new-student.php:61
+msgid "Add From Users"
+msgstr ""
+
+#: app/views/admin/students/new-student.php:67
+msgctxt "ui"
+msgid "Create"
+msgstr ""
+
+#: app/views/admin/students/program-list.php:35
+msgctxt "ui"
+msgid "Not accepting enrollment. This cohort is at full capacity. Please go to the Program page to edit the cohort settings."
+msgstr ""
+
+#: app/views/admin/students/search-box.php:13
+#: app/views/theme/default/students.php:29
+msgid "All Cohorts"
+msgstr ""
+
+#: app/views/emails/enrollment-cap-email.php:2
+msgctxt "ui"
+msgid "Enrollment Limit Notice"
+msgstr ""
+
+#: app/views/emails/enrollment-cap-email.php:7
+msgctxt "ui"
+msgid "This is to alert you that the enrollment limit for the following program is nearing its maximum capacity:"
+msgstr ""
+
+#: app/views/emails/enrollment-cap-email.php:11
+#: app/views/emails/program-habit-email.php:18
+#: app/views/emails/program-milestone-email.php:18
+#: app/views/emails/program-started-email.php:14
+msgctxt "ui"
+msgid "Program:"
+msgstr ""
+
+#: app/views/emails/enrollment-cap-email.php:15
+#: app/views/emails/program-started-email.php:18
+msgctxt "ui"
+msgid "Membership:"
+msgstr ""
+
+#: app/views/emails/enrollment-cap-email.php:19
+msgctxt "ui"
+msgid "Available Seats:"
+msgstr ""
+
+#: app/views/emails/enrollment-cap-email.php:24
+msgctxt "ui"
+msgid "Once the limit is reached, users <b>will not</b> be able to register for the {$membership_name} membership. To ensure uninterrupted access, please consider adjusting the enrollment limit."
+msgstr ""
+
+#: app/views/emails/enrollment-cap-email.php:26
+msgctxt "ui"
+msgid "Edit Enrollment Limit"
+msgstr ""
+
+#: app/views/emails/enrollment-cap-email.php:28
+msgctxt "ui"
+msgid "If the current enrollment limit aligns with your intentions, there's no need to take any action"
+msgstr ""
+
+#: app/views/emails/message-received-email.php:5
+msgctxt "ui"
+msgid "New Direct Message Received"
+msgstr ""
+
+#: app/views/emails/message-received-email.php:10
+msgctxt "ui"
+msgid "You've received a new direct message from {$user_full_name} on our coaching platform:"
+msgstr ""
+
+#: app/views/emails/message-received-email.php:12
+msgctxt "ui"
+msgid "Click to view the message"
+msgstr ""
+
+#: app/views/emails/program-completed-email.php:5
+#: app/views/emails/program-started-email.php:5
+msgctxt "ui"
+msgid "Program Started Notice"
+msgstr ""
+
+#: app/views/emails/program-completed-email.php:10
+msgctxt "ui"
+msgid "This email is to inform you that {$enrollee} has successfully completed the \"{$program_name}\" program"
+msgstr ""
+
+#: app/views/emails/program-habit-email.php:10
+msgctxt "ui"
+msgid "This is a friendly reminder to complete your check-in for the following habit and program:"
+msgstr ""
+
+#: app/views/emails/program-habit-email.php:14
+msgctxt "ui"
+msgid "Habit:"
+msgstr ""
+
+#: app/views/emails/program-habit-email.php:23
+msgctxt "ui"
+msgid "Please take a moment to provide an update on your habit by clicking on the link below:"
+msgstr ""
+
+#: app/views/emails/program-habit-email.php:23
+#: app/views/emails/program-milestone-email.php:23
+msgctxt "ui"
+msgid "Complete Check-in"
+msgstr ""
+
+#: app/views/emails/program-habit-email.php:25
+#: app/views/emails/program-milestone-email.php:25
+msgctxt "ui"
+msgid "Cheers!"
+msgstr ""
+
+#: app/views/emails/program-habit-email.php:26
+#: app/views/emails/program-milestone-email.php:26
+msgctxt "ui"
+msgid "The {$blog_name} Team"
+msgstr ""
+
+#: app/views/emails/program-milestone-email.php:10
+msgctxt "ui"
+msgid "This is a friendly reminder to complete your check-in for the following milestone and program:"
+msgstr ""
+
+#: app/views/emails/program-milestone-email.php:14
+msgctxt "ui"
+msgid "Milestone:"
+msgstr ""
+
+#: app/views/emails/program-milestone-email.php:23
+msgctxt "ui"
+msgid "Please take a moment to provide an update on your milestone by clicking on the link below:"
+msgstr ""
+
+#: app/views/emails/program-started-email.php:10
+msgctxt "ui"
+msgid "This email is to inform you that {$enrollee} has begun the following program:"
+msgstr ""
+
+#: app/views/theme/default/enrollments.php:10
+msgid "A list of all your enrollments including their milestones and progress."
+msgstr ""
+
+#: app/views/theme/default/enrollments.php:19
+msgid "No enrollments found"
+msgstr ""
+
+#: app/views/theme/default/messages.php:33
+msgctxt "ui"
+msgid "Start New Message"
+msgstr ""
+
+#: app/views/theme/default/messages.php:138
+msgctxt "ui"
+msgid "Add your comment"
+msgstr ""
+
+#: app/views/theme/default/messages.php:153
+msgctxt "ui"
+msgid "Attach a file"
+msgstr ""
+
+#: app/views/theme/default/messages.php:159
+msgctxt "ui"
+msgid "Send"
+msgstr ""
+
+#: app/views/theme/default/messages.php:175
+#: app/views/theme/default/messages.php:187
+msgctxt "ui"
+msgid "New Message"
+msgstr ""
+
+#: app/views/theme/default/messages.php:176
+msgctxt "ui"
+msgid "You can send direct messages and files using Messages."
+msgstr ""
+
+#: app/views/theme/default/nav.php:8
+#: app/views/theme/partials/navbar.php:43
+#: app/views/theme/readylaunch/sidebar.php:34
+#: app/views/theme/readylaunch/sidebar.php:115
+msgid "Account"
+msgstr ""
+
+#: app/views/theme/default/nav.php:21
+#: app/views/theme/default/notifications.php:64
+#: app/views/theme/readylaunch/sidebar.php:64
+#: app/views/theme/readylaunch/sidebar.php:145
+msgid "Messages"
+msgstr ""
+
+#: app/views/theme/default/nav.php:26
+#: app/views/theme/default/notifications.php:7
+msgid "Notifications"
+msgstr ""
+
+#: app/views/theme/default/notifications.php:8
+msgid "Timely Updates: Keeping you posted on important events."
+msgstr ""
+
+#: app/views/theme/default/notifications.php:36
+msgid "No notifications found"
+msgstr ""
+
+#: app/views/theme/default/notifications.php:42
+msgid "Showing page"
+msgstr ""
+
+#: app/views/theme/default/notifications.php:42
+msgid "of"
+msgstr ""
+
+#: app/views/theme/default/notifications.php:46
+msgid "Previous"
+msgstr ""
+
+#: app/views/theme/default/notifications.php:47
+msgid "Next"
+msgstr ""
+
+#: app/views/theme/default/single-enrollment.php:27
+#: app/views/theme/readylaunch/single-enrollment.php:34
+msgid "Program Commencing Soon"
+msgstr ""
+
+#: app/views/theme/default/single-enrollment.php:28
+#: app/views/theme/readylaunch/single-enrollment.php:35
+msgid "The program is scheduled to begin on"
+msgstr ""
+
+#: app/views/theme/default/single-enrollment.php:51
+msgid "Schedule Appointment"
+msgstr ""
+
+#: app/views/theme/default/single-student.php:69
+msgid "Active Memberships"
+msgstr ""
+
+#: app/views/theme/default/single-student.php:76
+msgid "ID"
+msgstr ""
+
+#: app/views/theme/default/single-student.php:77
+msgid "Membership"
+msgstr ""
+
+#: app/views/theme/default/single-student.php:78
+msgid "Term"
+msgstr ""
+
+#: app/views/theme/default/single-student.php:110
+msgid "Notes"
+msgstr ""
+
+#: app/views/theme/default/single-student.php:156
+msgid "Create Note"
+msgstr ""
+
+#: app/views/theme/default/single-student.php:158
+#: app/views/theme/partials/enrollment-habits.php:74
+#: app/views/theme/partials/enrollment-milestones.php:106
+msgid "Cancel"
+msgstr ""
+
+#: app/views/theme/default/single-student.php:159
+msgid "Update Note"
+msgstr ""
+
+#: app/views/theme/default/students.php:12
+msgid "A list of all your %s."
+msgstr ""
+
+#: app/views/theme/default/students.php:35
+msgid "Edit Settings"
+msgstr ""
+
+#: app/views/theme/default/students.php:46
+msgid "No %s found."
+msgstr ""
+
+#: app/views/theme/partials/enrollment-habits.php:12
+#: app/views/theme/partials/enrollment-milestones.php:12
+msgid "Goal"
+msgstr ""
+
+#: app/views/theme/partials/enrollment-habits.php:27
+#: app/views/theme/partials/enrollment-milestones.php:61
+#: app/views/theme/partials/enrollment-milestones.php:74
+msgid "available"
+msgstr ""
+
+#: app/views/theme/partials/enrollment-habits.php:64
+#: app/views/theme/partials/enrollment-milestones.php:100
+msgid "Are you sure?"
+msgstr ""
+
+#: app/views/theme/partials/enrollment-habits.php:65
+msgid "Habit cannot be unchecked"
+msgstr ""
+
+#: app/views/theme/partials/enrollment-habits.php:66
+msgid "No habit due for completion today"
+msgstr ""
+
+#: app/views/theme/partials/enrollment-habits.php:68
+msgid "Marking a habit complete for"
+msgstr ""
+
+#: app/views/theme/partials/enrollment-habits.php:70
+msgid "cannot be undone"
+msgstr ""
+
+#: app/views/theme/partials/enrollment-habits.php:75
+#: app/views/theme/partials/enrollment-milestones.php:107
+msgid "Yes"
+msgstr ""
+
+#: app/views/theme/partials/enrollment-habits.php:104
+msgid "This program doesn't include any habits."
+msgstr ""
+
+#: app/views/theme/partials/enrollment-milestones.php:11
+msgid "Milestone"
+msgstr ""
+
+#: app/views/theme/partials/enrollment-milestones.php:13
+msgid "Due"
+msgstr ""
+
+#: app/views/theme/partials/enrollment-milestones.php:43
+msgid "courses"
+msgstr ""
+
+#: app/views/theme/partials/enrollment-milestones.php:51
+msgid "downloads"
+msgstr ""
+
+#: app/views/theme/partials/enrollment-milestones.php:101
+msgid "Milestone cannot be unchecked"
+msgstr ""
+
+#: app/views/theme/partials/enrollment-milestones.php:102
+msgid "Marking a milestone complete cannot be undone"
+msgstr ""
+
+#: app/views/theme/partials/enrollment-milestones.php:125
+msgid "This program doesn't include any milestones."
+msgstr ""
+
+#: app/views/theme/partials/header.php:26
+msgid "Skip to content"
+msgstr ""
+
+#: app/views/theme/partials/modal-appointments.php:25
+msgid "Allow %s appointments"
+msgstr ""
+
+#: app/views/theme/partials/modal-appointments.php:30
+msgctxt "ui"
+msgid "Appointment URL"
+msgstr ""
+
+#: app/views/theme/partials/modal-courses.php:34
+msgid "View"
+msgstr ""
+
+#: app/views/theme/partials/navbar.php:3
+msgctxt "ui"
+msgid "Open sidebar"
+msgstr ""
+
+#: app/views/theme/partials/navbar.php:16
+msgctxt "ui"
+msgid "View notifications"
+msgstr ""
+
+#: app/views/theme/partials/navbar.php:44
+msgid "Log out"
+msgstr ""
+
+#: app/views/theme/partials/new-chat-dropdown.php:6
+msgctxt "ui"
+msgid "Students"
+msgstr ""
+
+#: app/views/theme/partials/new-chat-dropdown.php:13
+msgctxt "ui"
+msgid "Search"
+msgstr ""
+
+#: app/views/theme/partials/new-chat-dropdown.php:41
+msgctxt "ui"
+msgid "Sorry, you can't send messages. Either you're not enrolled in a program, or your current enrollment doesn't allow messaging."
+msgstr ""
+
+#: app/views/theme/partials/snackbar.php:22
+msgid "Success"
+msgstr ""
+
+#: app/views/theme/partials/snackbar.php:23
+msgid "Error"
+msgstr ""
+
+#: app/views/theme/partials/students-table.php:4
+msgid "Name"
+msgstr ""

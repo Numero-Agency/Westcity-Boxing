@@ -1,0 +1,2 @@
+<?php
+return ['x-generator'=>'GlotPress/4.0.1','translation-revision-date'=>'2020-03-01 22:48:45+0000','plural-forms'=>'nplurals=2; plural=n != 1;','project-id-version'=>'Plugins - WPCode &#8211; Insert Headers and Footers + Custom Code Snippets &#8211; WordPress Code Manager - Stable (latest release)','language'=>'en_NZ','messages'=>['Settings'=>'Settings','Settings Saved.'=>'Settings Saved.']];

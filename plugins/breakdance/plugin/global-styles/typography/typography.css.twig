@@ -1,0 +1,135 @@
+
+{# Default: Sizes & Font Family #}
+{% if isBaseBreakpoint %}
+
+    .breakdance {
+        font-family: var(--bde-body-font-family);
+        font-size: var(--bde-body-font-size);
+    }
+
+    .bde-h1,
+    .bde-h2,
+    .bde-h3,
+    .bde-h4,
+    .bde-h5,
+    .bde-h6,
+    .breakdance h1,
+    .breakdance h2,
+    .breakdance h3,
+    .breakdance h4,
+    .breakdance h5,
+    .breakdance h6 {
+        font-family: var(--bde-heading-font-family);
+    }
+
+    .bde-h1,
+    .breakdance h1 {
+        font-size: var(--bde-h1-font-size);
+    }
+
+    .bde-h2,
+    .breakdance h2 {
+        font-size: var(--bde-h2-font-size);
+    }
+
+    .bde-h3,
+    .breakdance h3 {
+        font-size: var(--bde-h3-font-size);
+    }
+
+    .bde-h4,
+    .breakdance h4 {
+        font-size: var(--bde-h4-font-size);
+    }
+
+    .bde-h5,
+    .breakdance h5 {
+        font-size: var(--bde-h5-font-size);
+    }
+
+    .bde-h6,
+    .breakdance h6 {
+        font-size: var(--bde-h6-font-size);
+    }
+{% endif %}
+
+{# Macros #}
+.breakdance {
+   {{ macros.typography(settings.typography.advanced.body, settings)  }}
+}
+
+.bde-h1,
+.bde-h2,
+.bde-h3,
+.bde-h4,
+.bde-h5,
+.bde-h6,
+.breakdance h1,
+.breakdance h2,
+.breakdance h3,
+.breakdance h4,
+.breakdance h5,
+.breakdance h6 {
+    {{ macros.typography(settings.typography.advanced.headings.all_headings, settings)  }}
+}
+
+.bde-h1,
+.breakdance h1 {
+    {{ macros.typography(settings.typography.advanced.headings.h1, settings)  }}
+}
+
+.bde-h2,
+.breakdance h2 {
+    {{ macros.typography(settings.typography.advanced.headings.h2, settings)  }}
+}
+
+.bde-h3,
+.breakdance h3 {
+    {{ macros.typography(settings.typography.advanced.headings.h3, settings)  }}
+}
+
+.bde-h4,
+.breakdance h4 {
+    {{ macros.typography(settings.typography.advanced.headings.h4, settings)  }}
+}
+
+.bde-h5,
+.breakdance h5 {
+    {{ macros.typography(settings.typography.advanced.headings.h5, settings)  }}
+}
+
+.bde-h6,
+.breakdance h6 {
+    {{ macros.typography(settings.typography.advanced.headings.h6, settings)  }}
+}
+
+.breakdance a,
+.breakdance .button-atom--text {
+    color: {{ settings.typography.advanced.links.color }};
+    font-weight: {{ settings.typography.advanced.links.font_weight }};
+    {% if settings.typography.advanced.links.decoration.style == 'none' %}
+        text-decoration: none;
+    {% endif %}
+    text-decoration-thickness: {{ settings.typography.advanced.links.decoration.thickness.style }};
+    text-decoration-line: {{ settings.typography.advanced.links.decoration.line }};
+    text-decoration-style: {{ settings.typography.advanced.links.decoration.style }};
+    text-decoration-color: {{ settings.typography.advanced.links.decoration.color }};
+}
+
+.breakdance a:hover,
+.breakdance .button-atom--text:hover {
+    color: {{ settings.typography.advanced.links.color_hover }};
+    {% if settings.typography.advanced.links.decoration.style_hover == 'none' %}
+        text-decoration: none;
+    {% endif %}
+    text-decoration-thickness: {{ settings.typography.advanced.links.decoration.thickness_hover.style }};
+    text-decoration-line: {{ settings.typography.advanced.links.decoration.line_hover }};
+    text-decoration-style: {{ settings.typography.advanced.links.decoration.style_hover }};
+    text-decoration-color: {{ settings.typography.advanced.links.decoration.color_hover }};
+}
+
+
+
+
+
+

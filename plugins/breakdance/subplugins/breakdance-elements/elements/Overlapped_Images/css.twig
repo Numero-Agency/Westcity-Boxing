@@ -1,0 +1,24 @@
+%%SELECTOR%% {
+  {% if design.misc.allow_overflow %}
+    overflow: visible;
+  {% endif %}
+  width: {{ design.size.width.style }};
+  height: {{ design.size.height.style }};
+  {{ macros.spacing_margin_y(design.spacing) }};
+}
+
+
+%%SELECTOR%% .bde-overlapped-image {
+  width: {{ design.misc.default_image_width.style }};
+}
+
+{% for item in content.content.images %}
+%%SELECTOR%% .bde-overlapped-image:nth-child({{ loop.index }}) {
+  left: {{ item.position == 'custom' and item.custom_position.x ? item.custom_position.x ~ '%' }};
+  top: {{ item.position == 'custom' and item.custom_position.y ? item.custom_position.y ~ '%' }};
+  width: {{ item.width.style }};
+  height: {{ item.height.style }};
+}
+{% endfor %}
+
+

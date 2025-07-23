@@ -1,0 +1,4 @@
+{% for item in content.content.images %}
+  {% set positionClass = item.position and item.position != 'custom' ? ' bde-overlapped-image--' ~ item.position : '' %}
+  {{ macros.image(item.image, item.image_size, item.alt, content.content.lazy_load, 'bde-overlapped-image' ~ positionClass) }}
+{% endfor %}
