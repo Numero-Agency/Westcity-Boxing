@@ -61,7 +61,6 @@ function wcb_load_files() {
         'shortcodes/single-competition.php',
         'shortcodes/competitions-table.php',
         'shortcodes/community-class.php',
-        'shortcodes/community-session-form.php',
         'shortcodes/single-referral.php',
         
         // Forms
