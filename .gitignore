@@ -32,3 +32,20 @@ npm-debug.log*
 # Backup files
 *.bak
 *~
+
+# WordPress backup and cache directories
+ai1wm-backups/
+aiowps_backups/
+cache/
+wp-rocket-config/
+maintenance/
+
+# WordPress core files that shouldn't be in wp-content repo
+index.php
+maintenance.php
+
+# Log files
+*.log
+
+# Language files (usually managed by WordPress core)
+languages/
