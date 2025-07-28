@@ -5,18 +5,19 @@ function dashboard_stats_shortcode() {
     // Get date range from URL parameters or use defaults
     $date_from = isset($_GET['date_from']) ? sanitize_text_field($_GET['date_from']) : date('Y-m-d', strtotime('-30 days'));
     $date_to = isset($_GET['date_to']) ? sanitize_text_field($_GET['date_to']) : date('Y-m-d');
-    
-    // Basic stats - count members active during the selected date range
-    $active_members = get_active_members_in_date_range($date_from, $date_to);
-    $total_students = count($active_members);
-    
+
+    // Use the proven logic from active-members-test.php for active members counting
+    // Only count members from the 7 defined program groups
+    $active_members_data = get_active_members_from_defined_groups($date_from, $date_to);
+    $total_students = $active_members_data['total_count'];
+
     $total_sessions = wp_count_posts('session_log')->publish;
+
+    // Get MemberPress groups breakdown using the proven logic
+    $memberships_breakdown = get_active_groups_breakdown($date_from, $date_to);
     
-    // Get MemberPress memberships count - active during the date range
-    $memberships_breakdown = get_active_memberships_breakdown($date_from, $date_to);
-    
-    // Get non-renewed members within date range
-    $non_renewed_members = get_non_renewed_members($date_from, $date_to);
+    // Get non-renewed members within date range (only from defined groups)
+    $non_renewed_members = get_non_renewed_members_from_defined_groups($date_from, $date_to);
     
     // Get session types count using correct helper function and slugs
     $session_taxonomy = wcb_get_session_type_taxonomy();
@@ -45,12 +46,15 @@ function dashboard_stats_shortcode() {
         ]
     ]);
     
-    // Get MemberPress users and their data for the selected date range
-    $waitlist_members = get_waitlist_member_count();
-    $ethnicity_data = get_member_ethnicity_breakdown($active_members);
+    // Get waitlist members using same logic as student table
+    $waitlist_members = get_waitlist_member_count_consistent();
+
+    // Get ethnicity and age data using the active members from defined groups
+    $active_member_ids = get_active_member_ids_from_defined_groups($date_from, $date_to);
+    $ethnicity_data = get_member_ethnicity_breakdown($active_member_ids);
     $ethnicity_breakdown = $ethnicity_data['grouped'];
     $ethnicity_detailed = $ethnicity_data['detailed'];
-    $age_breakdown = get_member_age_breakdown($active_members);
+    $age_breakdown = get_member_age_breakdown($active_member_ids);
     
     // Get community class and competition data
     $community_class_members = get_community_class_member_count();
@@ -299,29 +303,75 @@ function dashboard_stats_shortcode() {
                     <p><small>Debug info: Found <?php echo count($non_renewed_members); ?> non-renewed members. Check your error log for detailed debugging info.</small></p>
                 </div>
                 <?php if (!empty($non_renewed_members)): ?>
-                <div class="non-renewed-list">
-                    <table class="non-renewed-table">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Program</th>
-                                <th>Expired Date</th>
-                                <th>Days Since Expiry</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($non_renewed_members as $member): ?>
-                            <tr>
-                                <td><?php echo esc_html($member['name']); ?></td>
-                                <td><?php echo esc_html($member['email']); ?></td>
-                                <td><?php echo esc_html($member['program']); ?></td>
-                                <td><?php echo esc_html($member['expired_date']); ?></td>
-                                <td><?php echo esc_html($member['days_since_expiry']); ?></td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+                <div class="non-renewed-cards-container">
+                    <?php foreach ($non_renewed_members as $member): ?>
+                    <div class="non-renewed-member-card">
+                        <!-- Member Header -->
+                        <div class="member-card-header">
+                            <div class="member-info">
+                                <h4 class="member-name"><?php echo esc_html($member['name']); ?></h4>
+                                <div class="member-email"><?php echo esc_html($member['email']); ?></div>
+                            </div>
+                            <div class="status-badge <?php echo esc_attr($member['status_class']); ?>">
+                                <?php echo esc_html($member['status_text']); ?>
+                            </div>
+                        </div>
+
+                        <!-- Member Details -->
+                        <div class="member-card-body">
+                            <div class="member-details-grid">
+                                <div class="detail-item">
+                                    <div class="detail-icon">
+                                        <span class="dashicons dashicons-groups"></span>
+                                    </div>
+                                    <div class="detail-content">
+                                        <div class="detail-label">Program</div>
+                                        <div class="detail-value"><?php echo esc_html($member['program']); ?></div>
+                                        <?php if (isset($member['membership_type']) && !empty($member['membership_type'])): ?>
+                                        <div class="detail-sub"><?php echo esc_html($member['membership_type']); ?> Membership</div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+
+                                <div class="detail-item">
+                                    <div class="detail-icon">
+                                        <span class="dashicons dashicons-calendar-alt"></span>
+                                    </div>
+                                    <div class="detail-content">
+                                        <div class="detail-label">Expired</div>
+                                        <div class="detail-value"><?php echo esc_html($member['expired_date']); ?></div>
+                                        <div class="detail-sub"><?php echo esc_html($member['days_since_expiry']); ?> ago</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Member Actions -->
+                        <div class="member-card-footer">
+                            <div class="member-actions">
+                                <?php if (isset($member['user_id'])): ?>
+                                <a href="<?php echo admin_url('user-edit.php?user_id=' . $member['user_id']); ?>"
+                                   class="action-btn view-profile" target="_blank" title="View Profile">
+                                    <span class="dashicons dashicons-admin-users"></span>
+                                    <span class="btn-text">Profile</span>
+                                </a>
+                                <?php endif; ?>
+                                <?php if (isset($member['subscription_id'])): ?>
+                                <a href="<?php echo admin_url('admin.php?page=memberpress-subscriptions&action=edit&id=' . $member['subscription_id']); ?>"
+                                   class="action-btn view-subscription" target="_blank" title="View Subscription">
+                                    <span class="dashicons dashicons-admin-settings"></span>
+                                    <span class="btn-text">Subscription</span>
+                                </a>
+                                <?php endif; ?>
+                                <a href="mailto:<?php echo esc_attr($member['email']); ?>"
+                                   class="action-btn send-email" title="Send Email">
+                                    <span class="dashicons dashicons-email-alt"></span>
+                                    <span class="btn-text">Email</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
                 </div>
                 <div class="breakdown-summary">
                     <p><strong>Total Non-Renewed:</strong> <?php echo count($non_renewed_members); ?></p>
@@ -915,38 +965,229 @@ function dashboard_stats_shortcode() {
         color: #000000;
     }
     
-    .non-renewed-list {
+    /* Card-based layout for non-renewed members */
+    .non-renewed-cards-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 20px;
         margin-bottom: 20px;
     }
-    
-    .non-renewed-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 14px;
+
+    .non-renewed-member-card {
         background: white;
+        border: 1px solid #e5e5e5;
+        border-radius: 8px;
+        overflow: hidden;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
-    
-    .non-renewed-table th {
+
+    .non-renewed-member-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border-color: #FF6B6B;
+    }
+
+    .member-card-header {
         background: #f8f9fa;
-        color: #000000;
-        padding: 12px 16px;
-        text-align: left;
-        font-weight: 600;
+        padding: 16px 20px;
         border-bottom: 1px solid #e5e5e5;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .member-card-body {
+        padding: 20px;
+    }
+
+    .member-card-footer {
+        background: #f8f9fa;
+        padding: 16px 20px;
+        border-top: 1px solid #e5e5e5;
+    }
+
+    /* Member info styling for cards */
+    .member-info {
+        flex: 1;
+    }
+
+    .member-name {
+        font-weight: 600;
+        color: #212529;
+        font-size: 16px;
+        margin: 0 0 4px 0;
+        line-height: 1.3;
+    }
+
+    .member-email {
+        font-size: 13px;
+        color: #6c757d;
+        margin: 0;
+    }
+
+    /* Member details grid */
+    .member-details-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    .detail-item {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+    }
+
+    .detail-icon {
+        width: 32px;
+        height: 32px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .detail-icon .dashicons {
+        font-size: 16px;
+        color: #6c757d;
+    }
+
+    .detail-content {
+        flex: 1;
+    }
+
+    .detail-label {
+        font-size: 11px;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+
+    .detail-value {
+        font-weight: 600;
+        color: #212529;
+        font-size: 14px;
+        line-height: 1.3;
+        margin-bottom: 2px;
+    }
+
+    .detail-sub {
         font-size: 12px;
+        color: #6c757d;
+        line-height: 1.3;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-    
-    .non-renewed-table td {
-        padding: 12px 16px;
-        border-bottom: 1px solid #f1f1f1;
-        vertical-align: middle;
-        color: #000000;
+
+    .status-badge.expired {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
     }
-    
-    .non-renewed-table tr:hover {
-        background: #fafafa;
+
+    .status-badge.overdue {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+
+    .status-badge.recent {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+    }
+
+    /* Action buttons for card layout */
+    .member-actions {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        justify-content: flex-start;
+    }
+
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: 6px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        border: 1px solid #e5e5e5;
+        font-size: 13px;
+        font-weight: 500;
+        flex: 1;
+        justify-content: center;
+        min-width: 0;
+    }
+
+    .action-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        text-decoration: none;
+    }
+
+    .action-btn.view-profile {
+        background: #e3f2fd;
+        color: #1976d2;
+        border-color: #bbdefb;
+    }
+
+    .action-btn.view-profile:hover {
+        background: #bbdefb;
+        color: #1565c0;
+        border-color: #90caf9;
+    }
+
+    .action-btn.view-subscription {
+        background: #f3e5f5;
+        color: #7b1fa2;
+        border-color: #e1bee7;
+    }
+
+    .action-btn.view-subscription:hover {
+        background: #e1bee7;
+        color: #6a1b9a;
+        border-color: #ce93d8;
+    }
+
+    .action-btn.send-email {
+        background: #e8f5e8;
+        color: #388e3c;
+        border-color: #c8e6c9;
+    }
+
+    .action-btn.send-email:hover {
+        background: #c8e6c9;
+        color: #2e7d32;
+        border-color: #a5d6a7;
+    }
+
+    .action-btn .dashicons {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+    }
+
+    .btn-text {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     
     .no-data {
@@ -1037,18 +1278,25 @@ function dashboard_stats_shortcode() {
             font-size: 13px;
         }
         
-        .non-renewed-table {
-            font-size: 13px;
+        /* Responsive cards for tablet */
+        .non-renewed-cards-container {
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 16px;
         }
-        
-        .non-renewed-table th,
-        .non-renewed-table td {
-            padding: 10px 12px;
+
+        .member-details-grid {
+            grid-template-columns: 1fr;
+            gap: 16px;
         }
-        
-        .non-renewed-table th:nth-child(5),
-        .non-renewed-table td:nth-child(5) {
-            display: none;
+
+        .member-actions {
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 10px 16px;
+            justify-content: flex-start;
         }
     }
     
@@ -1075,9 +1323,44 @@ function dashboard_stats_shortcode() {
             grid-template-columns: 1fr;
         }
         
-        .non-renewed-table th:nth-child(4),
-        .non-renewed-table td:nth-child(4) {
-            display: none;
+        /* Mobile responsive cards */
+        .non-renewed-cards-container {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .member-card-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .member-details-grid {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .detail-item {
+            gap: 8px;
+        }
+
+        .detail-icon {
+            width: 28px;
+            height: 28px;
+        }
+
+        .member-actions {
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 12px 16px;
+            font-size: 14px;
+        }
+
+        .btn-text {
+            display: block;
         }
     }
     </style>
@@ -1085,28 +1368,348 @@ function dashboard_stats_shortcode() {
     return ob_get_clean();
 }
 
-// Helper function to get all active members across all programs (current)
-function get_all_active_members() {
+// NEW: Function to get active members from the 7 defined program groups using proven logic
+function get_active_members_from_defined_groups($date_from = null, $date_to = null) {
     global $wpdb;
-    
+
     // Check if MemberPress transactions table exists
     $txn_table = $wpdb->prefix . 'mepr_transactions';
     $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$txn_table'") == $txn_table;
-    
+
+    if (!$table_exists) {
+        return ['total_count' => 0, 'group_breakdown' => []];
+    }
+
+    // Get all groups using the same query as active-members-test.php
+    $groups = $wpdb->get_results("SELECT ID, post_title FROM {$wpdb->posts} WHERE post_type = 'memberpressgroup' AND post_status IN ('publish', 'private') ORDER BY post_title");
+
+    // Define the 7 program groups (same as active-members-test.php)
+    $defined_groups = [
+        'Mini Cadet Boys (9-11 Years) Group 1',
+        'Cadet Boys Group 1',
+        'Cadet Boys Group 2',
+        'Youth Boys Group 1',
+        'Youth Boys Group 2',
+        'Mini Cadets Girls Group 1',
+        'Youth Girls Group 1'
+    ];
+
+    $total_active_members = [];
+    $group_breakdown = [];
+
+    foreach ($defined_groups as $group_name) {
+        // Find the group - exact matching
+        $group = null;
+        foreach ($groups as $g) {
+            if (strcasecmp($g->post_title, $group_name) === 0) {
+                $group = $g;
+                break;
+            }
+        }
+
+        if (!$group) {
+            $group_breakdown[$group_name] = 0;
+            continue;
+        }
+
+        // Use the EXACT same logic as active-members-test.php
+        $group_memberships = wcb_get_group_memberships($group->ID);
+        $group_member_count = 0;
+
+        if (!empty($group_memberships)) {
+            $membership_ids = array_map(function($m) { return $m->ID; }, $group_memberships);
+            $placeholders = implode(',', array_fill(0, count($membership_ids), '%d'));
+
+            // Get members who have active transactions for memberships in this group
+            // Use EXACT same query as active-members-test.php (line 320-329)
+            $group_members = $wpdb->get_results($wpdb->prepare("
+                SELECT DISTINCT u.ID
+                FROM {$wpdb->users} u
+                JOIN {$txn_table} t ON u.ID = t.user_id
+                WHERE t.product_id IN ({$placeholders})
+                AND t.status IN ('confirmed', 'complete')
+                AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+                AND u.user_login != 'bwgdev'
+                ORDER BY u.ID
+            ", ...$membership_ids));
+
+            $group_member_ids = array_column($group_members, 'ID');
+            $group_member_count = count($group_member_ids);
+
+            // Add to total (avoiding duplicates across groups)
+            foreach ($group_member_ids as $member_id) {
+                $total_active_members[$member_id] = true;
+            }
+        }
+
+        $group_breakdown[$group_name] = $group_member_count;
+    }
+
+    return [
+        'total_count' => count($total_active_members),
+        'group_breakdown' => $group_breakdown
+    ];
+}
+
+// NEW: Function to get active groups breakdown using proven logic
+function get_active_groups_breakdown($date_from = null, $date_to = null) {
+    $active_members_data = get_active_members_from_defined_groups($date_from, $date_to);
+    return $active_members_data['group_breakdown'];
+}
+
+// NEW: Helper function to get just the member IDs from defined groups
+function get_active_member_ids_from_defined_groups($date_from = null, $date_to = null) {
+    global $wpdb;
+
+    // Check if MemberPress transactions table exists
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$txn_table'") == $txn_table;
+
     if (!$table_exists) {
         return [];
     }
-    
-    // Get all users with active MemberPress memberships across all programs
-    $results = $wpdb->get_results("
+
+    // Get all groups using the same query as active-members-test.php
+    $groups = $wpdb->get_results("SELECT ID, post_title FROM {$wpdb->posts} WHERE post_type = 'memberpressgroup' AND post_status IN ('publish', 'private') ORDER BY post_title");
+
+    // Define the 7 program groups (same as active-members-test.php)
+    $defined_groups = [
+        'Mini Cadet Boys (9-11 Years) Group 1',
+        'Cadet Boys Group 1',
+        'Cadet Boys Group 2',
+        'Youth Boys Group 1',
+        'Youth Boys Group 2',
+        'Mini Cadets Girls Group 1',
+        'Youth Girls Group 1'
+    ];
+
+    $total_active_members = [];
+
+    foreach ($defined_groups as $group_name) {
+        // Find the group - exact matching
+        $group = null;
+        foreach ($groups as $g) {
+            if (strcasecmp($g->post_title, $group_name) === 0) {
+                $group = $g;
+                break;
+            }
+        }
+
+        if (!$group) {
+            continue;
+        }
+
+        // Use the EXACT same logic as active-members-test.php
+        $group_memberships = wcb_get_group_memberships($group->ID);
+
+        if (!empty($group_memberships)) {
+            $membership_ids = array_map(function($m) { return $m->ID; }, $group_memberships);
+            $placeholders = implode(',', array_fill(0, count($membership_ids), '%d'));
+
+            // Get members who have active transactions for memberships in this group
+            if ($date_from && $date_to) {
+                // Filter by date range if provided
+                $group_members = $wpdb->get_results($wpdb->prepare("
+                    SELECT DISTINCT u.ID
+                    FROM {$wpdb->users} u
+                    JOIN {$txn_table} t ON u.ID = t.user_id
+                    WHERE t.product_id IN ({$placeholders})
+                    AND t.status IN ('confirmed', 'complete')
+                    AND DATE(t.created_at) <= %s
+                    AND (
+                        t.expires_at IS NULL
+                        OR t.expires_at = '0000-00-00 00:00:00'
+                        OR DATE(t.expires_at) >= %s
+                    )
+                    AND u.user_login != 'bwgdev'
+                    ORDER BY u.ID
+                ", array_merge($membership_ids, [$date_to, $date_from])));
+            } else {
+                // No date filter - get currently active members
+                $group_members = $wpdb->get_results($wpdb->prepare("
+                    SELECT DISTINCT u.ID
+                    FROM {$wpdb->users} u
+                    JOIN {$txn_table} t ON u.ID = t.user_id
+                    WHERE t.product_id IN ({$placeholders})
+                    AND t.status IN ('confirmed', 'complete')
+                    AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+                    AND u.user_login != 'bwgdev'
+                    ORDER BY u.ID
+                ", ...$membership_ids));
+            }
+
+            $group_member_ids = array_column($group_members, 'ID');
+
+            // Add to total (avoiding duplicates across groups)
+            foreach ($group_member_ids as $member_id) {
+                $total_active_members[$member_id] = true;
+            }
+        }
+    }
+
+    return array_keys($total_active_members);
+}
+
+// NEW: Function to get non-renewed members from defined groups only
+function get_non_renewed_members_from_defined_groups($date_from, $date_to) {
+    global $wpdb;
+
+    // Check if MemberPress transactions table exists
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$txn_table'") == $txn_table;
+
+    if (!$table_exists) {
+        return [];
+    }
+
+    // Get all groups and find the defined groups
+    $groups = $wpdb->get_results("SELECT ID, post_title FROM {$wpdb->posts} WHERE post_type = 'memberpressgroup' AND post_status IN ('publish', 'private') ORDER BY post_title");
+
+    // Define the 7 program groups
+    $defined_groups = [
+        'Mini Cadet Boys (9-11 Years) Group 1',
+        'Cadet Boys Group 1',
+        'Cadet Boys Group 2',
+        'Youth Boys Group 1',
+        'Youth Boys Group 2',
+        'Mini Cadets Girls Group 1',
+        'Youth Girls Group 1'
+    ];
+
+    // Get all membership IDs from the defined groups
+    $all_group_membership_ids = [];
+    foreach ($defined_groups as $group_name) {
+        // Find the group
+        $group = null;
+        foreach ($groups as $g) {
+            if (strcasecmp($g->post_title, $group_name) === 0) {
+                $group = $g;
+                break;
+            }
+        }
+
+        if ($group) {
+            $group_memberships = wcb_get_group_memberships($group->ID);
+            if (!empty($group_memberships)) {
+                $membership_ids = array_map(function($m) { return $m->ID; }, $group_memberships);
+                $all_group_membership_ids = array_merge($all_group_membership_ids, $membership_ids);
+            }
+        }
+    }
+
+    if (empty($all_group_membership_ids)) {
+        return [];
+    }
+
+    $placeholders = implode(',', array_fill(0, count($all_group_membership_ids), '%d'));
+
+    // Get all transactions that expired within the date range for defined group memberships only
+    $expired_transactions = $wpdb->get_results($wpdb->prepare("
+        SELECT t.*, u.display_name, u.user_email, p.post_title as program_name,
+               s.id as subscription_id, s.status as subscription_status
+        FROM {$txn_table} t
+        JOIN {$wpdb->users} u ON t.user_id = u.ID
+        JOIN {$wpdb->posts} p ON t.product_id = p.ID
+        LEFT JOIN {$wpdb->prefix}mepr_subscriptions s ON t.subscription_id = s.id
+        WHERE t.product_id IN ({$placeholders})
+        AND t.status IN ('confirmed', 'complete')
+        AND t.expires_at IS NOT NULL
+        AND t.expires_at != '0000-00-00 00:00:00'
+        AND DATE(t.expires_at) BETWEEN %s AND %s
+        ORDER BY t.expires_at DESC
+    ", array_merge($all_group_membership_ids, [$date_from, $date_to])));
+
+    $non_renewed_members = [];
+
+    foreach ($expired_transactions as $expired_txn) {
+        $user_id = $expired_txn->user_id;
+
+        // Check if this user renewed THIS SPECIFIC membership or got a new one after expiry
+        $renewed_membership = $wpdb->get_var($wpdb->prepare("
+            SELECT COUNT(*)
+            FROM {$txn_table} t
+            WHERE t.user_id = %d
+            AND t.status IN ('confirmed', 'complete')
+            AND t.created_at > %s
+            AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+        ", $user_id, $expired_txn->expires_at));
+
+        // If no new membership after expiry, this user didn't renew
+        if ($renewed_membership == 0) {
+            $expired_date = date('d/m/Y', strtotime($expired_txn->expires_at));
+            $days_since_expiry = floor((time() - strtotime($expired_txn->expires_at)) / (60 * 60 * 24));
+
+            // Determine status based on days since expiry
+            $status_class = 'expired';
+            $status_text = 'Expired';
+            if ($days_since_expiry > 30) {
+                $status_class = 'overdue';
+                $status_text = 'Overdue';
+            } elseif ($days_since_expiry <= 7) {
+                $status_class = 'recent';
+                $status_text = 'Recent';
+            }
+
+            // Get membership type from product title
+            $membership_type = '';
+            if (stripos($expired_txn->program_name, 'monthly') !== false) {
+                $membership_type = 'Monthly';
+            } elseif (stripos($expired_txn->program_name, 'weekly') !== false) {
+                $membership_type = 'Weekly';
+            } elseif (stripos($expired_txn->program_name, 'term') !== false) {
+                $membership_type = 'Full Term';
+            }
+
+            // Avoid duplicates (same user with multiple expired memberships)
+            $user_key = $user_id . '_' . $expired_txn->product_id;
+            if (!isset($non_renewed_members[$user_key])) {
+                $non_renewed_members[$user_key] = [
+                    'user_id' => $user_id,
+                    'name' => $expired_txn->display_name,
+                    'email' => $expired_txn->user_email,
+                    'program' => $expired_txn->program_name,
+                    'membership_type' => $membership_type,
+                    'expired_date' => $expired_date,
+                    'days_since_expiry' => $days_since_expiry . ' days',
+                    'status_class' => $status_class,
+                    'status_text' => $status_text,
+                    'subscription_id' => $expired_txn->subscription_id,
+                    'subscription_status' => $expired_txn->subscription_status
+                ];
+            }
+        }
+    }
+
+    return array_values($non_renewed_members);
+}
+
+// Helper function to get all active members across all programs (current)
+function get_all_active_members() {
+    global $wpdb;
+
+    // Check if MemberPress transactions table exists
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$txn_table'") == $txn_table;
+
+    if (!$table_exists) {
+        return [];
+    }
+
+    // Get WCB Mentoring membership ID
+    $wcb_mentoring_id = 1738;
+
+    // Get all users with active MemberPress memberships excluding WCB Mentoring and admin users
+    $results = $wpdb->get_results($wpdb->prepare("
         SELECT DISTINCT u.ID
         FROM {$wpdb->users} u
         JOIN {$txn_table} t ON u.ID = t.user_id
         WHERE t.status IN ('confirmed', 'complete')
         AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+        AND t.product_id != %d
+        AND u.user_login != 'bwgdev'
         ORDER BY u.ID
-    ");
-    
+    ", $wcb_mentoring_id));
+
     return array_column($results, 'ID');
 }
 
@@ -1225,9 +1828,29 @@ function get_non_renewed_members($date_from, $date_to) {
     return array_values($non_renewed_members);
 }
 
-// Helper function to get waitlist member count
+// Helper function to get waitlist member count (old method)
 function get_waitlist_member_count() {
     return WCB_MemberPress_Helper::get_waitlist_count();
+}
+
+// Helper function to get waitlist member count using same logic as student table
+function get_waitlist_member_count_consistent() {
+    global $wpdb;
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+
+    $waitlist_count = $wpdb->get_var("
+        SELECT COUNT(DISTINCT u.ID)
+        FROM {$wpdb->users} u
+        JOIN {$txn_table} t ON u.ID = t.user_id
+        JOIN {$wpdb->posts} p ON t.product_id = p.ID
+        WHERE t.status IN ('confirmed', 'complete')
+        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+        AND p.post_type = 'memberpressproduct'
+        AND p.post_title LIKE '%waitlist%'
+        AND u.user_login != 'bwgdev'
+    ");
+
+    return (int) $waitlist_count;
 }
 
 // Helper function to get member ethnicity breakdown
@@ -1260,7 +1883,7 @@ function get_member_ethnicity_breakdown($active_members = null) {
     $polynesian_patterns = [
         'samoan', 'samoa', 'tongan', 'tonga', 'fijian', 'fiji', 'cook island', 'cook islands',
         'tahitian', 'tahiti', 'hawaiian', 'hawaii', 'niuean', 'niue', 'tokelauan', 'tokelau',
-        'tuvaluan', 'tuvalu', 'kiribati', 'marshal', 'solomon', 'vanuatu', 'polynesian', 'pacific'
+        'tuvaluan', 'tuavaluan', 'tuvalu', 'kiribati', 'marshal', 'solomon', 'vanuatu', 'polynesian', 'pacific'
     ];
     
     $grouped_breakdown = [
@@ -1293,10 +1916,10 @@ function get_member_ethnicity_breakdown($active_members = null) {
             $found_categories['Māori'] = true;
         }
         
-        // Check for Polynesian patterns in full string
+        // Check for Polynesian patterns in full string (high priority)
         foreach ($polynesian_patterns as $pattern) {
             if (strpos($ethnicity_value, $pattern) !== false) {
-                $found_categories['Polynesia'] = true;
+                $found_categories['Pacific Island'] = true;
                 break;
             }
         }
@@ -1334,16 +1957,16 @@ function get_member_ethnicity_breakdown($active_members = null) {
             foreach ($ethnicities as $single_ethnicity) {
                 $single_ethnicity = trim(strtolower($single_ethnicity));
                 
-                // Check for Māori (highest priority after specific countries)
+                // Check for Māori (highest priority)
                 if (strpos($single_ethnicity, 'maori') !== false || strpos($single_ethnicity, 'māori') !== false) {
                     $found_categories['Māori'] = true;
                 }
-                // Check for Polynesian ethnicities
+                // Check for Polynesian ethnicities (second highest priority)
                 else {
                     $is_polynesian = false;
                     foreach ($polynesian_patterns as $pattern) {
                         if (strpos($single_ethnicity, $pattern) !== false) {
-                            $found_categories['Polynesia'] = true;
+                            $found_categories['Pacific Island'] = true;
                             $is_polynesian = true;
                             break;
                         }
@@ -1396,20 +2019,24 @@ function get_member_ethnicity_breakdown($active_members = null) {
             $found_categories['Other'] = true;
         }
         
-        // Priority assignment: Māori > Asian > Pacific Island > NZ European > Other
+        // Priority assignment: Māori > Pacific Island > Asian > NZ European > Other
+        // Pacific Island should have higher priority than Asian to ensure proper categorization
+        $assigned_category = null;
+
         if (isset($found_categories['Māori'])) {
             $assigned_category = 'Māori';
+        } elseif (isset($found_categories['Pacific Island'])) {
+            $assigned_category = 'Pacific Island';
+            // Store detailed breakdown for Pacific Island
+            $detailed_breakdowns['Pacific Island'][$ethnicity_value] = isset($detailed_breakdowns['Pacific Island'][$ethnicity_value]) ? $detailed_breakdowns['Pacific Island'][$ethnicity_value] + 1 : 1;
         } elseif (isset($found_categories['Asian'])) {
             $assigned_category = 'Asian';
             // Store detailed breakdown for Asian
             $detailed_breakdowns['Asian'][$ethnicity_value] = isset($detailed_breakdowns['Asian'][$ethnicity_value]) ? $detailed_breakdowns['Asian'][$ethnicity_value] + 1 : 1;
-        } elseif (isset($found_categories['Polynesia'])) {
-            $assigned_category = 'Pacific Island';
-            // Store detailed breakdown for Pacific Island
-            $detailed_breakdowns['Pacific Island'][$ethnicity_value] = isset($detailed_breakdowns['Pacific Island'][$ethnicity_value]) ? $detailed_breakdowns['Pacific Island'][$ethnicity_value] + 1 : 1;
         } elseif (isset($found_categories['New Zealand']) || isset($found_categories['European'])) {
             $assigned_category = 'NZ European';
-        } elseif (isset($found_categories['Other'])) {
+        } else {
+            // Only assign to Other if no other category was found
             $assigned_category = 'Other';
             // Store detailed breakdown for Other
             $detailed_breakdowns['Other'][$ethnicity_value] = isset($detailed_breakdowns['Other'][$ethnicity_value]) ? $detailed_breakdowns['Other'][$ethnicity_value] + 1 : 1;
@@ -1580,64 +2207,132 @@ function get_largest_age_group($age_breakdown) {
     return 'Unknown'; // fallback
 }
 
-// Helper function to get active memberships breakdown
+// Helper function to get active groups breakdown (updated to use Groups instead of individual memberships)
 function get_active_memberships_breakdown($date_from = null, $date_to = null) {
     global $wpdb;
-    
+
     // Check if MemberPress transactions table exists
     $txn_table = $wpdb->prefix . 'mepr_transactions';
     $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$txn_table'") == $txn_table;
-    
+
     if (!$table_exists) {
         return [];
     }
-    
-    // Get all published MemberPress products
-    $memberships = get_posts([
-        'post_type' => 'memberpressproduct',
-        'numberposts' => -1,
-        'post_status' => 'publish'
+
+    // Get all published Groups first, fallback to individual memberships if no groups exist
+    $groups = get_posts([
+        'post_type' => 'memberpressgroup',
+        'post_status' => 'publish',
+        'posts_per_page' => -1,
+        'orderby' => 'title',
+        'order' => 'ASC'
     ]);
-    
-    $memberships_breakdown = [];
-    
-    foreach ($memberships as $membership) {
-        if ($date_from && $date_to) {
-            // Get members who were active during the date range for this specific membership
-            $results = $wpdb->get_results($wpdb->prepare("
-                SELECT DISTINCT u.ID
-                FROM {$wpdb->users} u
-                JOIN {$txn_table} t ON u.ID = t.user_id
-                WHERE t.product_id = %d 
-                AND t.status IN ('confirmed', 'complete')
-                AND DATE(t.created_at) <= %s
-                AND (
-                    t.expires_at IS NULL 
-                    OR t.expires_at = '0000-00-00 00:00:00' 
-                    OR DATE(t.expires_at) >= %s
-                )
-            ", $membership->ID, $date_to, $date_from));
-        } else {
-            // Use current active logic
-            $results = $wpdb->get_results($wpdb->prepare("
-                SELECT DISTINCT u.ID
-                FROM {$wpdb->users} u
-                JOIN {$txn_table} t ON u.ID = t.user_id
-                WHERE t.product_id = %d 
-                AND t.status IN ('confirmed', 'complete')
-                AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-            ", $membership->ID));
+
+    $groups_breakdown = [];
+
+    if (!empty($groups)) {
+        // Use Groups approach
+        foreach ($groups as $group) {
+            // Get all membership IDs in this group
+            $membership_ids = $wpdb->get_col($wpdb->prepare("
+                SELECT p.ID
+                FROM {$wpdb->posts} p
+                JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+                WHERE pm.meta_key = '_mepr_group_id'
+                AND pm.meta_value = %d
+                AND p.post_type = 'memberpressproduct'
+                AND p.post_status = 'publish'
+            ", $group->ID));
+
+            if (empty($membership_ids)) {
+                continue;
+            }
+
+            // Count unique users with active transactions for any membership in this group
+            $placeholders = implode(',', array_fill(0, count($membership_ids), '%d'));
+
+            if ($date_from && $date_to) {
+                // Get members who were active during the date range for this group
+                $query = "
+                    SELECT COUNT(DISTINCT t.user_id)
+                    FROM {$txn_table} t
+                    WHERE t.product_id IN ({$placeholders})
+                    AND t.status IN ('confirmed', 'complete')
+                    AND DATE(t.created_at) <= %s
+                    AND (
+                        t.expires_at IS NULL
+                        OR t.expires_at = '0000-00-00 00:00:00'
+                        OR DATE(t.expires_at) >= %s
+                    )
+                ";
+                $member_count = (int) $wpdb->get_var($wpdb->prepare($query, ...array_merge($membership_ids, [$date_to, $date_from])));
+            } else {
+                // Use current active logic
+                $query = "
+                    SELECT COUNT(DISTINCT t.user_id)
+                    FROM {$txn_table} t
+                    WHERE t.product_id IN ({$placeholders})
+                    AND t.status IN ('confirmed', 'complete')
+                    AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+                ";
+                $member_count = (int) $wpdb->get_var($wpdb->prepare($query, ...$membership_ids));
+            }
+
+            // Only include groups with active members
+            if ($member_count > 0) {
+                $groups_breakdown[$group->post_title] = $member_count;
+            }
         }
-        
-        $member_count = count($results);
-        
-        // Only include memberships with active members
-        if ($member_count > 0) {
-            $memberships_breakdown[$membership->post_title] = $member_count;
+
+        return $groups_breakdown;
+    } else {
+        // Fallback: use individual memberships if no groups exist
+        $memberships = get_posts([
+            'post_type' => 'memberpressproduct',
+            'numberposts' => -1,
+            'post_status' => 'publish'
+        ]);
+
+        $memberships_breakdown = [];
+
+        foreach ($memberships as $membership) {
+            if ($date_from && $date_to) {
+                // Get members who were active during the date range for this specific membership
+                $results = $wpdb->get_results($wpdb->prepare("
+                    SELECT DISTINCT u.ID
+                    FROM {$wpdb->users} u
+                    JOIN {$txn_table} t ON u.ID = t.user_id
+                    WHERE t.product_id = %d
+                    AND t.status IN ('confirmed', 'complete')
+                    AND DATE(t.created_at) <= %s
+                    AND (
+                        t.expires_at IS NULL
+                        OR t.expires_at = '0000-00-00 00:00:00'
+                        OR DATE(t.expires_at) >= %s
+                    )
+                ", $membership->ID, $date_to, $date_from));
+            } else {
+                // Use current active logic
+                $results = $wpdb->get_results($wpdb->prepare("
+                    SELECT DISTINCT u.ID
+                    FROM {$wpdb->users} u
+                    JOIN {$txn_table} t ON u.ID = t.user_id
+                    WHERE t.product_id = %d
+                    AND t.status IN ('confirmed', 'complete')
+                    AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+                ", $membership->ID));
+            }
+
+            $member_count = count($results);
+
+            // Only include memberships with active members
+            if ($member_count > 0) {
+                $memberships_breakdown[$membership->post_title] = $member_count;
+            }
         }
+
+        return $memberships_breakdown;
     }
-    
-    return $memberships_breakdown;
 }
 
 // Helper function to get most popular membership

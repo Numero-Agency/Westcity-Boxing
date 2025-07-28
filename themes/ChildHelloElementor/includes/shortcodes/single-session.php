@@ -61,8 +61,26 @@ function single_session_shortcode($atts) {
         }
         
         // Format date
-        $formatted_date = $date ? date('l, F j, Y', strtotime($date)) : 'Unknown Date';
-        $formatted_time = $date ? date('g:i A', strtotime($date)) : '';
+        $formatted_date = $date ? date('d/m/Y', strtotime($date)) : 'Unknown Date';
+
+        // Format time - try dedicated time fields first
+        $session_time = get_field('session_time', $session_id);
+        $start_time = get_field('start_time', $session_id);
+
+        $formatted_time = '';
+        if ($session_time) {
+            $formatted_time = date('g:i A', strtotime($session_time));
+        } elseif ($start_time) {
+            $formatted_time = date('g:i A', strtotime($start_time));
+        } elseif ($date && strpos($date, ':') !== false) {
+            // Only extract time if date field actually contains time
+            $formatted_time = date('g:i A', strtotime($date));
+        }
+
+        // Don't show midnight time
+        if ($formatted_time === '12:00 AM') {
+            $formatted_time = '';
+        }
         
         // Format duration
         $formatted_duration = $duration ? date('g:i A', strtotime($duration)) : '';
@@ -100,8 +118,26 @@ function single_session_shortcode($atts) {
         }
         
         // Format date
-        $formatted_date = $date ? date('l, F j, Y', strtotime($date)) : 'Unknown Date';
-        $formatted_time = $date ? date('g:i A', strtotime($date)) : '';
+        $formatted_date = $date ? date('d/m/Y', strtotime($date)) : 'Unknown Date';
+
+        // Format time - try dedicated time fields first
+        $session_time = get_field('session_time', $session_id);
+        $start_time = get_field('start_time', $session_id);
+
+        $formatted_time = '';
+        if ($session_time) {
+            $formatted_time = date('g:i A', strtotime($session_time));
+        } elseif ($start_time) {
+            $formatted_time = date('g:i A', strtotime($start_time));
+        } elseif ($date && strpos($date, ':') !== false) {
+            // Only extract time if date field actually contains time
+            $formatted_time = date('g:i A', strtotime($date));
+        }
+
+        // Don't show midnight time
+        if ($formatted_time === '12:00 AM') {
+            $formatted_time = '';
+        }
     }
     
     // Debug: Log what we're getting from ACF
