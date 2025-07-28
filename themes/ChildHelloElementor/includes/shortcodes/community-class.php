@@ -1165,7 +1165,7 @@ function wcb_ajax_load_community_members() {
     $rows = '';
     foreach ($users as $user) {
         $membership = wcb_get_user_membership($user->ID);
-        $session_count = wcb_get_user_session_count($user->ID);
+        $session_count = wcb_get_user_community_session_count($user->ID);
         $join_date = date('M j, Y', strtotime($user->user_registered));
 
         // Get member status based on transactions
@@ -1587,6 +1587,74 @@ function wcb_get_user_membership($user_id) {
     }
 
     return 'Community Member';
+}
+
+// Community Class specific session count function
+function wcb_get_user_community_session_count($user_id) {
+    // Get all community sessions (remove meta_query to get all sessions first)
+    $community_sessions = get_posts([
+        'post_type' => 'community_session',
+        'numberposts' => -1,
+        'post_status' => 'publish'
+    ]);
+
+    $session_count = 0;
+
+    // Debug: Log for administrators
+    if (current_user_can('administrator')) {
+        error_log("=== COMMUNITY SESSION DEBUG ===");
+        error_log("Checking sessions for user ID: " . $user_id);
+        error_log("Found " . count($community_sessions) . " community sessions");
+
+        // Debug: Show all session IDs and titles
+        foreach ($community_sessions as $session) {
+            error_log("Session found: ID=" . $session->ID . ", Title=" . $session->post_title);
+        }
+    }
+
+    foreach ($community_sessions as $session) {
+        // Try multiple ways to get attendance data
+        $attendance = get_field('attendance', $session->ID);
+        $attendance_raw = get_post_meta($session->ID, 'attendance', true);
+
+        // Debug: Log attendance data
+        if (current_user_can('administrator')) {
+            error_log("Session " . $session->ID . ":");
+            error_log("  - ACF attendance: " . print_r($attendance, true));
+            error_log("  - Raw meta attendance: " . print_r($attendance_raw, true));
+
+            // Check all meta fields for this session
+            $all_meta = get_post_meta($session->ID);
+            error_log("  - All meta fields: " . print_r($all_meta, true));
+        }
+
+        // Check both ACF and raw meta data
+        $attendance_to_check = $attendance ?: $attendance_raw;
+
+        // Check if user is in attendance array
+        if (is_array($attendance_to_check) && in_array($user_id, $attendance_to_check)) {
+            $session_count++;
+            if (current_user_can('administrator')) {
+                error_log("User " . $user_id . " found in session " . $session->ID);
+            }
+        } elseif (is_array($attendance_to_check)) {
+            // Convert attendance array to integers and check again
+            $attendance_ids = array_map('intval', $attendance_to_check);
+            if (in_array(intval($user_id), $attendance_ids)) {
+                $session_count++;
+                if (current_user_can('administrator')) {
+                    error_log("User " . $user_id . " found in session " . $session->ID . " (after int conversion)");
+                }
+            }
+        }
+    }
+
+    if (current_user_can('administrator')) {
+        error_log("Final session count for user " . $user_id . ": " . $session_count);
+        error_log("=== END COMMUNITY SESSION DEBUG ===");
+    }
+
+    return $session_count;
 }
 
 // Note: wcb_get_user_session_count() function is defined in student-table.php
