@@ -62,6 +62,7 @@ function community_class_shortcode($atts) {
                             <th><span class="dashicons dashicons-admin-users"></span> Name</th>
                             <th><span class="dashicons dashicons-email"></span> Email</th>
                             <th><span class="dashicons dashicons-awards"></span> Membership</th>
+                            <th><span class="dashicons dashicons-yes-alt"></span> Status</th>
                             <th><span class="dashicons dashicons-chart-bar"></span> Sessions</th>
                             <th><span class="dashicons dashicons-calendar-alt"></span> Joined</th>
                             <th><span class="dashicons dashicons-admin-tools"></span> Actions</th>
@@ -406,6 +407,127 @@ function community_class_shortcode($atts) {
                 }
             });
         }
+
+        // Event handlers for dynamically generated buttons
+
+        // View Member button handler
+        $(document).on('click', '.btn-view-member', function(e) {
+            e.preventDefault();
+            var userId = $(this).data('user-id');
+
+            if (userId) {
+                // Open member profile in new tab/window
+                var memberUrl = '/wp-admin/user-edit.php?user_id=' + userId;
+                window.open(memberUrl, '_blank');
+            }
+        });
+
+        // View Session button handler
+        $(document).on('click', '.btn-view-session', function(e) {
+            e.preventDefault();
+            var sessionId = $(this).data('session-id');
+
+            if (sessionId) {
+                // Load session details in a modal or redirect to edit page
+                viewSessionDetails(sessionId);
+            }
+        });
+
+        // Edit Session button handler
+        $(document).on('click', '.btn-edit-session', function(e) {
+            e.preventDefault();
+            var sessionId = $(this).data('session-id');
+
+            if (sessionId) {
+                // Open session edit page
+                var editUrl = '/wp-admin/post.php?post=' + sessionId + '&action=edit';
+                window.open(editUrl, '_blank');
+            }
+        });
+
+        // Function to view session details
+        function viewSessionDetails(sessionId) {
+            $.ajax({
+                url: wcb_ajax.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'wcb_get_session_details',
+                    session_id: sessionId,
+                    nonce: wcb_ajax.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        showSessionDetailsModal(response.data);
+                    } else {
+                        alert('Failed to load session details: ' + response.data);
+                    }
+                },
+                error: function() {
+                    alert('Failed to load session details. Please try again.');
+                }
+            });
+        }
+
+        // Function to show session details in a modal
+        function showSessionDetailsModal(sessionData) {
+            var modalHtml = `
+                <div id="session-details-modal" class="wcb-modal" style="display: block;">
+                    <div class="wcb-modal-overlay" onclick="closeSessionDetailsModal()"></div>
+                    <div class="wcb-modal-content">
+                        <div class="wcb-modal-header">
+                            <h3><span class="dashicons dashicons-calendar-alt"></span> Session Details</h3>
+                            <button class="wcb-close-modal" onclick="closeSessionDetailsModal()">&times;</button>
+                        </div>
+                        <div class="wcb-modal-body">
+                            <div class="session-details">
+                                <div class="detail-row">
+                                    <strong>Date:</strong> ${sessionData.date}
+                                </div>
+                                <div class="detail-row">
+                                    <strong>Time:</strong> ${sessionData.time}
+                                </div>
+                                <div class="detail-row">
+                                    <strong>Instructor:</strong> ${sessionData.instructor}
+                                </div>
+                                <div class="detail-row">
+                                    <strong>Attendees (${sessionData.attendee_count}):</strong>
+                                    <ul class="attendee-list">
+                                        ${sessionData.attendees}
+                                    </ul>
+                                </div>
+                                ${sessionData.notes ? `
+                                <div class="detail-row">
+                                    <strong>Notes:</strong>
+                                    <p>${sessionData.notes}</p>
+                                </div>
+                                ` : ''}
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="btn-submit" onclick="editSession(${sessionData.id})">Edit Session</button>
+                                <button type="button" class="btn-cancel" onclick="closeSessionDetailsModal()">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Remove existing modal if any
+            $('#session-details-modal').remove();
+
+            // Add modal to body
+            $('body').append(modalHtml);
+        }
+
+        // Global functions for modal control
+        window.closeSessionDetailsModal = function() {
+            $('#session-details-modal').remove();
+        };
+
+        window.editSession = function(sessionId) {
+            var editUrl = '/wp-admin/post.php?post=' + sessionId + '&action=edit';
+            window.open(editUrl, '_blank');
+            closeSessionDetailsModal();
+        };
     });
     </script>
     
@@ -772,6 +894,232 @@ function community_class_shortcode($atts) {
         font-size: 14px;
         margin-bottom: 10px;
     }
+
+    /* Action buttons styling */
+    .btn-view-member,
+    .btn-view-session,
+    .btn-edit-session {
+        background: #667eea;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        margin-right: 5px;
+        transition: background 0.3s ease;
+    }
+
+    .btn-view-member:hover,
+    .btn-view-session:hover {
+        background: #5a6fd8;
+    }
+
+    .btn-edit-session {
+        background: #28a745;
+    }
+
+    .btn-edit-session:hover {
+        background: #218838;
+    }
+
+    /* Session details modal styling */
+    .wcb-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 999999;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+
+    .wcb-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(2px);
+        z-index: -1;
+    }
+
+    .wcb-modal-content {
+        position: relative;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        max-width: 600px;
+        width: 100%;
+        max-height: 80vh;
+        overflow: hidden;
+        animation: modalFadeIn 0.3s ease-out;
+        margin: auto;
+        z-index: 1000000;
+    }
+
+    @keyframes modalFadeIn {
+        from {
+            opacity: 0;
+            transform: scale(0.9) translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+    }
+
+    .wcb-modal-header {
+        padding: 15px 20px;
+        border-bottom: 1px solid #ddd;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .wcb-modal-header h3 {
+        margin: 0;
+        color: #333;
+        font-size: 16px;
+        font-weight: normal;
+    }
+
+    .wcb-close-modal {
+        background: none;
+        border: none;
+        font-size: 20px;
+        color: #666;
+        cursor: pointer;
+        padding: 5px;
+    }
+
+    .wcb-close-modal:hover {
+        color: #333;
+    }
+
+    .wcb-modal-body {
+        padding: 20px;
+    }
+
+    .session-details {
+        margin-bottom: 20px;
+    }
+
+    .detail-row {
+        margin-bottom: 15px;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 4px;
+    }
+
+    .detail-row strong {
+        display: block;
+        margin-bottom: 5px;
+        color: #333;
+    }
+
+    .attendee-list {
+        margin: 10px 0 0 0;
+        padding: 0;
+        list-style: none;
+        max-height: 150px;
+        overflow-y: auto;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 10px;
+    }
+
+    .attendee-list li {
+        padding: 5px 0;
+        border-bottom: 1px solid #eee;
+    }
+
+    .attendee-list li:last-child {
+        border-bottom: none;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        padding-top: 15px;
+        border-top: 1px solid #eee;
+    }
+
+    .form-actions .btn-submit,
+    .form-actions .btn-cancel {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    .form-actions .btn-submit {
+        background: #28a745;
+        color: white;
+    }
+
+    .form-actions .btn-submit:hover {
+        background: #218838;
+    }
+
+    .form-actions .btn-cancel {
+        background: #6c757d;
+        color: white;
+    }
+
+    .form-actions .btn-cancel:hover {
+        background: #5a6268;
+    }
+
+    /* Status badges styling */
+    .status-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+    }
+
+    .status-active {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .status-warning {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+
+    .status-expired {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .status-inactive {
+        background: #e2e3e5;
+        color: #383d41;
+        border: 1px solid #d6d8db;
+    }
+
+    .status-unknown {
+        background: #e7f3ff;
+        color: #004085;
+        border: 1px solid #b3d7ff;
+    }
     </style>
     <?php
     return ob_get_clean();
@@ -819,11 +1167,15 @@ function wcb_ajax_load_community_members() {
         $membership = wcb_get_user_membership($user->ID);
         $session_count = wcb_get_user_session_count($user->ID);
         $join_date = date('M j, Y', strtotime($user->user_registered));
-        
+
+        // Get member status based on transactions
+        $status_info = wcb_get_member_status($user->ID);
+
         $rows .= '<tr>';
         $rows .= '<td><strong>' . esc_html($user->display_name) . '</strong></td>';
         $rows .= '<td>' . esc_html($user->user_email) . '</td>';
         $rows .= '<td>' . esc_html($membership) . '</td>';
+        $rows .= '<td>' . $status_info['html'] . '</td>';
         $rows .= '<td>' . intval($session_count) . '</td>';
         $rows .= '<td>' . esc_html($join_date) . '</td>';
         $rows .= '<td><button class="btn-view-member" data-user-id="' . $user->ID . '">View</button></td>';
@@ -887,9 +1239,53 @@ function wcb_ajax_load_community_sessions() {
         $session_date = get_field('session_date', $session->ID);
         $instructor_id = get_field('instructor', $session->ID);
         $attendance = get_field('attendance', $session->ID);
-        
-        $formatted_date = $session_date ? date('M j, Y', strtotime($session_date)) : 'N/A';
-        $formatted_time = $session_date ? date('g:i A', strtotime($session_date)) : 'N/A';
+
+        // Try multiple ways to get the date
+        $date_to_use = null;
+
+        // Method 1: Try ACF field
+        if (!empty($session_date)) {
+            $date_to_use = $session_date;
+        }
+
+        // Method 2: Try raw meta value
+        if (empty($date_to_use)) {
+            $date_to_use = get_post_meta($session->ID, 'session_date', true);
+        }
+
+        // Method 3: Try field_ prefixed meta (ACF sometimes stores this way)
+        if (empty($date_to_use)) {
+            $date_to_use = get_post_meta($session->ID, 'field_session_date', true);
+        }
+
+        // Method 4: Fallback to post date
+        if (empty($date_to_use)) {
+            $date_to_use = $session->post_date;
+        }
+
+        // Format the date
+        if ($date_to_use) {
+            // Handle different date formats
+            $timestamp = false;
+
+            if (is_numeric($date_to_use)) {
+                $timestamp = $date_to_use;
+            } elseif (strtotime($date_to_use)) {
+                $timestamp = strtotime($date_to_use);
+            }
+
+            if ($timestamp && $timestamp > 0) {
+                $formatted_date = date('M j, Y', $timestamp);
+                $formatted_time = date('g:i A', $timestamp);
+            } else {
+                // Last resort: use post date
+                $formatted_date = date('M j, Y', strtotime($session->post_date));
+                $formatted_time = date('g:i A', strtotime($session->post_date));
+            }
+        } else {
+            $formatted_date = date('M j, Y', strtotime($session->post_date));
+            $formatted_time = date('g:i A', strtotime($session->post_date));
+        }
         
         $instructor = $instructor_id ? get_user_by('ID', $instructor_id) : null;
         $instructor_name = $instructor ? $instructor->display_name : 'N/A';
@@ -996,6 +1392,118 @@ function wcb_ajax_add_community_session() {
 add_action('wp_ajax_wcb_add_community_session', 'wcb_ajax_add_community_session');
 add_action('wp_ajax_nopriv_wcb_add_community_session', 'wcb_ajax_add_community_session');
 
+// Get Session Details
+function wcb_ajax_get_session_details() {
+    if (!wp_verify_nonce($_POST['nonce'], 'wcb_nonce')) {
+        wp_die('Security check failed');
+    }
+
+    $session_id = intval($_POST['session_id']);
+
+    if (!$session_id) {
+        wp_send_json_error('Invalid session ID');
+        return;
+    }
+
+    $session = get_post($session_id);
+
+    if (!$session || $session->post_type !== 'community_session') {
+        wp_send_json_error('Session not found');
+        return;
+    }
+
+    // Get session data
+    $session_date = get_field('session_date', $session_id);
+    $instructor_id = get_field('instructor', $session_id);
+    $attendance = get_field('attendance', $session_id);
+    $notes = get_field('session_notes', $session_id);
+
+    // Try multiple ways to get the date (same logic as table)
+    $date_to_use = null;
+
+    // Method 1: Try ACF field
+    if (!empty($session_date)) {
+        $date_to_use = $session_date;
+    }
+
+    // Method 2: Try raw meta value
+    if (empty($date_to_use)) {
+        $date_to_use = get_post_meta($session_id, 'session_date', true);
+    }
+
+    // Method 3: Try field_ prefixed meta (ACF sometimes stores this way)
+    if (empty($date_to_use)) {
+        $date_to_use = get_post_meta($session_id, 'field_session_date', true);
+    }
+
+    // Method 4: Fallback to post date
+    if (empty($date_to_use)) {
+        $post = get_post($session_id);
+        $date_to_use = $post->post_date;
+    }
+
+    // Format the date
+    if ($date_to_use) {
+        // Handle different date formats
+        $timestamp = false;
+
+        if (is_numeric($date_to_use)) {
+            $timestamp = $date_to_use;
+        } elseif (strtotime($date_to_use)) {
+            $timestamp = strtotime($date_to_use);
+        }
+
+        if ($timestamp && $timestamp > 0) {
+            $formatted_date = date('d/m/Y', $timestamp);
+            $formatted_time = date('g:i A', $timestamp);
+        } else {
+            // Last resort: use post date
+            $post = get_post($session_id);
+            $formatted_date = date('d/m/Y', strtotime($post->post_date));
+            $formatted_time = date('g:i A', strtotime($post->post_date));
+        }
+    } else {
+        $post = get_post($session_id);
+        $formatted_date = date('d/m/Y', strtotime($post->post_date));
+        $formatted_time = date('g:i A', strtotime($post->post_date));
+    }
+
+    $instructor = $instructor_id ? get_user_by('ID', $instructor_id) : null;
+    $instructor_name = $instructor ? $instructor->display_name : 'N/A';
+
+    // Format attendees
+    $attendees_html = '';
+    $attendee_count = 0;
+
+    if (is_array($attendance) && !empty($attendance)) {
+        $attendee_count = count($attendance);
+        foreach ($attendance as $user_id) {
+            $user = get_user_by('ID', $user_id);
+            if ($user) {
+                $attendees_html .= '<li>' . esc_html($user->display_name) . '</li>';
+            }
+        }
+    }
+
+    if (empty($attendees_html)) {
+        $attendees_html = '<li>No attendees recorded</li>';
+    }
+
+    $session_data = [
+        'id' => $session_id,
+        'date' => $formatted_date,
+        'time' => $formatted_time,
+        'instructor' => $instructor_name,
+        'attendee_count' => $attendee_count,
+        'attendees' => $attendees_html,
+        'notes' => $notes ? esc_html($notes) : ''
+    ];
+
+    wp_send_json_success($session_data);
+}
+add_action('wp_ajax_wcb_get_session_details', 'wcb_ajax_get_session_details');
+add_action('wp_ajax_nopriv_wcb_get_session_details', 'wcb_ajax_get_session_details');
+
 // Helper Functions
 
 function wcb_get_community_class_members($community_class_id, $search = '') {
@@ -1071,15 +1579,17 @@ function wcb_get_user_membership($user_id) {
     if (class_exists('MeprUser')) {
         $mepr_user = new MeprUser($user_id);
         $active_memberships = $mepr_user->active_product_subscriptions();
-        
+
         if (!empty($active_memberships)) {
             $membership = get_post($active_memberships[0]);
             return $membership ? $membership->post_title : 'Member';
         }
     }
-    
+
     return 'Community Member';
 }
+
+// Note: wcb_get_user_session_count() function is defined in student-table.php
 
 function wcb_generate_pagination_controls($current_page, $total_pages) {
     if ($total_pages <= 1) {
@@ -1115,4 +1625,121 @@ function wcb_generate_pagination_controls($current_page, $total_pages) {
     }
     
     return $controls;
+}
+
+// Get member status based on transaction/payment status
+function wcb_get_member_status($user_id) {
+    global $wpdb;
+
+    // Check if MemberPress transactions table exists
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$txn_table'") == $txn_table;
+
+    if (!$table_exists) {
+        return [
+            'status' => 'unknown',
+            'html' => '<span class="status-badge status-unknown">Unknown</span>'
+        ];
+    }
+
+    // Get user's transactions (using same logic as active-members-test.php)
+    $transactions = $wpdb->get_results($wpdb->prepare("
+        SELECT t.*, p.post_title as membership_name
+        FROM {$txn_table} t
+        LEFT JOIN {$wpdb->posts} p ON t.product_id = p.ID
+        WHERE t.user_id = %d
+        AND t.status IN ('confirmed', 'complete')
+        ORDER BY t.created_at DESC
+    ", $user_id));
+
+    if (empty($transactions)) {
+        return [
+            'status' => 'no_membership',
+            'html' => '<span class="status-badge status-inactive">No Active Membership</span>'
+        ];
+    }
+
+    $active_transactions = [];
+    $expired_transactions = [];
+
+    foreach ($transactions as $txn) {
+        $is_active = false;
+        $expires_at = $txn->expires_at;
+
+        // Check if transaction is active (same logic as active-members-test.php)
+        if (empty($expires_at) || $expires_at === '0000-00-00 00:00:00') {
+            // Lifetime membership
+            $is_active = true;
+        } else {
+            // Check if not expired
+            $expiry_timestamp = strtotime($expires_at);
+            $is_active = $expiry_timestamp > time();
+        }
+
+        if ($is_active) {
+            $active_transactions[] = $txn;
+        } else {
+            $expired_transactions[] = $txn;
+        }
+    }
+
+    if (!empty($active_transactions)) {
+        // User has active membership
+        $latest_txn = $active_transactions[0];
+
+        if (empty($latest_txn->expires_at) || $latest_txn->expires_at === '0000-00-00 00:00:00') {
+            // Lifetime membership
+            return [
+                'status' => 'active_lifetime',
+                'html' => '<span class="status-badge status-active">Active (Lifetime)</span>'
+            ];
+        } else {
+            // Check how close to expiry
+            $expiry_timestamp = strtotime($latest_txn->expires_at);
+            $days_until_expiry = ceil(($expiry_timestamp - time()) / (24 * 60 * 60));
+
+            if ($days_until_expiry <= 7) {
+                // Expires within 7 days
+                $expiry_date = date('M j', $expiry_timestamp);
+                return [
+                    'status' => 'expiring_soon',
+                    'html' => '<span class="status-badge status-warning" title="Expires ' . $expiry_date . '">Expires Soon</span>'
+                ];
+            } else {
+                // Active with good time remaining
+                $expiry_date = date('M j', $expiry_timestamp);
+                return [
+                    'status' => 'active',
+                    'html' => '<span class="status-badge status-active" title="Expires ' . $expiry_date . '">Active</span>'
+                ];
+            }
+        }
+    } else {
+        // No active transactions, check if recently expired
+        if (!empty($expired_transactions)) {
+            $latest_expired = $expired_transactions[0];
+            $expiry_timestamp = strtotime($latest_expired->expires_at);
+            $days_since_expiry = ceil((time() - $expiry_timestamp) / (24 * 60 * 60));
+
+            if ($days_since_expiry <= 30) {
+                // Recently expired (within 30 days)
+                $expiry_date = date('M j', $expiry_timestamp);
+                return [
+                    'status' => 'recently_expired',
+                    'html' => '<span class="status-badge status-expired" title="Expired ' . $expiry_date . '">Recently Expired</span>'
+                ];
+            } else {
+                // Long expired
+                return [
+                    'status' => 'expired',
+                    'html' => '<span class="status-badge status-inactive">Expired</span>'
+                ];
+            }
+        } else {
+            return [
+                'status' => 'no_membership',
+                'html' => '<span class="status-badge status-inactive">No Active Membership</span>'
+            ];
+        }
+    }
 }

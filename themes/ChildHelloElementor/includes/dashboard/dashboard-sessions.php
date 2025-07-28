@@ -124,9 +124,9 @@ function all_sessions_list_shortcode() {
                         
                         // Format date - use intervention_date for mentoring sessions
                         if ($session_type_raw === 'Mentoring' && $intervention_date) {
-                            $formatted_date = date('M j, Y', strtotime($intervention_date));
+                            $formatted_date = date('d/m/Y', strtotime($intervention_date));
                         } elseif ($date) {
-                            $formatted_date = date('M j, Y', strtotime($date));
+                            $formatted_date = date('d/m/Y', strtotime($date));
                         } else {
                             $formatted_date = 'Unknown Date';
                         }
@@ -178,10 +178,26 @@ function all_sessions_list_shortcode() {
                             <td class="session-date">
                                 <div class="date-display">
                                     <span class="date-main"><?php echo esc_html($formatted_date); ?></span>
-                                    <?php 
+                                    <?php
                                     // Show time for regular sessions, not for interventions (which typically don't have specific times)
-                                    if($date && $session_type_raw !== 'Mentoring'): ?>
-                                    <span class="date-time"><?php echo date('g:i A', strtotime($date)); ?></span>
+                                    if($session_type_raw !== 'Mentoring'):
+                                        // Try to get time from dedicated time fields
+                                        $session_time = get_field('session_time', $session_id);
+                                        $start_time = get_field('start_time', $session_id);
+
+                                        $display_time = '';
+                                        if ($session_time) {
+                                            $display_time = date('g:i A', strtotime($session_time));
+                                        } elseif ($start_time) {
+                                            $display_time = date('g:i A', strtotime($start_time));
+                                        } elseif ($date && strpos($date, ':') !== false) {
+                                            // Only extract time if date field actually contains time
+                                            $display_time = date('g:i A', strtotime($date));
+                                        }
+
+                                        if ($display_time && $display_time !== '12:00 AM'): ?>
+                                    <span class="date-time"><?php echo $display_time; ?></span>
+                                    <?php endif; ?>
                                     <?php endif; ?>
                                 </div>
                             </td>
