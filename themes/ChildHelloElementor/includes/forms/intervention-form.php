@@ -12,9 +12,11 @@ function wcb_intervention_form_shortcode() {
         }
     }
     
-    // Get all users for staff and student selection
+    // Get all users for staff selection
     $all_users = get_users(['role__in' => ['administrator', 'editor', 'author', 'contributor']]);
-    $students = get_users(['role__in' => ['subscriber', 'member', 'customer']]);
+
+    // Get students who are part of WBC Mentoring program (ID: 1738) using proven logic
+    $mentoring_students = wcb_get_mentoring_program_members();
     
     ob_start();
     ?>
@@ -66,12 +68,17 @@ function wcb_intervention_form_shortcode() {
                 <label for="student_involved">Student Involved *</label>
                 <select id="student_involved" name="student_involved" required>
                     <option value="">Select Student</option>
-                    <?php foreach ($students as $student): ?>
-                        <option value="<?php echo $student->ID; ?>">
-                            <?php echo esc_html($student->display_name); ?>
-                        </option>
-                    <?php endforeach; ?>
+                    <?php if (!empty($mentoring_students)): ?>
+                        <?php foreach ($mentoring_students as $student): ?>
+                            <option value="<?php echo $student->ID; ?>">
+                                <?php echo esc_html($student->display_name); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <option value="" disabled>No students found in WBC Mentoring program</option>
+                    <?php endif; ?>
                 </select>
+                <small>Only students enrolled in the WBC Mentoring program are shown</small>
             </div>
             
             <div class="form-row">
@@ -213,4 +220,34 @@ function wcb_handle_intervention_submission() {
     wp_set_object_terms($post_id, 'mentoring', 'session_type');
     
     return ['success' => true, 'message' => 'Intervention logged successfully', 'post_id' => $post_id];
+}
+
+// Function to get students who are part of WBC Mentoring program
+function wcb_get_mentoring_program_members() {
+    global $wpdb;
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+
+    // Check if MemberPress transactions table exists
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$txn_table'") == $txn_table;
+    if (!$table_exists) {
+        return [];
+    }
+
+    // WBC Mentoring program ID
+    $mentoring_program_id = 1738;
+
+    // Get members who have active transactions for WBC Mentoring program
+    // Use EXACT same logic as active-members-test.php
+    $mentoring_members = $wpdb->get_results($wpdb->prepare("
+        SELECT DISTINCT u.ID, u.display_name, u.user_email
+        FROM {$wpdb->users} u
+        JOIN {$txn_table} t ON u.ID = t.user_id
+        WHERE t.product_id = %d
+        AND t.status IN ('confirmed', 'complete')
+        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+        AND u.user_login != 'bwgdev'
+        ORDER BY u.display_name
+    ", $mentoring_program_id));
+
+    return $mentoring_members;
 }

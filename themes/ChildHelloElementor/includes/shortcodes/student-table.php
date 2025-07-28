@@ -1483,59 +1483,143 @@ function wcb_ajax_load_students_table() {
     $total_users = 0;
     
     if ($table_exists) {
-        // Use exact same logic as dashboard stats
+        // Use EXACT same logic as active-members-test.php
+        $defined_groups = [
+            'Mini Cadet Boys (9-11 Years) Group 1',
+            'Cadet Boys Group 1',
+            'Cadet Boys Group 2',
+            'Youth Boys Group 1',
+            'Youth Boys Group 2',
+            'Mini Cadets Girls Group 1',
+            'Youth Girls Group 1'
+        ];
+
+        $all_groups = $wpdb->get_results("SELECT ID, post_title FROM {$wpdb->posts} WHERE post_type = 'memberpressgroup' AND post_status IN ('publish', 'private') ORDER BY post_title");
+
         if ($membership_status === 'active') {
-            // Active members: use exact same logic as get_all_active_members() from dashboard stats
+            // Use EXACT same two-step approach as active-members-test.php
+            $wcb_mentoring_id = 1738;
+
+            // Step 1: Get ALL active members first (same as active-members-test.php)
+            $all_active_members = $wpdb->get_results($wpdb->prepare("
+                SELECT DISTINCT u.ID, u.display_name, u.user_email, u.user_registered
+                FROM {$wpdb->users} u
+                JOIN {$txn_table} t ON u.ID = t.user_id
+                WHERE t.status IN ('confirmed', 'complete')
+                AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+                AND t.product_id != %d
+                AND u.user_login != 'bwgdev'
+                ORDER BY u.ID
+            ", $wcb_mentoring_id));
+
+            // Step 2: Filter by groups (same as active-members-test.php)
+            $all_program_members = [];
+
+            foreach ($defined_groups as $group_name) {
+                // Find the group - exact matching (same as active-members-test.php)
+                $group = null;
+                foreach ($all_groups as $g) {
+                    if (strcasecmp($g->post_title, $group_name) === 0) {
+                        $group = $g;
+                        break;
+                    }
+                }
+
+                if (!$group) {
+                    continue; // Group not found
+                }
+
+                // Use the EXACT same logic as active-members-test.php
+                $group_memberships = wcb_get_group_memberships($group->ID);
+
+                if (!empty($group_memberships)) {
+                    $membership_ids = array_map(function($m) { return $m->ID; }, $group_memberships);
+
+                    // Check each active member to see if they belong to this group (same as active-members-test.php)
+                    foreach ($all_active_members as $active_member) {
+                        // Get their current transaction
+                        $user_transaction = $wpdb->get_row($wpdb->prepare("
+                            SELECT t.*, p.post_title as membership_name
+                            FROM {$txn_table} t
+                            LEFT JOIN {$wpdb->posts} p ON t.product_id = p.ID
+                            WHERE t.user_id = %d
+                            AND t.status IN ('confirmed', 'complete')
+                            AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+                            AND t.product_id != %d
+                            ORDER BY t.created_at DESC
+                            LIMIT 1
+                        ", $active_member->ID, $wcb_mentoring_id));
+
+                        if ($user_transaction && in_array($user_transaction->product_id, $membership_ids)) {
+                            $all_program_members[$active_member->ID] = $active_member;
+                        }
+                    }
+                }
+            }
+
+            // Convert to array
+            $filtered_members = array_values($all_program_members);
+
+            if (empty($filtered_members)) {
+                $query = "SELECT * FROM {$wpdb->users} WHERE 1=0"; // Return empty result
+            } else {
+                $member_ids = array_map(function($user) { return $user->ID; }, $filtered_members);
+                $id_placeholders = implode(',', array_map('intval', $member_ids));
+                $query = "
+                    SELECT DISTINCT u.ID, u.display_name, u.user_email, u.user_registered
+                    FROM {$wpdb->users} u
+                    WHERE u.ID IN ({$id_placeholders})
+                ";
+            }
+            
+        } elseif ($membership_status === 'waitlist') {
+            // Simple waitlist logic - completely separate from program groups
+            $query = "
+                SELECT DISTINCT u.ID, u.display_name, u.user_email, u.user_registered
+                FROM {$wpdb->users} u
+                JOIN {$txn_table} t ON u.ID = t.user_id
+                JOIN {$wpdb->posts} p ON t.product_id = p.ID
+                WHERE t.status IN ('confirmed', 'complete')
+                AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+                AND p.post_type = 'memberpressproduct'
+                AND p.post_title LIKE '%waitlist%'
+                AND u.user_login != 'bwgdev'
+            ";
+
+        } elseif ($membership_status === 'inactive') {
+            // Inactive members: users with expired or cancelled transactions
+            $wcb_mentoring_id = 1738;
+            $query = "
+                SELECT DISTINCT u.ID, u.display_name, u.user_email, u.user_registered
+                FROM {$wpdb->users} u
+                JOIN {$txn_table} t ON u.ID = t.user_id
+                WHERE (
+                    t.status IN ('cancelled', 'failed', 'refunded')
+                    OR (t.expires_at IS NOT NULL AND t.expires_at != '0000-00-00 00:00:00' AND t.expires_at <= NOW())
+                )
+                AND t.product_id != {$wcb_mentoring_id}
+                AND u.user_login != 'bwgdev'
+                AND u.ID NOT IN (
+                    SELECT DISTINCT u2.ID
+                    FROM {$wpdb->users} u2
+                    JOIN {$txn_table} t2 ON u2.ID = t2.user_id
+                    WHERE t2.status IN ('confirmed', 'complete')
+                    AND (t2.expires_at IS NULL OR t2.expires_at > NOW() OR t2.expires_at = '0000-00-00 00:00:00')
+                    AND t2.product_id != {$wcb_mentoring_id}
+                )
+            ";
+
+        } else {
+            // All members: get ALL active members (not just program groups)
+            $wcb_mentoring_id = 1738;
             $query = "
                 SELECT DISTINCT u.ID, u.display_name, u.user_email, u.user_registered
                 FROM {$wpdb->users} u
                 JOIN {$txn_table} t ON u.ID = t.user_id
                 WHERE t.status IN ('confirmed', 'complete')
                 AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-            ";
-            
-        } elseif ($membership_status === 'waitlist') {
-            // Waitlist members: all users assigned to a membership with "Waitlist" in the title (active or inactive)
-            $query = "
-                SELECT DISTINCT u.ID, u.display_name, u.user_email, u.user_registered
-                FROM {$wpdb->users} u
-                JOIN {$wpdb->prefix}mepr_members m ON u.ID = m.user_id
-                JOIN {$wpdb->posts} p ON (
-                    m.memberships LIKE CONCAT('%', p.ID, '%') 
-                    OR m.inactive_memberships LIKE CONCAT('%', p.ID, '%')
-                )
-                WHERE p.post_type = 'memberpressproduct'
-                AND p.post_title LIKE '%Waitlist%'
-            ";
-            
-        } elseif ($membership_status === 'inactive') {
-            // Inactive members: users who don't have any active memberships
-            $query = "
-                SELECT DISTINCT u.ID, u.display_name, u.user_email, u.user_registered
-                FROM {$wpdb->users} u
-                WHERE u.ID NOT IN (
-                    SELECT DISTINCT t.user_id 
-                    FROM {$txn_table} t 
-                    WHERE t.status IN ('confirmed', 'complete')
-                    AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-                )
-                AND u.ID IN (
-                    SELECT DISTINCT user_id FROM {$wpdb->usermeta} 
-                    WHERE meta_key = '{$wpdb->prefix}capabilities' 
-                    AND (meta_value LIKE '%subscriber%' OR meta_value LIKE '%member%' OR meta_value LIKE '%customer%')
-                )
-            ";
-            
-        } else {
-            // All members: include all users with member-related roles
-            $query = "
-                SELECT DISTINCT u.ID, u.display_name, u.user_email, u.user_registered
-                FROM {$wpdb->users} u
-                WHERE u.ID IN (
-                    SELECT DISTINCT user_id FROM {$wpdb->usermeta} 
-                    WHERE meta_key = '{$wpdb->prefix}capabilities' 
-                    AND (meta_value LIKE '%subscriber%' OR meta_value LIKE '%member%' OR meta_value LIKE '%customer%')
-                )
+                AND t.product_id != {$wcb_mentoring_id}
+                AND u.user_login != 'bwgdev'
             ";
         }
         
@@ -1555,9 +1639,15 @@ function wcb_ajax_load_students_table() {
         
         $user_results = $wpdb->get_results($query);
         
-        // Convert to user objects
+        // Use the data we already have from the SQL query
         foreach ($user_results as $user_result) {
-            $users[] = get_user_by('ID', $user_result->ID);
+            // Create a user-like object with the data we need
+            $user_obj = new stdClass();
+            $user_obj->ID = $user_result->ID;
+            $user_obj->display_name = $user_result->display_name;
+            $user_obj->user_email = $user_result->user_email;
+            $user_obj->user_registered = $user_result->user_registered;
+            $users[] = $user_obj;
         }
         
     } else {
@@ -1680,21 +1770,166 @@ function wcb_ajax_load_students_table() {
 add_action('wp_ajax_wcb_load_students_table', 'wcb_ajax_load_students_table');
 add_action('wp_ajax_nopriv_wcb_load_students_table', 'wcb_ajax_load_students_table');
 
-// Helper function to get all active memberships for a user as separate badges
-function wcb_get_user_all_memberships($user_id) {
+// Helper function to get group for a membership ID
+function wcb_get_membership_group($membership_id) {
+    $group_id = get_post_meta($membership_id, '_mepr_group_id', true);
+    if ($group_id) {
+        $group = get_post($group_id);
+        if ($group && $group->post_type === 'memberpressgroup') {
+            return $group;
+        }
+    }
+    return false;
+}
+
+// Helper function to get all groups
+function wcb_get_all_groups() {
+    return get_posts([
+        'post_type' => 'memberpressgroup',
+        'post_status' => ['publish', 'private'], // Include both publish and private groups
+        'posts_per_page' => -1,
+        'orderby' => 'title',
+        'order' => 'ASC'
+    ]);
+}
+
+// Helper function to get all memberships within a group
+function wcb_get_group_memberships($group_id) {
     global $wpdb;
-    
+
+    $memberships = $wpdb->get_results($wpdb->prepare("
+        SELECT p.ID, p.post_title
+        FROM {$wpdb->posts} p
+        JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+        WHERE pm.meta_key = '_mepr_group_id'
+        AND pm.meta_value = %d
+        AND p.post_type = 'memberpressproduct'
+        AND p.post_status IN ('publish', 'private')
+        ORDER BY p.post_title
+    ", $group_id));
+
+    return $memberships;
+}
+
+// Helper function to get total member count for a group (across all its memberships)
+function wcb_get_group_member_count($group_id) {
+    global $wpdb;
+
     // Check if MemberPress transactions table exists
     $txn_table = $wpdb->prefix . 'mepr_transactions';
     $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$txn_table'") == $txn_table;
-    
+
+    if (!$table_exists) {
+        return 0;
+    }
+
+    // Get all membership IDs in this group
+    $membership_ids = $wpdb->get_col($wpdb->prepare("
+        SELECT p.ID
+        FROM {$wpdb->posts} p
+        JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+        WHERE pm.meta_key = '_mepr_group_id'
+        AND pm.meta_value = %d
+        AND p.post_type = 'memberpressproduct'
+        AND p.post_status = 'publish'
+    ", $group_id));
+
+    if (empty($membership_ids)) {
+        return 0;
+    }
+
+    // Count unique users with active transactions for any membership in this group
+    // Use EXACT same logic as active-members-test.php
+    $placeholders = implode(',', array_fill(0, count($membership_ids), '%d'));
+    $query = "
+        SELECT COUNT(DISTINCT u.ID)
+        FROM {$wpdb->users} u
+        JOIN {$txn_table} t ON u.ID = t.user_id
+        WHERE t.product_id IN ({$placeholders})
+        AND t.status IN ('confirmed', 'complete')
+        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+        AND u.user_login != 'bwgdev'
+    ";
+
+    return (int) $wpdb->get_var($wpdb->prepare($query, ...$membership_ids));
+}
+
+// Helper function to get all active groups for a user (based on their memberships)
+function wcb_get_user_groups($user_id) {
+    global $wpdb;
+
+    // Check if MemberPress transactions table exists
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$txn_table'") == $txn_table;
+
+    if (!$table_exists) {
+        return [];
+    }
+
+    // Get all active memberships for this user and their associated groups
+    $groups = $wpdb->get_results($wpdb->prepare("
+        SELECT DISTINCT g.ID, g.post_title as group_name
+        FROM {$wpdb->posts} g
+        JOIN {$wpdb->postmeta} pm ON g.ID = pm.meta_value
+        JOIN {$wpdb->posts} p ON pm.post_id = p.ID
+        JOIN {$txn_table} t ON p.ID = t.product_id
+        WHERE t.user_id = %d
+        AND t.status IN ('confirmed', 'complete')
+        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+        AND p.post_type = 'memberpressproduct'
+        AND g.post_type = 'memberpressgroup'
+        AND pm.meta_key = '_mepr_group_id'
+        ORDER BY g.post_title
+    ", $user_id));
+
+    return $groups;
+}
+
+// Helper function to infer group name from membership name
+function wcb_infer_group_from_membership($membership_name) {
+    // Pattern matching to extract group information from membership names
+    $patterns = [
+        // Pattern: "Cadet Boys (12-14 Years) Group 1 Monthly" -> "Cadet Boys Group 1"
+        '/^(Cadet Boys) \([^)]+\) (Group \d+) .*$/' => '$1 $2',
+
+        // Pattern: "Youth Boys (15-18 Years) Group 2 Monthly" -> "Youth Boys Group 2"
+        '/^(Youth Boys) \([^)]+\) (Group \d+) .*$/' => '$1 $2',
+
+        // Pattern: "Youth Girls (13-18 Years) Group 1 Monthly" -> "Youth Girls Group 1"
+        '/^(Youth Girls) \([^)]+\) (Group \d+) .*$/' => '$1 $2',
+
+        // Pattern: "Mini Cadet Boys (9-11 Years) Group 1 Monthly" -> "Mini Cadet Boys (9-11 Years) Group 1"
+        '/^(Mini Cadet Boys \([^)]+\)) (Group \d+) .*$/' => '$1 $2',
+
+        // Pattern: "Mini Cadet Girls (9-12 Years) Group 1 Monthly" -> "Mini Cadets Girls Group 1"
+        '/^(Mini Cadet Girls) \([^)]+\) (Group \d+) .*$/' => 'Mini Cadets Girls $2',
+    ];
+
+    foreach ($patterns as $pattern => $replacement) {
+        if (preg_match($pattern, $membership_name)) {
+            return preg_replace($pattern, $replacement, $membership_name);
+        }
+    }
+
+    // If no pattern matches, return the original name
+    return $membership_name;
+}
+
+// Helper function to get all active memberships for a user as group badges
+function wcb_get_user_all_memberships($user_id) {
+    global $wpdb;
+
+    // Check if MemberPress transactions table exists
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$txn_table'") == $txn_table;
+
     if (!$table_exists) {
         return '<span style="color: #666666;">No active membership</span>';
     }
-    
-    // Get all active memberships for this user
+
+    // Get all active memberships for this user with their group associations
     $memberships = $wpdb->get_results($wpdb->prepare("
-        SELECT DISTINCT p.post_title
+        SELECT DISTINCT p.ID, p.post_title
         FROM {$wpdb->posts} p
         JOIN {$txn_table} t ON p.ID = t.product_id
         WHERE t.user_id = %d
@@ -1703,22 +1938,144 @@ function wcb_get_user_all_memberships($user_id) {
         AND p.post_type = 'memberpressproduct'
         ORDER BY p.post_title
     ", $user_id));
-    
+
     if (empty($memberships)) {
         return '<span style="color: #666666;">No active membership</span>';
     }
-    
-    $membership_badges = [];
+
+    $display_items = [];
+    $processed_groups = [];
+
     foreach ($memberships as $membership) {
-        $membership_name = $membership->post_title;
-        $bg_color = wcb_get_membership_color($membership_name);
+        // Check if this membership belongs to a group
+        $group_id = get_post_meta($membership->ID, '_mepr_group_id', true);
+
+        if ($group_id && !in_array($group_id, $processed_groups)) {
+            // This membership belongs to a group, show the group name
+            $group = get_post($group_id);
+            if ($group && $group->post_type === 'memberpressgroup') {
+                $display_name = $group->post_title;
+                $processed_groups[] = $group_id; // Avoid showing the same group multiple times
+            } else {
+                // Group not found, fall back to inferred group name
+                $display_name = wcb_infer_group_from_membership($membership->post_title);
+            }
+        } else if (!$group_id) {
+            // This membership is not part of any group, try to infer the group name
+            $inferred_group = wcb_infer_group_from_membership($membership->post_title);
+
+            // Check if we've already processed this inferred group
+            if (!in_array($inferred_group, $processed_groups)) {
+                $display_name = $inferred_group;
+                $processed_groups[] = $inferred_group;
+            } else {
+                // This inferred group was already processed, skip
+                continue;
+            }
+        } else {
+            // This group was already processed, skip
+            continue;
+        }
+
+        $bg_color = wcb_get_membership_color($display_name);
         $text_color = wcb_get_text_color_for_background($bg_color);
-        
-        $membership_badges[] = '<span class="membership-badge" style="background-color: ' . esc_attr($bg_color) . '; color: ' . esc_attr($text_color) . ';">' . esc_html($membership_name) . '</span>';
+
+        $display_items[] = '<span class="membership-badge" style="background-color: ' . esc_attr($bg_color) . '; color: ' . esc_attr($text_color) . ';">' . esc_html($display_name) . '</span>';
     }
-    
-    return implode(' ', $membership_badges);
+
+    if (empty($display_items)) {
+        return '<span style="color: #666666;">No active membership</span>';
+    }
+
+    return implode(' ', $display_items);
 }
+
+// Function to associate Monthly memberships with their corresponding groups
+function wcb_associate_monthly_memberships_with_groups() {
+    global $wpdb;
+
+    // Define the mapping of monthly membership patterns to group IDs
+    $monthly_to_group_mapping = [
+        // Cadet Boys Group 1 (ID: 1786)
+        'Cadet Boys (12-14 Years) Group 1 Monthly' => 1786,
+
+        // Cadet Boys Group 2 (ID: 1790)
+        'Cadet Boys (12-14 Years) Group 2 Monthly' => 1790,
+
+        // Youth Boys Group 1 (ID: 1803)
+        'Youth Boys (15-18 Years) Group 1 Monthly' => 1803,
+
+        // Youth Boys Group 2 (ID: 1809)
+        'Youth Boys (15-18 Years) Group 2 Monthly' => 1809,
+
+        // Youth Girls Group 1 (ID: 1815)
+        'Youth Girls (13-18 Years) Group 1 Monthly' => 1815,
+
+        // Mini Cadet Boys Group 1 (ID: 1767)
+        'Mini Cadet Boys (9-11 Years) Group 1 Monthly' => 1767,
+
+        // Mini Cadets Girls Group 1 (ID: 1812)
+        'Mini Cadet Girls (9-12 Years) Group 1 Monthly' => 1812,
+    ];
+
+    $updated_count = 0;
+    $results = [];
+
+    foreach ($monthly_to_group_mapping as $membership_name => $group_id) {
+        // Find the membership by name
+        $membership = get_posts([
+            'post_type' => 'memberpressproduct',
+            'post_status' => 'publish',
+            'title' => $membership_name,
+            'posts_per_page' => 1
+        ]);
+
+        if (!empty($membership)) {
+            $membership_id = $membership[0]->ID;
+
+            // Check if it already has a group association
+            $existing_group = get_post_meta($membership_id, '_mepr_group_id', true);
+
+            if (!$existing_group) {
+                // Associate with the group
+                $success = update_post_meta($membership_id, '_mepr_group_id', $group_id);
+
+                if ($success) {
+                    $updated_count++;
+                    $results[] = "✅ Associated '{$membership_name}' (ID: {$membership_id}) with Group {$group_id}";
+                } else {
+                    $results[] = "❌ Failed to associate '{$membership_name}' (ID: {$membership_id}) with Group {$group_id}";
+                }
+            } else {
+                $results[] = "ℹ️ '{$membership_name}' (ID: {$membership_id}) already associated with Group {$existing_group}";
+            }
+        } else {
+            $results[] = "⚠️ Membership '{$membership_name}' not found";
+        }
+    }
+
+    return [
+        'updated_count' => $updated_count,
+        'results' => $results
+    ];
+}
+
+// AJAX handler to run the monthly membership association
+function wcb_ajax_associate_monthly_memberships() {
+    // Verify nonce and permissions
+    if (!wp_verify_nonce($_POST['nonce'], 'wcb_nonce') || !current_user_can('manage_options')) {
+        wp_send_json_error('Security check failed or insufficient permissions');
+        return;
+    }
+
+    $result = wcb_associate_monthly_memberships_with_groups();
+
+    wp_send_json_success([
+        'message' => "Updated {$result['updated_count']} monthly memberships",
+        'details' => $result['results']
+    ]);
+}
+add_action('wp_ajax_wcb_associate_monthly_memberships', 'wcb_ajax_associate_monthly_memberships');
 
 // AJAX Handler for loading student profile overlay
 function wcb_ajax_load_student_profile_overlay() {

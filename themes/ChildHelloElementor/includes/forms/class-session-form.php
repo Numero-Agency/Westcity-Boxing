@@ -12,12 +12,8 @@ function wcb_class_session_form_shortcode() {
         }
     }
     
-    // Get memberships for dropdown
-    $memberships = get_posts([
-        'post_type' => 'memberpressproduct',
-        'numberposts' => -1,
-        'post_status' => 'publish'
-    ]);
+    // Get groups for dropdown using proven logic from active-members-test.php
+    $groups = wcb_get_all_groups();
     
     // Get schools for dropdown
     $schools = get_terms([
@@ -25,8 +21,7 @@ function wcb_class_session_form_shortcode() {
         'hide_empty' => false
     ]);
     
-    // Get all users for attendance and instructor selection
-    $users = get_users(['role__in' => ['subscriber', 'member', 'customer']]);
+    // Note: Members will be loaded dynamically via AJAX when a group is selected
     
     // Get instructors (assuming they have a specific role or capability)
     $instructors = get_users(['role__in' => ['administrator', 'editor', 'instructor']]);
@@ -67,15 +62,18 @@ function wcb_class_session_form_shortcode() {
             
             <!-- 3. Class Selection (shows when Class is selected) -->
             <div class="form-row" id="class-selection" style="display: none;">
-                <label for="selected_membership">Class *</label>
-                <select id="selected_membership" name="selected_membership">
+                <label for="selected_group">Class/Program *</label>
+                <select id="selected_group" name="selected_group" onchange="loadGroupMembers()">
                     <option value="">Select Class/Program</option>
-                    <?php foreach ($memberships as $membership): ?>
-                        <option value="<?php echo $membership->ID; ?>">
-                            <?php echo esc_html($membership->post_title); ?>
+                    <?php foreach ($groups as $group): ?>
+                        <option value="<?php echo $group->ID; ?>">
+                            <?php echo esc_html($group->post_title); ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
+                <div id="group-info" style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px; display: none;">
+                    <small id="group-member-count" style="color: #6c757d;"></small>
+                </div>
             </div>
             
             <!-- 4. School Selection (shows when School is selected) -->
@@ -91,18 +89,20 @@ function wcb_class_session_form_shortcode() {
                 </select>
             </div>
             
-            <!-- 5. Attendance List (Repeater-style) -->
+            <!-- 5. Attendance List (Dynamic based on selected group) -->
             <div class="form-row">
                 <label>Attendance</label>
                 <div class="attendance-section">
                     <p class="field-description">Select students who attended this session:</p>
-                    <div class="checkbox-grid">
-                        <?php foreach ($users as $user): ?>
-                            <label class="checkbox-item">
-                                <input type="checkbox" name="attendance_list[]" value="<?php echo $user->ID; ?>">
-                                <?php echo esc_html($user->display_name); ?>
-                            </label>
-                        <?php endforeach; ?>
+                    <div id="attendance-loading" style="display: none; padding: 20px; text-align: center; color: #6c757d;">
+                        <span class="dashicons dashicons-update-alt" style="animation: spin 1s linear infinite;"></span>
+                        Loading members...
+                    </div>
+                    <div id="attendance-empty" style="padding: 20px; text-align: center; color: #6c757d; background: #f8f9fa; border-radius: 4px;">
+                        Please select a class/program above to load members for attendance tracking.
+                    </div>
+                    <div id="attendance-grid" class="checkbox-grid" style="display: none;">
+                        <!-- Members will be loaded here via AJAX -->
                     </div>
                 </div>
             </div>
@@ -139,11 +139,7 @@ function wcb_class_session_form_shortcode() {
                 <label for="which_student_did_you_have_an_intervention_or_concern_for">Which student did you have an intervention or concern for</label>
                 <select id="which_student_did_you_have_an_intervention_or_concern_for" name="which_student_did_you_have_an_intervention_or_concern_for">
                     <option value="">Select Student (if applicable)</option>
-                    <?php foreach ($users as $user): ?>
-                        <option value="<?php echo $user->ID; ?>">
-                            <?php echo esc_html($user->display_name); ?>
-                        </option>
-                    <?php endforeach; ?>
+                    <!-- Options will be populated when a group is selected -->
                 </select>
             </div>
             
@@ -175,23 +171,151 @@ function wcb_class_session_form_shortcode() {
         const classType = document.querySelector('input[name="class_type"]:checked');
         const classSelection = document.getElementById('class-selection');
         const schoolSelection = document.getElementById('school-selection');
-        const classSelect = document.getElementById('selected_membership');
+        const groupSelect = document.getElementById('selected_group');
         const schoolSelect = document.getElementById('selected_school');
-        
+
         if (!classType) return;
-        
+
         if (classType.value === 'School') {
             schoolSelection.style.display = 'block';
             classSelection.style.display = 'none';
             schoolSelect.required = true;
-            classSelect.required = false;
+            groupSelect.required = false;
+            // Clear attendance when switching to school
+            clearAttendanceList();
         } else if (classType.value === 'Class') {
             schoolSelection.style.display = 'none';
             classSelection.style.display = 'block';
             schoolSelect.required = false;
-            classSelect.required = true;
+            groupSelect.required = true;
+            // Show empty state when switching to class
+            showAttendanceEmpty();
         }
     }
+
+    function loadGroupMembers() {
+        const groupSelect = document.getElementById('selected_group');
+        const groupId = groupSelect.value;
+
+        if (!groupId) {
+            showAttendanceEmpty();
+            clearStudentSelect();
+            hideGroupInfo();
+            return;
+        }
+
+        showAttendanceLoading();
+
+        // Make AJAX request to load group members
+        fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                action: 'wcb_load_group_members',
+                group_id: groupId,
+                nonce: '<?php echo wp_create_nonce('wcb_load_group_members'); ?>'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                populateAttendanceList(data.data.members);
+                populateStudentSelect(data.data.members);
+                showGroupInfo(data.data.group_name, data.data.member_count);
+            } else {
+                showAttendanceError(data.data || 'Failed to load members');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading group members:', error);
+            showAttendanceError('Failed to load members');
+        });
+    }
+
+    function showAttendanceLoading() {
+        document.getElementById('attendance-loading').style.display = 'block';
+        document.getElementById('attendance-empty').style.display = 'none';
+        document.getElementById('attendance-grid').style.display = 'none';
+    }
+
+    function showAttendanceEmpty() {
+        document.getElementById('attendance-loading').style.display = 'none';
+        document.getElementById('attendance-empty').style.display = 'block';
+        document.getElementById('attendance-grid').style.display = 'none';
+    }
+
+    function showAttendanceError(message) {
+        document.getElementById('attendance-loading').style.display = 'none';
+        document.getElementById('attendance-empty').style.display = 'block';
+        document.getElementById('attendance-empty').innerHTML = '<span style="color: #dc3545;">Error: ' + message + '</span>';
+        document.getElementById('attendance-grid').style.display = 'none';
+    }
+
+    function populateAttendanceList(members) {
+        const grid = document.getElementById('attendance-grid');
+        grid.innerHTML = '';
+
+        members.forEach(member => {
+            const label = document.createElement('label');
+            label.className = 'checkbox-item';
+            label.innerHTML = `
+                <input type="checkbox" name="attendance_list[]" value="${member.id}">
+                ${member.name}
+            `;
+            grid.appendChild(label);
+        });
+
+        document.getElementById('attendance-loading').style.display = 'none';
+        document.getElementById('attendance-empty').style.display = 'none';
+        document.getElementById('attendance-grid').style.display = 'block';
+    }
+
+    function populateStudentSelect(members) {
+        const select = document.getElementById('which_student_did_you_have_an_intervention_or_concern_for');
+        select.innerHTML = '<option value="">Select Student (if applicable)</option>';
+
+        members.forEach(member => {
+            const option = document.createElement('option');
+            option.value = member.id;
+            option.textContent = member.name;
+            select.appendChild(option);
+        });
+    }
+
+    function clearStudentSelect() {
+        const select = document.getElementById('which_student_did_you_have_an_intervention_or_concern_for');
+        select.innerHTML = '<option value="">Select Student (if applicable)</option>';
+    }
+
+    function clearAttendanceList() {
+        document.getElementById('attendance-grid').innerHTML = '';
+        showAttendanceEmpty();
+        clearStudentSelect();
+        hideGroupInfo();
+    }
+
+    function showGroupInfo(groupName, memberCount) {
+        const info = document.getElementById('group-info');
+        const countText = document.getElementById('group-member-count');
+        countText.textContent = `${memberCount} active members in ${groupName}`;
+        info.style.display = 'block';
+    }
+
+    function hideGroupInfo() {
+        document.getElementById('group-info').style.display = 'none';
+    }
+
+    // Add CSS for spinning animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    `;
+    document.head.appendChild(style);
     </script>
     <?php
     return ob_get_clean();
@@ -210,7 +334,7 @@ function wcb_handle_class_session_submission() {
         return ['success' => false, 'message' => 'Please select a school'];
     }
     
-    if ($_POST['class_type'] === 'Class' && empty($_POST['selected_membership'])) {
+    if ($_POST['class_type'] === 'Class' && empty($_POST['selected_group'])) {
         return ['success' => false, 'message' => 'Please select a class/program'];
     }
     
@@ -236,11 +360,11 @@ function wcb_handle_class_session_submission() {
     update_field('session_date', sanitize_text_field($_POST['session_date']), $post_id);
     update_field('class_type', $class_type, $post_id);
     
-    // Save school or membership based on type
+    // Save school or group based on type
     if ($class_type === 'School') {
         wp_set_object_terms($post_id, intval($_POST['selected_school']), 'school');
     } else {
-        update_field('selected_membership', intval($_POST['selected_membership']), $post_id);
+        update_field('selected_group', intval($_POST['selected_group']), $post_id);
     }
     
     // Save attendance list (as repeater-style data)
@@ -296,3 +420,80 @@ function wcb_handle_class_session_submission() {
     
     return ['success' => true, 'post_id' => $post_id];
 }
+
+// AJAX handler for loading group members
+function wcb_ajax_load_group_members() {
+    // Verify nonce
+    if (!wp_verify_nonce($_POST['nonce'], 'wcb_load_group_members')) {
+        wp_die('Security check failed');
+    }
+
+    $group_id = intval($_POST['group_id']);
+
+    if (!$group_id) {
+        wp_send_json_error('Invalid group ID');
+    }
+
+    // Get group information
+    $group = get_post($group_id);
+    if (!$group || $group->post_type !== 'memberpressgroup') {
+        wp_send_json_error('Group not found');
+    }
+
+    // Use the exact same logic as active-members-test.php to get group members
+    global $wpdb;
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+
+    // Check if MemberPress transactions table exists
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$txn_table'") == $txn_table;
+    if (!$table_exists) {
+        wp_send_json_error('MemberPress not properly configured');
+    }
+
+    // Get memberships in this group using the proven function
+    $group_memberships = wcb_get_group_memberships($group_id);
+
+    if (empty($group_memberships)) {
+        wp_send_json_success([
+            'group_name' => $group->post_title,
+            'member_count' => 0,
+            'members' => []
+        ]);
+    }
+
+    $membership_ids = array_map(function($m) { return $m->ID; }, $group_memberships);
+    $placeholders = implode(',', array_fill(0, count($membership_ids), '%d'));
+
+    // Get members who have active transactions for memberships in this group
+    // Use EXACT same query as active-members-test.php
+    $group_members = $wpdb->get_results($wpdb->prepare("
+        SELECT DISTINCT u.ID, u.display_name, u.user_email
+        FROM {$wpdb->users} u
+        JOIN {$txn_table} t ON u.ID = t.user_id
+        WHERE t.product_id IN ({$placeholders})
+        AND t.status IN ('confirmed', 'complete')
+        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+        AND u.user_login != 'bwgdev'
+        ORDER BY u.display_name
+    ", ...$membership_ids));
+
+    // Format members for frontend
+    $members = [];
+    foreach ($group_members as $member) {
+        $members[] = [
+            'id' => $member->ID,
+            'name' => $member->display_name,
+            'email' => $member->user_email
+        ];
+    }
+
+    wp_send_json_success([
+        'group_name' => $group->post_title,
+        'member_count' => count($members),
+        'members' => $members
+    ]);
+}
+
+// Register AJAX handlers
+add_action('wp_ajax_wcb_load_group_members', 'wcb_ajax_load_group_members');
+add_action('wp_ajax_nopriv_wcb_load_group_members', 'wcb_ajax_load_group_members');
