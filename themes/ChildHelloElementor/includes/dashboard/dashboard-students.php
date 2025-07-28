@@ -13,8 +13,8 @@ function dashboard_students_shortcode() {
         return '<div class="access-denied">You do not have permission to access the student dashboard.</div>';
     }
 
-    // Get current filter from URL
-    $current_filter = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : 'all';
+    // Get current filter from URL (default to active members)
+    $current_filter = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : 'active';
     $search_term = isset($_GET['search']) ? sanitize_text_field($_GET['search']) : '';
     
     ob_start();
@@ -57,28 +57,14 @@ function dashboard_students_shortcode() {
                 <div id="wcb-student-search-results" class="search-results-container" style="display: none;"></div>
             </div>
 
-            <!-- Status Filter Buttons -->
-            <div class="filter-buttons">
-                <button class="filter-btn <?php echo $current_filter === 'all' ? 'active' : ''; ?>" 
-                        data-status="all">
-                    <span class="dashicons dashicons-admin-users"></span>
-                    All Students
-                </button>
-                <button class="filter-btn <?php echo $current_filter === 'active' ? 'active' : ''; ?>" 
-                        data-status="active">
-                    <span class="dashicons dashicons-yes-alt"></span>
-                    Active Members
-                </button>
-                <button class="filter-btn <?php echo $current_filter === 'waitlist' ? 'active' : ''; ?>" 
-                        data-status="waitlist">
-                    <span class="dashicons dashicons-clock"></span>
-                    Waitlist
-                </button>
-                <button class="filter-btn <?php echo $current_filter === 'inactive' ? 'active' : ''; ?>" 
-                        data-status="inactive">
-                    <span class="dashicons dashicons-dismiss"></span>
-                    Inactive
-                </button>
+            <!-- Active Members Only -->
+            <div class="active-members-header">
+                <h3>
+                    <span class="dashicons dashicons-groups"></span>
+                    Active Members (Program Groups)
+                    <span class="member-count"><?php echo $stats['active']; ?></span>
+                </h3>
+                <p class="subtitle">Showing members from the 7 defined program groups</p>
             </div>
         </div>
 
@@ -86,7 +72,7 @@ function dashboard_students_shortcode() {
         <div class="students-table-container">
             <div class="table-header">
                 <h3 id="table-title">
-                    <?php echo wcb_get_table_title($current_filter); ?>
+                    Active Members
                 </h3>
                 <div class="table-controls">
                     <label for="per-page-select">Show:</label>
@@ -208,70 +194,122 @@ function wcb_get_student_stats_cards() {
 }
 
 /**
- * Get membership status counts for stats cards
+ * Get membership status counts using EXACT same logic as active-members-test.php
  */
 function wcb_get_membership_status_counts() {
     global $wpdb;
-    
+
+    // Check if MemberPress transactions table exists
     $txn_table = $wpdb->prefix . 'mepr_transactions';
-    
-    // Active members
-    $active_count = $wpdb->get_var("
-        SELECT COUNT(DISTINCT u.ID)
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$txn_table'") == $txn_table;
+
+    if (!$table_exists) {
+        return [
+            'active' => 0,
+            'waitlist' => 0,
+            'inactive' => 0,
+            'total' => 0
+        ];
+    }
+
+    // Use the EXACT same group names as active-members-test.php
+    $defined_groups = [
+        'Mini Cadet Boys (9-11 Years) Group 1',
+        'Cadet Boys Group 1',
+        'Cadet Boys Group 2',
+        'Youth Boys Group 1',
+        'Youth Boys Group 2',
+        'Mini Cadets Girls Group 1',
+        'Youth Girls Group 1'
+    ];
+
+    $all_groups = $wpdb->get_results("SELECT ID, post_title FROM {$wpdb->posts} WHERE post_type = 'memberpressgroup' AND post_status IN ('publish', 'private') ORDER BY post_title");
+
+    $total_active_count = 0;
+
+    // Step 1: Get ALL active members first (same as active-members-test.php)
+    $wcb_mentoring_id = 1738;
+    $all_active_members = $wpdb->get_results($wpdb->prepare("
+        SELECT DISTINCT u.ID, u.display_name
         FROM {$wpdb->users} u
         JOIN {$txn_table} t ON u.ID = t.user_id
         WHERE t.status IN ('confirmed', 'complete')
         AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-    ");
+        AND t.product_id != %d
+        AND u.user_login != 'bwgdev'
+        ORDER BY u.ID
+    ", $wcb_mentoring_id));
 
-    // Waitlist members - all students in memberships with "Waitlist" in title (active or inactive)
+    // Step 2: Filter by groups (same as active-members-test.php)
+    $program_group_members = [];
+
+    foreach ($defined_groups as $group_name) {
+        // Find the group - exact matching (same as active-members-test.php)
+        $group = null;
+        foreach ($all_groups as $g) {
+            if (strcasecmp($g->post_title, $group_name) === 0) {
+                $group = $g;
+                break;
+            }
+        }
+
+        if (!$group) {
+            continue; // Group not found
+        }
+
+        // Use the EXACT same logic as active-members-test.php
+        $group_memberships = wcb_get_group_memberships($group->ID);
+
+        if (!empty($group_memberships)) {
+            $membership_ids = array_map(function($m) { return $m->ID; }, $group_memberships);
+
+            // Check each active member to see if they belong to this group (same as active-members-test.php)
+            foreach ($all_active_members as $active_member) {
+                // Get their current transaction
+                $user_transaction = $wpdb->get_row($wpdb->prepare("
+                    SELECT t.*, p.post_title as membership_name
+                    FROM {$txn_table} t
+                    LEFT JOIN {$wpdb->posts} p ON t.product_id = p.ID
+                    WHERE t.user_id = %d
+                    AND t.status IN ('confirmed', 'complete')
+                    AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+                    AND t.product_id != %d
+                    ORDER BY t.created_at DESC
+                    LIMIT 1
+                ", $active_member->ID, $wcb_mentoring_id));
+
+                if ($user_transaction && in_array($user_transaction->product_id, $membership_ids)) {
+                    $program_group_members[$active_member->ID] = $active_member;
+                }
+            }
+        }
+    }
+
+    $total_active_count = count($program_group_members);
+
+    // Get waitlist members count (separate from program groups)
     $waitlist_count = $wpdb->get_var("
         SELECT COUNT(DISTINCT u.ID)
         FROM {$wpdb->users} u
-        JOIN {$wpdb->prefix}mepr_members m ON u.ID = m.user_id
-        JOIN {$wpdb->posts} p ON (
-            m.memberships LIKE CONCAT('%', p.ID, '%') 
-            OR m.inactive_memberships LIKE CONCAT('%', p.ID, '%')
-        )
-        WHERE p.post_type = 'memberpressproduct'
-        AND p.post_title LIKE '%Waitlist%'
-    ");
-
-    // Inactive members
-    $inactive_count = $wpdb->get_var("
-        SELECT COUNT(DISTINCT u.ID)
-        FROM {$wpdb->users} u
-        WHERE u.ID NOT IN (
-            SELECT DISTINCT t.user_id 
-            FROM {$txn_table} t 
-            WHERE t.status IN ('confirmed', 'complete')
-            AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-        )
-        AND u.ID IN (
-            SELECT DISTINCT user_id FROM {$wpdb->usermeta} 
-            WHERE meta_key = '{$wpdb->prefix}capabilities' 
-            AND (meta_value LIKE '%subscriber%' OR meta_value LIKE '%member%' OR meta_value LIKE '%customer%')
-        )
-    ");
-
-    // Total students (all with member-related roles)
-    $total_count = $wpdb->get_var("
-        SELECT COUNT(DISTINCT u.ID)
-        FROM {$wpdb->users} u
-        WHERE u.ID IN (
-            SELECT DISTINCT user_id FROM {$wpdb->usermeta} 
-            WHERE meta_key = '{$wpdb->prefix}capabilities' 
-            AND (meta_value LIKE '%subscriber%' OR meta_value LIKE '%member%' OR meta_value LIKE '%customer%')
-        )
+        JOIN {$txn_table} t ON u.ID = t.user_id
+        JOIN {$wpdb->posts} p ON t.product_id = p.ID
+        WHERE t.status IN ('confirmed', 'complete')
+        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+        AND p.post_type = 'memberpressproduct'
+        AND p.post_title LIKE '%waitlist%'
+        AND u.user_login != 'bwgdev'
     ");
 
     return [
-        'active' => (int) $active_count,
+        'active' => (int) $total_active_count,
         'waitlist' => (int) $waitlist_count,
-        'inactive' => (int) $inactive_count,
-        'total' => (int) $total_count
+        'inactive' => 0, // Can be implemented later if needed
+        'total' => (int) ($total_active_count + $waitlist_count)
     ];
 }
+
+// Note: wcb_get_group_member_count() and wcb_get_group_members() functions
+// are defined in student-table.php to avoid conflicts
 
 /**
  * Get table title based on current filter
@@ -457,34 +495,36 @@ function wcb_students_dashboard_styles() {
     }
 
     /* Filter Buttons */
-    .filter-buttons {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
+    .active-members-header {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        border-left: 4px solid #667eea;
+        margin-bottom: 20px;
     }
 
-    .filter-btn {
-        padding: 12px 20px;
-        border: 2px solid #ddd;
-        background: white;
-        border-radius: 8px;
-        cursor: pointer;
-        font-weight: 600;
-        transition: all 0.3s ease;
+    .active-members-header h3 {
+        margin: 0 0 8px 0;
+        color: #212529;
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 10px;
+        font-size: 18px;
     }
 
-    .filter-btn:hover {
-        border-color: #667eea;
-        color: #667eea;
-    }
-
-    .filter-btn.active {
+    .active-members-header .member-count {
         background: #667eea;
-        border-color: #667eea;
         color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: bold;
+    }
+
+    .active-members-header .subtitle {
+        margin: 0;
+        color: #6c757d;
+        font-size: 14px;
     }
 
     /* Students Table */
@@ -631,7 +671,7 @@ function wcb_students_dashboard_scripts() {
         'use strict';
         
         let currentPage = 1;
-        let currentFilter = 'all';
+        let currentFilter = 'active'; // Always active members only
         let currentSearch = '';
         let itemsPerPage = 20;
 
@@ -642,12 +682,8 @@ function wcb_students_dashboard_scripts() {
             loadStudentsTable();
             bindEvents();
             
-            // Load initial state from URL
+            // Load initial search from URL if provided
             const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('status')) {
-                currentFilter = urlParams.get('status');
-                $('.filter-btn[data-status="' + currentFilter + '"]').addClass('active').siblings().removeClass('active');
-            }
             if (urlParams.get('search')) {
                 currentSearch = urlParams.get('search');
                 $('#wcb-student-search').val(currentSearch);
@@ -684,28 +720,9 @@ function wcb_students_dashboard_scripts() {
                 updateURL();
             });
 
-            // Filter buttons
-            $('.filter-btn').on('click', function() {
-                currentFilter = $(this).data('status');
-                currentPage = 1;
-                $(this).addClass('active').siblings().removeClass('active');
-                $('#table-title').text(getTableTitle(currentFilter));
-                loadStudentsTable();
-                updateURL();
-            });
+            // No filter buttons - always show active members
 
-            // Stat cards click
-            $('.stat-card').on('click', function() {
-                const status = $(this).data('status');
-                if (status) {
-                    currentFilter = status;
-                    currentPage = 1;
-                    $('.filter-btn[data-status="' + status + '"]').addClass('active').siblings().removeClass('active');
-                    $('#table-title').text(getTableTitle(status));
-                    loadStudentsTable();
-                    updateURL();
-                }
-            });
+            // No stat card filtering - always show active members
 
             // Per page select
             $('#per-page-select').on('change', function() {
@@ -732,7 +749,7 @@ function wcb_students_dashboard_scripts() {
                 url: wcb_ajax.ajax_url,
                 type: 'POST',
                 data: {
-                    action: 'wcb_load_students_table',
+                    action: 'wcb_load_dashboard_students_table',
                     page: currentPage,
                     per_page: itemsPerPage,
                     search: currentSearch,
@@ -769,7 +786,7 @@ function wcb_students_dashboard_scripts() {
                 url: wcb_ajax.ajax_url,
                 type: 'POST',
                 data: {
-                    action: 'wcb_search_students',
+                    action: 'wcb_dashboard_search_students',
                     search: searchTerm,
                     limit: 10,
                     nonce: wcb_ajax.nonce
@@ -830,9 +847,8 @@ function wcb_students_dashboard_scripts() {
 
         function updateURL() {
             const params = new URLSearchParams();
-            if (currentFilter !== 'all') params.set('status', currentFilter);
             if (currentSearch) params.set('search', currentSearch);
-            
+
             const newURL = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
             window.history.replaceState({}, '', newURL);
         }
@@ -900,3 +916,737 @@ function wcb_students_dashboard_scripts() {
 
 // Register the shortcode
 add_shortcode('dashboard_students', 'dashboard_students_shortcode');
+
+/**
+ * AJAX handler for loading dashboard students table using proven logic
+ */
+function wcb_ajax_load_dashboard_students_table() {
+    if (!wp_verify_nonce($_POST['nonce'], 'wcb_nonce')) {
+        wp_die('Security check failed');
+    }
+
+    global $wpdb;
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+
+    // Check if MemberPress transactions table exists
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$txn_table'") == $txn_table;
+    if (!$table_exists) {
+        wp_send_json_error('MemberPress data not available');
+        return;
+    }
+
+    $page = max(1, intval($_POST['page']));
+    $per_page = max(1, min(100, intval($_POST['per_page'])));
+    $search = sanitize_text_field($_POST['search']);
+    $membership_status = sanitize_text_field($_POST['membership_status']);
+
+    $offset = ($page - 1) * $per_page;
+
+    // Use the EXACT same group names as active-members-test.php
+    $defined_groups = [
+        'Mini Cadet Boys (9-11 Years) Group 1',
+        'Cadet Boys Group 1',
+        'Cadet Boys Group 2',
+        'Youth Boys Group 1',
+        'Youth Boys Group 2',
+        'Mini Cadets Girls Group 1',
+        'Youth Girls Group 1'
+    ];
+
+    $all_groups = $wpdb->get_results("SELECT ID, post_title FROM {$wpdb->posts} WHERE post_type = 'memberpressgroup' AND post_status IN ('publish', 'private') ORDER BY post_title");
+
+    // Filter to only include the 7 defined groups
+    $programs = [];
+    foreach ($all_groups as $group) {
+        foreach ($defined_groups as $defined_group) {
+            if (strcasecmp($group->post_title, $defined_group) === 0) {
+                $programs[] = $group;
+                break;
+            }
+        }
+    }
+
+    // Use EXACT same two-step approach as active-members-test.php
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+    $wcb_mentoring_id = 1738;
+
+    // Step 1: Get ALL active members first (same as active-members-test.php)
+    $all_active_members = $wpdb->get_results($wpdb->prepare("
+        SELECT DISTINCT u.ID, u.display_name, u.user_email, u.user_registered
+        FROM {$wpdb->users} u
+        JOIN {$txn_table} t ON u.ID = t.user_id
+        WHERE t.status IN ('confirmed', 'complete')
+        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+        AND t.product_id != %d
+        AND u.user_login != 'bwgdev'
+        ORDER BY u.ID
+    ", $wcb_mentoring_id));
+
+    // Step 2: Filter by groups (same as active-members-test.php)
+    $all_program_members = [];
+
+    foreach ($defined_groups as $group_name) {
+        // Find the group - exact matching (same as active-members-test.php)
+        $group = null;
+        foreach ($all_groups as $g) {
+            if (strcasecmp($g->post_title, $group_name) === 0) {
+                $group = $g;
+                break;
+            }
+        }
+
+        if (!$group) {
+            continue; // Group not found
+        }
+
+        // Use the EXACT same logic as active-members-test.php
+        $group_memberships = wcb_get_group_memberships($group->ID);
+
+        if (!empty($group_memberships)) {
+            $membership_ids = array_map(function($m) { return $m->ID; }, $group_memberships);
+
+            // Check each active member to see if they belong to this group (same as active-members-test.php)
+            foreach ($all_active_members as $active_member) {
+                // Get their current transaction
+                $user_transaction = $wpdb->get_row($wpdb->prepare("
+                    SELECT t.*, p.post_title as membership_name
+                    FROM {$txn_table} t
+                    LEFT JOIN {$wpdb->posts} p ON t.product_id = p.ID
+                    WHERE t.user_id = %d
+                    AND t.status IN ('confirmed', 'complete')
+                    AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+                    AND t.product_id != %d
+                    ORDER BY t.created_at DESC
+                    LIMIT 1
+                ", $active_member->ID, $wcb_mentoring_id));
+
+                if ($user_transaction && in_array($user_transaction->product_id, $membership_ids)) {
+                    $all_program_members[$active_member->ID] = $active_member;
+                }
+            }
+        }
+    }
+
+    // Convert to array and apply search filter
+    $filtered_members = array_values($all_program_members);
+
+    if (!empty($search)) {
+        $filtered_members = array_filter($filtered_members, function($user) use ($search) {
+            return (stripos($user->display_name, $search) !== false ||
+                    stripos($user->user_email, $search) !== false);
+        });
+    }
+
+    // Only handle active members (from program groups)
+    $target_members = $filtered_members;
+
+    if (empty($target_members)) {
+        wp_send_json_success([
+            'rows' => '<div class="no-students-found"><p>No students found matching your criteria.</p></div>',
+            'pagination_controls' => '<div class="pagination-info">Showing 0 students</div>',
+            'total_items' => 0,
+            'current_page' => 1,
+            'total_pages' => 1
+        ]);
+        return;
+    }
+
+    // Apply pagination
+    $total_items = count($target_members);
+    $total_pages = ceil($total_items / $per_page);
+
+    $paginated_members = array_slice($target_members, $offset, $per_page);
+
+    // Convert to the format expected by the table generator
+    $users = [];
+    foreach ($paginated_members as $member) {
+        if (is_object($member) && isset($member->ID)) {
+            $users[] = (object) [
+                'ID' => $member->ID,
+                'display_name' => $member->display_name ?? 'Unknown',
+                'user_email' => $member->user_email ?? '',
+                'user_registered' => $member->user_registered ?? date('Y-m-d H:i:s')
+            ];
+        }
+    }
+
+    // Generate table HTML
+    $rows_html = wcb_generate_students_table_html($users, $membership_status);
+
+    // Generate pagination
+    $pagination_html = wcb_generate_pagination_html($page, $total_pages, $total_items);
+
+    wp_send_json_success([
+        'rows' => $rows_html,
+        'pagination_controls' => $pagination_html,
+        'total_items' => $total_items,
+        'current_page' => $page,
+        'total_pages' => $total_pages
+    ]);
+}
+add_action('wp_ajax_wcb_load_dashboard_students_table', 'wcb_ajax_load_dashboard_students_table');
+add_action('wp_ajax_nopriv_wcb_load_dashboard_students_table', 'wcb_ajax_load_dashboard_students_table');
+
+/**
+ * Generate students table HTML
+ */
+function wcb_generate_students_table_html($users, $membership_status) {
+    if (empty($users)) {
+        return '<div class="no-students-found">
+            <p>No ' . $membership_status . ' students found.</p>
+        </div>';
+    }
+
+    ob_start();
+    ?>
+    <table class="wcb-students-table">
+        <thead>
+            <tr>
+                <th><span class="dashicons dashicons-admin-users"></span> Name</th>
+                <th><span class="dashicons dashicons-email"></span> Email</th>
+                <th><span class="dashicons dashicons-groups"></span> Membership</th>
+                <th><span class="dashicons dashicons-yes-alt"></span> Status</th>
+                <th><span class="dashicons dashicons-calendar-alt"></span> Joined</th>
+                <th><span class="dashicons dashicons-admin-tools"></span> Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($users as $user): ?>
+                <?php
+                $membership_info = wcb_get_user_membership_info($user->ID);
+                $status_info = wcb_get_user_status_info($user->ID, $membership_status);
+                $join_date = date('M j, Y', strtotime($user->user_registered));
+                ?>
+                <tr data-user-id="<?php echo $user->ID; ?>">
+                    <td>
+                        <div class="student-name">
+                            <strong><?php echo esc_html($user->display_name); ?></strong>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="student-email">
+                            <?php echo esc_html($user->user_email); ?>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="membership-info">
+                            <?php echo esc_html($membership_info); ?>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="status-info">
+                            <?php echo $status_info; ?>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="join-date">
+                            <?php echo esc_html($join_date); ?>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="student-actions">
+                            <button class="btn-view-student" data-user-id="<?php echo $user->ID; ?>">
+                                <span class="dashicons dashicons-visibility"></span>
+                                View
+                            </button>
+                            <button class="btn-edit-student" data-user-id="<?php echo $user->ID; ?>">
+                                <span class="dashicons dashicons-edit"></span>
+                                Edit
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+
+    <style>
+    .wcb-students-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+    }
+
+    .wcb-students-table th {
+        background: #f8f9fa;
+        color: #333;
+        padding: 15px 12px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 13px;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    .wcb-students-table th .dashicons {
+        margin-right: 5px;
+        color: #667eea;
+    }
+
+    .wcb-students-table td {
+        padding: 15px 12px;
+        border-bottom: 1px solid #dee2e6;
+        vertical-align: middle;
+    }
+
+    .wcb-students-table tr:hover {
+        background: #f8f9fa;
+    }
+
+    .student-name strong {
+        color: #333;
+        font-size: 14px;
+    }
+
+    .student-email {
+        color: #6c757d;
+        font-size: 13px;
+    }
+
+    .membership-info {
+        color: #495057;
+        font-size: 13px;
+    }
+
+    .join-date {
+        color: #6c757d;
+        font-size: 13px;
+    }
+
+    .student-actions {
+        display: flex;
+        gap: 5px;
+    }
+
+    .btn-view-student,
+    .btn-edit-student {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        transition: all 0.2s ease;
+    }
+
+    .btn-view-student {
+        background: #667eea;
+        color: white;
+    }
+
+    .btn-view-student:hover {
+        background: #5a6fd8;
+    }
+
+    .btn-edit-student {
+        background: #28a745;
+        color: white;
+    }
+
+    .btn-edit-student:hover {
+        background: #218838;
+    }
+
+    .no-students-found {
+        text-align: center;
+        padding: 40px;
+        color: #6c757d;
+        background: #f8f9fa;
+        border-radius: 8px;
+        margin: 20px;
+    }
+
+    /* Status badges */
+    .status-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-active {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .status-waitlist {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+
+    .status-inactive {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    </style>
+    <?php
+    return ob_get_clean();
+}
+
+/**
+ * Get user membership information using proven logic
+ */
+function wcb_get_user_membership_info($user_id) {
+    global $wpdb;
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+
+    // Get user's most recent active transaction
+    $transaction = $wpdb->get_row($wpdb->prepare("
+        SELECT t.*, p.post_title as membership_name
+        FROM {$txn_table} t
+        LEFT JOIN {$wpdb->posts} p ON t.product_id = p.ID
+        WHERE t.user_id = %d
+        AND t.status IN ('confirmed', 'complete')
+        ORDER BY t.created_at DESC
+        LIMIT 1
+    ", $user_id));
+
+    if ($transaction && $transaction->membership_name) {
+        return $transaction->membership_name;
+    }
+
+    return 'No Membership';
+}
+
+/**
+ * Get user status information with badge
+ */
+function wcb_get_user_status_info($user_id, $current_filter) {
+    global $wpdb;
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+    $wcb_mentoring_id = 1738;
+
+    // Check if user has active transactions
+    $active_transaction = $wpdb->get_row($wpdb->prepare("
+        SELECT t.*, p.post_title as membership_name
+        FROM {$txn_table} t
+        LEFT JOIN {$wpdb->posts} p ON t.product_id = p.ID
+        WHERE t.user_id = %d
+        AND t.status IN ('confirmed', 'complete')
+        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+        AND t.product_id != %d
+        ORDER BY t.created_at DESC
+        LIMIT 1
+    ", $user_id, $wcb_mentoring_id));
+
+    if ($active_transaction) {
+        // Check if it's a waitlist membership
+        if (strpos($active_transaction->membership_name, 'Waitlist') !== false) {
+            return '<span class="status-badge status-waitlist">Waitlist</span>';
+        } else {
+            return '<span class="status-badge status-active">Active</span>';
+        }
+    } else {
+        return '<span class="status-badge status-inactive">Inactive</span>';
+    }
+}
+
+/**
+ * Generate pagination HTML
+ */
+function wcb_generate_pagination_html($current_page, $total_pages, $total_items) {
+    if ($total_pages <= 1) {
+        return '<div class="pagination-info">Showing all ' . $total_items . ' students</div>';
+    }
+
+    ob_start();
+    ?>
+    <div class="pagination-container">
+        <div class="pagination-info">
+            Showing page <?php echo $current_page; ?> of <?php echo $total_pages; ?>
+            (<?php echo number_format($total_items); ?> total students)
+        </div>
+
+        <div class="pagination-controls">
+            <?php if ($current_page > 1): ?>
+                <button class="pagination-btn" data-page="1">
+                    <span class="dashicons dashicons-controls-skipback"></span>
+                    First
+                </button>
+                <button class="pagination-btn" data-page="<?php echo $current_page - 1; ?>">
+                    <span class="dashicons dashicons-arrow-left-alt2"></span>
+                    Previous
+                </button>
+            <?php endif; ?>
+
+            <?php
+            // Show page numbers
+            $start_page = max(1, $current_page - 2);
+            $end_page = min($total_pages, $current_page + 2);
+
+            for ($i = $start_page; $i <= $end_page; $i++):
+            ?>
+                <button class="pagination-btn <?php echo $i === $current_page ? 'active' : ''; ?>"
+                        data-page="<?php echo $i; ?>">
+                    <?php echo $i; ?>
+                </button>
+            <?php endfor; ?>
+
+            <?php if ($current_page < $total_pages): ?>
+                <button class="pagination-btn" data-page="<?php echo $current_page + 1; ?>">
+                    Next
+                    <span class="dashicons dashicons-arrow-right-alt2"></span>
+                </button>
+                <button class="pagination-btn" data-page="<?php echo $total_pages; ?>">
+                    Last
+                    <span class="dashicons dashicons-controls-skipforward"></span>
+                </button>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <style>
+    .pagination-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 25px;
+        background: #f8f9fa;
+        border-top: 1px solid #dee2e6;
+    }
+
+    .pagination-info {
+        color: #6c757d;
+        font-size: 14px;
+    }
+
+    .pagination-controls {
+        display: flex;
+        gap: 5px;
+    }
+
+    .pagination-btn {
+        padding: 8px 12px;
+        border: 1px solid #dee2e6;
+        background: white;
+        color: #495057;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        transition: all 0.2s ease;
+    }
+
+    .pagination-btn:hover {
+        background: #e9ecef;
+        border-color: #adb5bd;
+    }
+
+    .pagination-btn.active {
+        background: #667eea;
+        border-color: #667eea;
+        color: white;
+    }
+
+    .pagination-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    @media (max-width: 768px) {
+        .pagination-container {
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .pagination-controls {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+    }
+    </style>
+    <?php
+    return ob_get_clean();
+}
+
+/**
+ * AJAX handler for dashboard student search
+ */
+function wcb_ajax_dashboard_search_students() {
+    if (!wp_verify_nonce($_POST['nonce'], 'wcb_nonce')) {
+        wp_die('Security check failed');
+    }
+
+    global $wpdb;
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+
+    $search = sanitize_text_field($_POST['search']);
+    $limit = max(1, min(20, intval($_POST['limit'])));
+
+    if (empty($search) || strlen($search) < 2) {
+        wp_send_json_success([]);
+        return;
+    }
+
+    // Search students using proven logic
+    $students = $wpdb->get_results($wpdb->prepare("
+        SELECT DISTINCT u.ID, u.display_name, u.user_email
+        FROM {$wpdb->users} u
+        JOIN {$txn_table} t ON u.ID = t.user_id
+        WHERE u.user_login != 'bwgdev'
+        AND (u.display_name LIKE %s OR u.user_email LIKE %s)
+        ORDER BY u.display_name
+        LIMIT %d
+    ", '%' . $search . '%', '%' . $search . '%', $limit));
+
+    $results = [];
+    foreach ($students as $student) {
+        $status_info = wcb_get_user_status_info($student->ID, 'all');
+        $results[] = [
+            'id' => $student->ID,
+            'name' => $student->display_name,
+            'email' => $student->user_email,
+            'status' => strip_tags($status_info)
+        ];
+    }
+
+    wp_send_json_success($results);
+}
+add_action('wp_ajax_wcb_dashboard_search_students', 'wcb_ajax_dashboard_search_students');
+add_action('wp_ajax_nopriv_wcb_dashboard_search_students', 'wcb_ajax_dashboard_search_students');
+
+/**
+ * AJAX handler for getting updated student stats
+ */
+function wcb_ajax_get_student_stats() {
+    if (!wp_verify_nonce($_POST['nonce'], 'wcb_nonce')) {
+        wp_die('Security check failed');
+    }
+
+    $stats = wcb_get_membership_status_counts();
+    wp_send_json_success($stats);
+}
+add_action('wp_ajax_wcb_get_student_stats', 'wcb_ajax_get_student_stats');
+add_action('wp_ajax_nopriv_wcb_get_student_stats', 'wcb_ajax_get_student_stats');
+
+/**
+ * AJAX handler for exporting students
+ */
+function wcb_ajax_export_students() {
+    if (!wp_verify_nonce($_GET['nonce'], 'wcb_nonce')) {
+        wp_die('Security check failed');
+    }
+
+    global $wpdb;
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+
+    $status = sanitize_text_field($_GET['status']);
+    $search = sanitize_text_field($_GET['search']);
+    $wcb_mentoring_id = 1738;
+
+    // Build query based on status (same logic as table loading)
+    $base_where = "WHERE u.user_login != 'bwgdev'";
+
+    $search_where = '';
+    if (!empty($search)) {
+        $search_where = $wpdb->prepare("
+            AND (u.display_name LIKE %s OR u.user_email LIKE %s)
+        ", '%' . $search . '%', '%' . $search . '%');
+    }
+
+    switch ($status) {
+        case 'active':
+            $query = "
+                SELECT DISTINCT u.ID, u.display_name, u.user_email, u.user_registered
+                FROM {$wpdb->users} u
+                JOIN {$txn_table} t ON u.ID = t.user_id
+                {$base_where}
+                AND t.status IN ('confirmed', 'complete')
+                AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+                AND t.product_id != {$wcb_mentoring_id}
+                {$search_where}
+                ORDER BY u.display_name
+            ";
+            break;
+
+        case 'waitlist':
+            $query = "
+                SELECT DISTINCT u.ID, u.display_name, u.user_email, u.user_registered
+                FROM {$wpdb->users} u
+                JOIN {$txn_table} t ON u.ID = t.user_id
+                JOIN {$wpdb->posts} p ON t.product_id = p.ID
+                {$base_where}
+                AND t.status IN ('confirmed', 'complete')
+                AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+                AND p.post_type = 'memberpressproduct'
+                AND p.post_title LIKE '%Waitlist%'
+                {$search_where}
+                ORDER BY u.display_name
+            ";
+            break;
+
+        case 'inactive':
+            $query = "
+                SELECT DISTINCT u.ID, u.display_name, u.user_email, u.user_registered
+                FROM {$wpdb->users} u
+                JOIN {$txn_table} t ON u.ID = t.user_id
+                {$base_where}
+                AND u.ID NOT IN (
+                    SELECT DISTINCT t2.user_id
+                    FROM {$txn_table} t2
+                    WHERE t2.status IN ('confirmed', 'complete')
+                    AND (t2.expires_at IS NULL OR t2.expires_at > NOW() OR t2.expires_at = '0000-00-00 00:00:00')
+                    AND t2.product_id != {$wcb_mentoring_id}
+                )
+                {$search_where}
+                ORDER BY u.display_name
+            ";
+            break;
+
+        default: // 'all'
+            $query = "
+                SELECT DISTINCT u.ID, u.display_name, u.user_email, u.user_registered
+                FROM {$wpdb->users} u
+                JOIN {$txn_table} t ON u.ID = t.user_id
+                {$base_where}
+                {$search_where}
+                ORDER BY u.display_name
+            ";
+            break;
+    }
+
+    $users = $wpdb->get_results($query);
+
+    // Generate CSV
+    $filename = 'students_export_' . date('Y-m-d_H-i-s') . '.csv';
+
+    header('Content-Type: text/csv');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+
+    $output = fopen('php://output', 'w');
+
+    // CSV headers
+    fputcsv($output, ['Name', 'Email', 'Membership', 'Status', 'Joined Date']);
+
+    // CSV data
+    foreach ($users as $user) {
+        $membership_info = wcb_get_user_membership_info($user->ID);
+        $status_info = strip_tags(wcb_get_user_status_info($user->ID, $status));
+        $join_date = date('M j, Y', strtotime($user->user_registered));
+
+        fputcsv($output, [
+            $user->display_name,
+            $user->user_email,
+            $membership_info,
+            $status_info,
+            $join_date
+        ]);
+    }
+
+    fclose($output);
+    exit;
+}
+add_action('wp_ajax_wcb_export_students', 'wcb_ajax_export_students');
+add_action('wp_ajax_nopriv_wcb_export_students', 'wcb_ajax_export_students');

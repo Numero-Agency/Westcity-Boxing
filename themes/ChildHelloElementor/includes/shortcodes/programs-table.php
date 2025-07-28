@@ -1,5 +1,7 @@
 <?php
 // Programs/Memberships Table Component
+// Updated to use proven logic from active-members-test.php for accurate member counting
+// Only shows the 7 defined program groups with consistent member counting logic
 
 function programs_table_shortcode($atts) {
     $atts = shortcode_atts([
@@ -839,67 +841,89 @@ function wcb_ajax_load_programs_table() {
         wp_send_json_error('Security check failed');
         return;
     }
-    
+
     $search = sanitize_text_field($_POST['search']);
     $show_inactive = $_POST['show_inactive'] === 'true';
-    
-    // Get all membership posts (programs)
-    $args = [
-        'post_type' => 'memberpressproduct',
-        'post_status' => 'publish',
-        'posts_per_page' => -1,
-        'orderby' => 'title',
-        'order' => 'ASC'
+
+    // Use the proven logic from active-members-test.php - only show the 7 defined groups
+    $defined_groups = [
+        'Mini Cadet Boys (9-11 Years) Group 1',
+        'Cadet Boys Group 1',
+        'Cadet Boys Group 2',
+        'Youth Boys Group 1',
+        'Youth Boys Group 2',
+        'Mini Cadets Girls Group 1',
+        'Youth Girls Group 1'
     ];
-    
-    // Add search if provided
-    if (!empty($search)) {
-        $args['s'] = $search;
+
+    // Get all groups using the same query as active-members-test.php
+    global $wpdb;
+    $all_groups = $wpdb->get_results("SELECT ID, post_title FROM {$wpdb->posts} WHERE post_type = 'memberpressgroup' AND post_status IN ('publish', 'private') ORDER BY post_title");
+
+    // Filter to only include the 7 defined groups
+    $programs = [];
+    foreach ($defined_groups as $group_name) {
+        foreach ($all_groups as $group) {
+            if (strcasecmp($group->post_title, $group_name) === 0) {
+                // Apply search filter if provided
+                if (empty($search) || stripos($group->post_title, $search) !== false) {
+                    $programs[] = $group;
+                }
+                break;
+            }
+        }
     }
-    
-    $programs = get_posts($args);
-    
+
+    $using_groups = true;
+
     // Generate table rows
     $rows_html = '';
     if (!empty($programs)) {
         foreach ($programs as $program) {
             $program_id = $program->ID;
-            
-            // Get member count for this program
-            $member_count = wcb_get_program_member_count($program_id);
-            
-            // Get session count for this program
-            $session_count = wcb_get_program_session_count($program_id);
-            
-            // Get most recent session
-            $recent_session = wcb_get_program_recent_session($program_id);
-            
+
+            if ($using_groups) {
+                // Get member count for this group (across all its memberships)
+                $member_count = wcb_get_group_member_count($program_id);
+
+                // Get session count for this group
+                $session_count = wcb_get_group_session_count($program_id);
+
+                // Get most recent session for this group
+                $recent_session = wcb_get_group_recent_session($program_id);
+            } else {
+                // Fallback: treat individual memberships as programs
+                $member_count = wcb_get_program_member_count($program_id);
+                $session_count = wcb_get_program_session_count($program_id);
+                $recent_session = wcb_get_program_recent_session($program_id);
+            }
+
             // Determine if program is active (has recent activity)
             $is_active = ($member_count > 0 || $session_count > 0);
-            
+
             // Skip inactive programs if not showing them
             if (!$is_active && !$show_inactive) {
                 continue;
             }
-            
+
             $status = $is_active ? 'Active' : 'Inactive';
             $status_class = $is_active ? 'active' : 'inactive';
-            
+
             $rows_html .= '<tr>';
             $rows_html .= '<td><div class="program-name">' . esc_html($program->post_title) . '</div></td>';
             $rows_html .= '<td><span class="member-count">' . esc_html($member_count) . '</span></td>';
             $rows_html .= '<td><span class="session-count">' . esc_html($session_count) . '</span></td>';
             $rows_html .= '<td>' . ($recent_session ? esc_html(date('M j, Y', strtotime($recent_session))) : 'No sessions') . '</td>';
             $rows_html .= '<td><span class="status-badge ' . esc_attr($status_class) . '">' . esc_html($status) . '</span></td>';
-            $rows_html .= '<td><button class="program-view-btn" data-program-id="' . esc_attr($program_id) . '">View Details</button></td>';
+            $rows_html .= '<td><button class="program-view-btn" data-program-id="' . esc_attr($program_id) . '" data-using-groups="' . ($using_groups ? '1' : '0') . '">View Details</button></td>';
             $rows_html .= '</tr>';
         }
     }
-    
+
     if (empty($rows_html)) {
         $rows_html = '<tr><td colspan="6" class="no-results">No programs found' . (!empty($search) ? ' matching "' . esc_html($search) . '"' : '') . '</td></tr>';
     }
-    
+
     wp_send_json_success([
         'rows' => $rows_html,
         'total_programs' => count($programs)
@@ -923,25 +947,38 @@ function wcb_ajax_load_program_details() {
         return;
     }
     
-    // Get the program
+    // Get the program (could be group or individual membership)
     $program = get_post($program_id);
-    if (!$program || $program->post_type !== 'memberpressproduct') {
+    if (!$program) {
         wp_send_json_error('Program not found');
         return;
     }
-    
+
     $program_title = $program->post_title;
     $program_content = $program->post_content;
-    
-    // Get program statistics
-    $member_count = wcb_get_program_member_count($program_id);
-    $session_count = wcb_get_program_session_count($program_id);
-    $recent_session = wcb_get_program_recent_session($program_id);
-    
-    // Get program members and sessions
-    $members = wcb_get_program_members($program_id);
-    $sessions = wcb_get_program_sessions($program_id, 10);
-    $total_session_count = wcb_get_program_session_count($program_id);
+    $using_groups = ($program->post_type === 'memberpressgroup');
+
+    if ($using_groups) {
+        // Get group statistics
+        $member_count = wcb_get_group_member_count($program_id);
+        $session_count = wcb_get_group_session_count($program_id);
+        $recent_session = wcb_get_group_recent_session($program_id);
+
+        // Get group members and sessions
+        $members = wcb_get_group_members($program_id);
+        $sessions = wcb_get_group_sessions($program_id, 10);
+        $total_session_count = wcb_get_group_session_count($program_id);
+    } else {
+        // Fallback: individual membership statistics
+        $member_count = wcb_get_program_member_count($program_id);
+        $session_count = wcb_get_program_session_count($program_id);
+        $recent_session = wcb_get_program_recent_session($program_id);
+
+        // Get individual membership members and sessions
+        $members = wcb_get_program_members($program_id);
+        $sessions = wcb_get_program_sessions($program_id, 10);
+        $total_session_count = wcb_get_program_session_count($program_id);
+    }
     
     ob_start();
     ?>
@@ -1170,19 +1207,278 @@ add_action('admin_notices', 'wcb_add_mentoring_fix_admin_notice');
 // Helper function to get member count for a program
 function wcb_get_program_member_count($program_id) {
     global $wpdb;
-    
-    // Use the same query logic as get_program_members to ensure consistency
+
+    // Use EXACT same query logic as active-members-test.php
     $results = $wpdb->get_results($wpdb->prepare("
         SELECT DISTINCT u.ID
         FROM {$wpdb->users} u
         JOIN {$wpdb->prefix}mepr_transactions t ON u.ID = t.user_id
-        WHERE t.product_id = %d 
+        WHERE t.product_id = %d
         AND t.status IN ('confirmed', 'complete')
         AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+        AND u.user_login != 'bwgdev'
     ", $program_id));
-    
+
     return count($results);
 }
+
+// Override: Helper function to get session count for a group using proven logic
+function wcb_get_group_session_count($group_id) {
+    global $wpdb;
+
+    // Use the EXACT same logic as active-members-test.php to get group memberships
+    $group_memberships = wcb_get_group_memberships($group_id);
+
+    if (empty($group_memberships)) {
+        return 0;
+    }
+
+    $membership_ids = array_map(function($m) { return $m->ID; }, $group_memberships);
+
+    // Count sessions for any membership in this group
+    $placeholders = implode(',', array_fill(0, count($membership_ids), '%d'));
+    $query = "
+        SELECT COUNT(*)
+        FROM {$wpdb->posts} s
+        JOIN {$wpdb->postmeta} sm ON s.ID = sm.post_id
+        WHERE s.post_type = 'session_log'
+        AND s.post_status = 'publish'
+        AND sm.meta_key = 'selected_membership'
+        AND sm.meta_value IN ({$placeholders})
+    ";
+
+    return (int) $wpdb->get_var($wpdb->prepare($query, ...$membership_ids));
+}
+
+// Override: Helper function to get most recent session date for a group using proven logic
+function wcb_get_group_recent_session($group_id) {
+    global $wpdb;
+
+    // Use the EXACT same logic as active-members-test.php to get group memberships
+    $group_memberships = wcb_get_group_memberships($group_id);
+
+    if (empty($group_memberships)) {
+        return null;
+    }
+
+    $membership_ids = array_map(function($m) { return $m->ID; }, $group_memberships);
+
+    // Find the most recent session for any membership in this group
+    $placeholders = implode(',', array_fill(0, count($membership_ids), '%d'));
+
+    // Check if any membership is WCB Mentoring (ID: 1738) for special handling
+    $is_wcb_mentoring = in_array(1738, $membership_ids);
+
+    if ($is_wcb_mentoring) {
+        // For WCB Mentoring, order by intervention_date_
+        $query = "
+            SELECT sm2.meta_value as session_date
+            FROM {$wpdb->posts} s
+            JOIN {$wpdb->postmeta} sm ON s.ID = sm.post_id
+            JOIN {$wpdb->postmeta} sm2 ON s.ID = sm2.post_id
+            WHERE s.post_type = 'session_log'
+            AND s.post_status = 'publish'
+            AND sm.meta_key = 'selected_membership'
+            AND sm.meta_value IN ({$placeholders})
+            AND sm2.meta_key = 'intervention_date_'
+            AND sm2.meta_value != ''
+            ORDER BY sm2.meta_value DESC
+            LIMIT 1
+        ";
+    } else {
+        // For regular programs, order by session_date
+        $query = "
+            SELECT sm2.meta_value as session_date
+            FROM {$wpdb->posts} s
+            JOIN {$wpdb->postmeta} sm ON s.ID = sm.post_id
+            JOIN {$wpdb->postmeta} sm2 ON s.ID = sm2.post_id
+            WHERE s.post_type = 'session_log'
+            AND s.post_status = 'publish'
+            AND sm.meta_key = 'selected_membership'
+            AND sm.meta_value IN ({$placeholders})
+            AND sm2.meta_key = 'session_date'
+            AND sm2.meta_value != ''
+            ORDER BY sm2.meta_value DESC
+            LIMIT 1
+        ";
+    }
+
+    return $wpdb->get_var($wpdb->prepare($query, ...$membership_ids));
+}
+
+// Override: Helper function to get group members using proven logic from active-members-test.php
+function wcb_get_group_members($group_id) {
+    global $wpdb;
+
+    // Check if MemberPress transactions table exists
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$txn_table'") == $txn_table;
+
+    if (!$table_exists) {
+        return [];
+    }
+
+    // Use the EXACT same logic as active-members-test.php
+    $group_memberships = wcb_get_group_memberships($group_id);
+
+    if (empty($group_memberships)) {
+        return [];
+    }
+
+    $membership_ids = array_map(function($m) { return $m->ID; }, $group_memberships);
+    $placeholders = implode(',', array_fill(0, count($membership_ids), '%d'));
+
+    // Get members who have active transactions for memberships in this group
+    // Use EXACT same query as active-members-test.php
+    $group_members = $wpdb->get_results($wpdb->prepare("
+        SELECT DISTINCT u.ID, u.display_name, u.user_email, t.created_at
+        FROM {$wpdb->users} u
+        JOIN {$txn_table} t ON u.ID = t.user_id
+        WHERE t.product_id IN ({$placeholders})
+        AND t.status IN ('confirmed', 'complete')
+        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+        AND u.user_login != 'bwgdev'
+        ORDER BY u.display_name
+    ", ...$membership_ids));
+
+    $members = [];
+    foreach ($group_members as $result) {
+        $members[] = [
+            'name' => $result->display_name,
+            'email' => $result->user_email,
+            'join_date' => date('M j, Y', strtotime($result->created_at)),
+            'status' => 'Active' // All members returned by this query are active
+        ];
+    }
+
+    return $members;
+}
+
+// Override: Helper function to get group sessions using proven logic
+function wcb_get_group_sessions($group_id, $limit = 10) {
+    global $wpdb;
+
+    // Use the EXACT same logic as active-members-test.php to get group memberships
+    $group_memberships = wcb_get_group_memberships($group_id);
+
+    if (empty($group_memberships)) {
+        return [];
+    }
+
+    $membership_ids = array_map(function($m) { return $m->ID; }, $group_memberships);
+
+    // Check if any membership is WCB Mentoring (ID: 1738) for special handling
+    $is_wcb_mentoring = in_array(1738, $membership_ids);
+
+    $placeholders = implode(',', array_fill(0, count($membership_ids), '%d'));
+
+    if ($is_wcb_mentoring) {
+        // For WCB Mentoring, order by intervention_date_
+        $query = "
+            SELECT s.ID, s.post_title
+            FROM {$wpdb->posts} s
+            JOIN {$wpdb->postmeta} sm ON s.ID = sm.post_id
+            LEFT JOIN {$wpdb->postmeta} sm2 ON s.ID = sm2.post_id AND sm2.meta_key = 'intervention_date_'
+            WHERE s.post_type = 'session_log'
+            AND s.post_status = 'publish'
+            AND sm.meta_key = 'selected_membership'
+            AND sm.meta_value IN ({$placeholders})
+            ORDER BY COALESCE(sm2.meta_value, s.post_date) DESC
+            LIMIT %d
+        ";
+        $session_posts = $wpdb->get_results($wpdb->prepare($query, ...array_merge($membership_ids, [$limit])));
+    } else {
+        // For regular programs, order by session_date
+        $query = "
+            SELECT s.ID, s.post_title
+            FROM {$wpdb->posts} s
+            JOIN {$wpdb->postmeta} sm ON s.ID = sm.post_id
+            LEFT JOIN {$wpdb->postmeta} sm2 ON s.ID = sm2.post_id AND sm2.meta_key = 'session_date'
+            WHERE s.post_type = 'session_log'
+            AND s.post_status = 'publish'
+            AND sm.meta_key = 'selected_membership'
+            AND sm.meta_value IN ({$placeholders})
+            ORDER BY COALESCE(sm2.meta_value, s.post_date) DESC
+            LIMIT %d
+        ";
+        $session_posts = $wpdb->get_results($wpdb->prepare($query, ...array_merge($membership_ids, [$limit])));
+    }
+
+    $sessions = [];
+    foreach ($session_posts as $session_post) {
+        $session_id = $session_post->ID;
+
+        // Get session type using helper function
+        $session_type_data = wcb_get_session_type($session_id);
+        $session_type = $session_type_data['name'];
+        $session_type_slug = $session_type_data['slug'];
+
+        // Check if this is a mentoring session and handle differently
+        if ($session_type_slug === 'mentoring' || $is_wcb_mentoring) {
+            // For mentoring sessions, use intervention date and student info
+            $intervention_date = get_field('intervention_date_', $session_id);
+            $student_involved = get_field('student_involved', $session_id);
+            $debrief_notes = get_field('debrief_event', $session_id);
+
+            if ($intervention_date) {
+                $date_display = date('M j, Y', strtotime($intervention_date));
+            } else {
+                // Fallback to post date if no intervention date
+                $date_display = date('M j, Y', strtotime($session_post->post_date));
+            }
+
+            // Get student name for mentoring session
+            $student_name = 'Unknown Student';
+            if ($student_involved) {
+                $user = get_user_by('ID', $student_involved);
+                if ($user) {
+                    $student_name = $user->display_name;
+                }
+            }
+
+            $attendance_display = '1 student (' . $student_name . ')';
+            $notes_display = $debrief_notes ? wp_trim_words($debrief_notes, 10) : 'No notes';
+
+        } else {
+            // Handle regular class sessions
+            $date = get_field('session_date', $session_id);
+            $notes = get_field('session_notes', $session_id);
+
+            $date_display = $date ? date('M j, Y', strtotime($date)) : 'Unknown';
+
+            // Get attendance count using the proper helper function
+            $attendance_data = wcb_get_session_attendance($session_id);
+            $attended_count = count($attendance_data['attended']);
+            $excused_count = count($attendance_data['excused']);
+            $total_attendance = $attended_count + $excused_count;
+
+            // Check if this is a 1-on-1 session (associated student)
+            $associated_student = get_field('associated_student', $session_id);
+            if ($associated_student) {
+                $attendance_display = '1 student (1-on-1)';
+            } else {
+                $attendance_display = $total_attendance . ' students';
+                if ($attended_count > 0 || $excused_count > 0) {
+                    $attendance_display .= ' (' . $attended_count . ' present, ' . $excused_count . ' excused)';
+                }
+            }
+
+            $notes_display = $notes ? wp_trim_words($notes, 10) : 'No notes';
+        }
+
+        $sessions[] = [
+            'id' => $session_id,
+            'date' => $date_display,
+            'type' => $session_type,
+            'attendance' => $attendance_display,
+            'notes' => $notes_display
+        ];
+    }
+
+    return $sessions;
+}
+
+// Note: wcb_get_group_member_count is already defined in student-table.php with the proven logic
 
 // Helper function to get session count for a program
 function wcb_get_program_session_count($program_id) {
@@ -1266,19 +1562,20 @@ function wcb_get_program_recent_session($program_id) {
 function wcb_get_program_members($program_id) {
     global $wpdb;
     
-    // Use consistent query logic with the count function
+    // Use EXACT same query logic as active-members-test.php
     $results = $wpdb->get_results($wpdb->prepare("
         SELECT DISTINCT u.ID, u.display_name, u.user_email, t.created_at,
-               CASE 
-                   WHEN t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00' 
-                   THEN 'Active' 
-                   ELSE 'Expired' 
+               CASE
+                   WHEN t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00'
+                   THEN 'Active'
+                   ELSE 'Expired'
                END as status
         FROM {$wpdb->users} u
         JOIN {$wpdb->prefix}mepr_transactions t ON u.ID = t.user_id
-        WHERE t.product_id = %d 
+        WHERE t.product_id = %d
         AND t.status IN ('confirmed', 'complete')
         AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+        AND u.user_login != 'bwgdev'
         ORDER BY u.display_name
     ", $program_id));
     
