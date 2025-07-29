@@ -781,3 +781,10 @@ function wcb_create_test_competition() {
     }
 }
 add_action('wp_ajax_wcb_create_test_competition', 'wcb_create_test_competition');
+
+// Include family membership system
+require_once get_stylesheet_directory() . '/includes/family-membership/family-membership-setup.php';
+require_once get_stylesheet_directory() . '/includes/family-membership/family-registration-ajax.php';
+require_once get_stylesheet_directory() . '/includes/family-membership/family-dashboard.php';
+require_once get_stylesheet_directory() . '/includes/family-membership/parent-registration.php';
+require_once get_stylesheet_directory() . '/includes/family-membership/create-test-data.php';

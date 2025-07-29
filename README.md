@@ -13,8 +13,8 @@ This workflow prevents the "broken site after Git pull" problem by separating co
 #### 1. Pull Live Data to Local (Before Development)
 
 ```bash
-# Sync live database to local
-~/scripts/sync-live-to-local.sh
+# Sync live database to local (improved version with better URL handling)
+~/scripts/sync-live-to-local-improved.sh
 
 # Sync live files (uploads, etc.)
 ~/scripts/sync-live-files-to-local.sh
@@ -37,7 +37,8 @@ This workflow prevents the "broken site after Git pull" problem by separating co
 
 #### Database Sync Scripts
 
-- `sync-live-to-local.sh` - Pull live database to local
+- `sync-live-to-local-improved.sh` - Pull live database to local (recommended - better URL handling)
+- `sync-live-to-local.sh` - Pull live database to local (original version)
 - `sync-live-files-to-local.sh` - Pull live uploads to local
 
 #### Deployment Scripts
@@ -113,8 +114,8 @@ bash ~/scripts/rollback-deployment.sh
 #### Before Development (Weekly)
 
 ```bash
-# Get latest live data
-~/scripts/sync-live-to-local.sh
+# Get latest live data (recommended improved version)
+~/scripts/sync-live-to-local-improved.sh
 ~/scripts/sync-live-files-to-local.sh
 ```
 
