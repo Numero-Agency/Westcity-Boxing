@@ -680,6 +680,7 @@ function wcb_family_dashboard_shortcode($atts) {
         margin: 0;
         font-size: 20px;
         font-weight: 600;
+        color: #fff !important;
     }
 
     .wcb-popup-close {

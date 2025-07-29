@@ -58,6 +58,7 @@ function student_table_shortcode($atts) {
                         <th><span class="dashicons dashicons-admin-users"></span> Name</th>
                         <th><span class="dashicons dashicons-email"></span> Email</th>
                         <th><span class="dashicons dashicons-awards"></span> Membership</th>
+                        <th><span class="dashicons dashicons-money-alt"></span> Payment Status</th>
                         <th><span class="dashicons dashicons-chart-bar"></span> Sessions</th>
                         <th><span class="dashicons dashicons-calendar-alt"></span> Joined</th>
                         <th><span class="dashicons dashicons-admin-tools"></span> Actions</th>
@@ -184,14 +185,14 @@ function student_table_shortcode($atts) {
                             $(this).delay(index * 50).fadeIn(200);
                         });
                     } else {
-                        $('#students-table-body').html('<tr><td colspan="6" class="error">' + response.data + '</td></tr>');
+                        $('#students-table-body').html('<tr><td colspan="7" class="error">' + response.data + '</td></tr>');
                         $('#pagination-info').html('Error loading students');
                         $('#pagination-controls').html('');
                     }
                 },
                 error: function() {
                     $('#table-loading').hide();
-                    $('#students-table-body').html('<tr><td colspan="6" class="error">Failed to load students. Please try again.</td></tr>');
+                    $('#students-table-body').html('<tr><td colspan="7" class="error">Failed to load students. Please try again.</td></tr>');
                     $('#pagination-info').html('Error loading students');
                     $('#pagination-controls').html('');
                 }
@@ -675,10 +676,10 @@ function student_table_shortcode($atts) {
             margin-bottom: 1px;
         }
         
-        .students-table th:nth-child(4),
-        .students-table td:nth-child(4),
         .students-table th:nth-child(5),
-        .students-table td:nth-child(5) {
+        .students-table td:nth-child(5),
+        .students-table th:nth-child(6),
+        .students-table td:nth-child(6) {
             display: none;
         }
         
@@ -1210,6 +1211,250 @@ function student_table_shortcode($atts) {
      .membership-color-mentoring { background-color: #E0DAFD !important; color: #000000 !important; }
      .membership-color-comp-team { background-color: #9AE095 !important; color: #000000 !important; }
      .membership-color-waitlist { background-color: #999999 !important; color: #ffffff !important; }
+
+     /* Payment Status Styling */
+     .payment-status-stripe {
+         display: flex;
+         flex-direction: column;
+         gap: 3px;
+         line-height: 1.2;
+     }
+
+     .stripe-dates-line {
+         font-size: 11px;
+         font-weight: 500;
+         color: #000000;
+         white-space: nowrap;
+     }
+
+     .stripe-active-text {
+         color: #007bff;
+         font-weight: 600;
+     }
+
+     .stripe-label-line {
+         display: flex;
+         align-items: flex-start;
+     }
+
+     .stripe-status-label {
+         font-size: 10px;
+         font-weight: 600;
+         text-transform: uppercase;
+         letter-spacing: 0.3px;
+         padding: 2px 6px;
+         border-radius: 6px;
+         white-space: nowrap;
+         line-height: 1.1;
+     }
+
+     .payment-status-badge {
+         display: inline-flex;
+         align-items: center;
+         padding: 4px 8px;
+         font-size: 11px;
+         font-weight: 600;
+         text-transform: uppercase;
+         letter-spacing: 0.3px;
+         border-radius: 12px;
+         white-space: nowrap;
+         line-height: 1.2;
+     }
+
+     .stripe-status-label.payment-active {
+         background: #d4edda;
+         color: #155724;
+         border: 1px solid #c3e6cb;
+     }
+
+     .stripe-status-label.payment-expiring {
+         background: #fff3cd;
+         color: #856404;
+         border: 1px solid #ffeaa7;
+     }
+
+     .stripe-status-label.payment-expired {
+         background: #f8d7da;
+         color: #721c24;
+         border: 1px solid #f5c6cb;
+     }
+
+     .stripe-status-label.payment-subscription {
+         background: #d1ecf1;
+         color: #0c5460;
+         border: 1px solid #bee5eb;
+     }
+
+     .stripe-status-label.payment-lifetime {
+         background: #e2e3e5;
+         color: #383d41;
+         border: 1px solid #d6d8db;
+     }
+
+     /* Keep original badge styles for non-Stripe payments */
+     .payment-status-badge.payment-active {
+         background: #d4edda;
+         color: #155724;
+         border: 1px solid #c3e6cb;
+     }
+
+     .payment-status-badge.payment-expiring {
+         background: #fff3cd;
+         color: #856404;
+         border: 1px solid #ffeaa7;
+     }
+
+     .payment-status-badge.payment-expired {
+         background: #f8d7da;
+         color: #721c24;
+         border: 1px solid #f5c6cb;
+     }
+
+     .payment-status-badge.payment-subscription {
+         background: #d1ecf1;
+         color: #0c5460;
+         border: 1px solid #bee5eb;
+     }
+
+     .payment-status-badge.payment-lifetime {
+         background: #e2e3e5;
+         color: #383d41;
+         border: 1px solid #d6d8db;
+     }
+
+     .payment-needs-activation {
+         background: #ffeaa7;
+         color: #856404;
+         border: 1px solid #fdcb6e;
+         animation: pulse-activation 2s infinite;
+     }
+
+     .payment-no-membership {
+         background: #f8d7da;
+         color: #721c24;
+         border: 1px solid #f5c6cb;
+     }
+
+     .payment-unknown {
+         background: #e2e3e5;
+         color: #6c757d;
+         border: 1px solid #d6d8db;
+     }
+
+     .payment-dates {
+         font-size: 10px;
+         color: #666666;
+         font-weight: 400;
+         line-height: 1.2;
+     }
+
+     @keyframes pulse-activation {
+         0%, 100% { opacity: 1; }
+         50% { opacity: 0.7; }
+     }
+
+     /* Responsive adjustments for payment status */
+     @media (max-width: 768px) {
+         .stripe-dates-line {
+             font-size: 10px;
+         }
+
+         .stripe-status-label {
+             font-size: 9px;
+             padding: 1px 4px;
+         }
+
+         .payment-status-badge {
+             font-size: 10px;
+             padding: 3px 6px;
+         }
+
+         .payment-dates {
+             font-size: 9px;
+         }
+     }
+
+     /* Payment-specific styling within existing card structure */
+     .payment-row-item {
+         /* Use existing info-row styling but customize for payments */
+     }
+
+     .payment-item-label {
+         /* Override info-label for payment items */
+         font-weight: 600 !important;
+         color: #000000 !important;
+     }
+
+     .payment-meta {
+         font-size: 10px;
+         color: #666666;
+         font-weight: 400;
+         margin-top: 2px;
+     }
+
+     .payment-amount-value {
+         font-weight: 700 !important;
+         color: #28a745 !important;
+         font-size: 14px !important;
+     }
+
+     .activation-needed-column {
+         border-color: #ffeaa7;
+         background: #fffbf0;
+     }
+
+     .activation-message {
+         text-align: center;
+         padding: 8px 0;
+     }
+
+     .activation-badge {
+         display: inline-block;
+         background: #ffeaa7;
+         color: #856404;
+         padding: 8px 16px;
+         border-radius: 20px;
+         font-weight: 600;
+         font-size: 12px;
+         text-transform: uppercase;
+         letter-spacing: 0.5px;
+         margin-bottom: 12px;
+         animation: pulse-activation 2s infinite;
+     }
+
+     .activation-description {
+         color: #856404;
+         font-size: 13px;
+         margin: 8px 0 0 0;
+         line-height: 1.4;
+     }
+
+     /* Responsive adjustments for payment columns */
+     @media (max-width: 1200px) {
+         /* Stack payment columns on medium screens */
+         .overlay-three-column-grid[style*="grid-template-columns: 1fr 1fr"] {
+             grid-template-columns: 1fr !important;
+         }
+     }
+
+     @media (max-width: 768px) {
+         .payment-meta {
+             font-size: 9px;
+         }
+
+         .payment-amount-value {
+             font-size: 13px !important;
+         }
+
+         .activation-badge {
+             padding: 6px 12px;
+             font-size: 11px;
+         }
+
+         .activation-description {
+             font-size: 12px;
+         }
+     }
      </style>
     <?php
     return ob_get_clean();
@@ -1392,6 +1637,171 @@ function wcb_get_membership_css_class($membership_name) {
     }
     
     return '';
+}
+
+// Get student payment status - similar to family dashboard logic
+function wcb_get_student_payment_status($user_id) {
+    global $wpdb;
+
+    // Check if MemberPress tables exist
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+    $subs_table = $wpdb->prefix . 'mepr_subscriptions';
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$txn_table'") == $txn_table;
+    $subs_exists = $wpdb->get_var("SHOW TABLES LIKE '$subs_table'") == $subs_table;
+
+    if (!$table_exists) {
+        return '<span class="payment-status-badge payment-unknown">Unknown</span>';
+    }
+
+    // Get user's most recent active transaction (same logic as family dashboard)
+    $wcb_mentoring_id = 1738;
+
+    $transaction = $wpdb->get_row($wpdb->prepare("
+        SELECT t.*, p.post_title as product_name
+        FROM {$txn_table} t
+        JOIN {$wpdb->posts} p ON t.product_id = p.ID
+        WHERE t.user_id = %d
+        AND t.status IN ('confirmed', 'complete')
+        AND t.product_id != %d
+        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+        ORDER BY t.created_at DESC
+        LIMIT 1
+    ", $user_id, $wcb_mentoring_id));
+
+    if (!$transaction) {
+        return '<span class="payment-status-badge payment-no-membership">No Membership</span>';
+    }
+
+    // Detect payment type using same logic as family dashboard
+    $payment_type = wcb_detect_student_payment_type($transaction);
+
+    if ($payment_type === 'manual') {
+        // Manual payment - needs activation
+        return '<span class="payment-status-badge payment-needs-activation">Needs Activation</span>';
+    } else {
+        // Stripe payment - show status and dates
+        $expires_at = $transaction->expires_at;
+        $created_at = $transaction->created_at;
+
+        if ($expires_at && $expires_at !== '0000-00-00 00:00:00') {
+            // Has expiry date
+            $expires_timestamp = strtotime($expires_at);
+            $now_timestamp = time();
+
+            if ($expires_timestamp > $now_timestamp) {
+                $days_until_expiry = ceil(($expires_timestamp - $now_timestamp) / (60 * 60 * 24));
+
+                if ($days_until_expiry <= 7) {
+                    $status_class = 'payment-expiring';
+                    $status_text = 'Expires Soon';
+                } else {
+                    $status_class = 'payment-active';
+                    $status_text = 'Active';
+                }
+            } else {
+                $status_class = 'payment-expired';
+                $status_text = 'Expired';
+            }
+
+            $start_date = date('M j', strtotime($created_at));
+            $due_date = date('M j', $expires_timestamp);
+
+            return '<div class="payment-status-stripe">
+                        <div class="stripe-dates-line">
+                            <span class="stripe-active-text">Stripe Active</span>: ' . $start_date . ' | Due: ' . $due_date . '
+                        </div>
+                        <div class="stripe-label-line">
+                            <span class="stripe-status-label ' . $status_class . '">' . $status_text . '</span>
+                        </div>
+                    </div>';
+        } else {
+            // Lifetime or subscription
+            if ($subs_exists) {
+                // Check for active subscription
+                $subscription = $wpdb->get_row($wpdb->prepare("
+                    SELECT * FROM {$subs_table}
+                    WHERE user_id = %d
+                    AND product_id = %d
+                    AND status = 'active'
+                    ORDER BY created_at DESC
+                    LIMIT 1
+                ", $user_id, $transaction->product_id));
+
+                if ($subscription) {
+                    $start_date = date('M j', strtotime($created_at));
+                    $next_payment = '';
+
+                    // Calculate next payment date based on subscription period
+                    if ($subscription->period_type === 'weeks') {
+                        $next_payment_date = strtotime($created_at . ' + ' . $subscription->period . ' weeks');
+                        $next_payment = date('M j', $next_payment_date);
+                    } elseif ($subscription->period_type === 'months') {
+                        $next_payment_date = strtotime($created_at . ' + ' . $subscription->period . ' months');
+                        $next_payment = date('M j', $next_payment_date);
+                    }
+
+                    return '<div class="payment-status-stripe">
+                                <div class="stripe-dates-line">
+                                    <span class="stripe-active-text">Stripe Active</span>: ' . $start_date . ' | Due: ' . ($next_payment ?: 'Ongoing') . '
+                                </div>
+                                <div class="stripe-label-line">
+                                    <span class="stripe-status-label payment-subscription">Subscription</span>
+                                </div>
+                            </div>';
+                }
+            }
+
+            // Lifetime membership
+            $start_date = date('M j', strtotime($created_at));
+            return '<div class="payment-status-stripe">
+                        <div class="stripe-dates-line">
+                            <span class="stripe-active-text">Stripe Active</span>: ' . $start_date . ' | Due: Never
+                        </div>
+                        <div class="stripe-label-line">
+                            <span class="stripe-status-label payment-lifetime">Lifetime</span>
+                        </div>
+                    </div>';
+        }
+    }
+}
+
+// Detect payment type for student table (same logic as family dashboard)
+function wcb_detect_student_payment_type($transaction) {
+    global $wpdb;
+
+    // Check if transaction has a gateway (non-empty gateway = Stripe, empty/manual = manual payment)
+    $gateway = $transaction->gateway ?? '';
+
+    // If gateway is empty or 'manual', it's a manual payment
+    if (empty($gateway) || $gateway === 'manual') {
+        return 'manual';
+    }
+
+    // If gateway has any value (like sz7gj0-4lm, stmm16-31, etc.), it's likely Stripe
+    if (!empty($gateway)) {
+        // Check if it's a Stripe gateway (contains stripe or starts with sz)
+        if (strpos($gateway, 'stripe') !== false || preg_match('/^sz[a-z0-9\-]+$/', $gateway)) {
+            return 'stripe';
+        }
+
+        // Double-check by looking for subscriptions
+        $subscription_table = $wpdb->prefix . 'mepr_subscriptions';
+        $subscription = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $subscription_table
+             WHERE user_id = %d
+             AND product_id = %d
+             ORDER BY created_at DESC
+             LIMIT 1",
+            $transaction->user_id,
+            $transaction->product_id
+        ));
+
+        if ($subscription) {
+            return 'stripe';
+        }
+    }
+
+    return 'manual';
 }
 
 // Helper function to get session count for a user
@@ -1685,16 +2095,20 @@ function wcb_ajax_load_students_table() {
             
             // Get all active memberships for this user
             $membership_info = wcb_get_user_all_memberships($user->ID);
-            
+
+            // Get payment status
+            $payment_status = wcb_get_student_payment_status($user->ID);
+
             // Get session count
             $session_count = wcb_get_user_session_count($user->ID);
-            
+
             $join_date = date('M j, Y', strtotime($user->user_registered));
-            
+
             $rows_html .= '<tr>';
             $rows_html .= '<td><div class="student-name">' . esc_html($user->display_name) . '</div></td>';
             $rows_html .= '<td>' . esc_html($user->user_email) . '</td>';
             $rows_html .= '<td>' . $membership_info . '</td>';
+            $rows_html .= '<td>' . $payment_status . '</td>';
             $rows_html .= '<td><span class="sessions-count">' . esc_html($session_count) . '</span></td>';
             $rows_html .= '<td>' . esc_html($join_date) . '</td>';
             $rows_html .= '<td><button class="student-table-view-btn" data-student-id="' . $user->ID . '">View</button></td>';
@@ -1713,7 +2127,7 @@ function wcb_ajax_load_students_table() {
                 $status_text = 'waitlist ';
                 break;
         }
-        $rows_html = '<tr><td colspan="6" class="no-results">No ' . $status_text . 'students found' . (!empty($search) ? ' matching "' . esc_html($search) . '"' : '') . '</td></tr>';
+        $rows_html = '<tr><td colspan="7" class="no-results">No ' . $status_text . 'students found' . (!empty($search) ? ' matching "' . esc_html($search) . '"' : '') . '</td></tr>';
     }
     
     // Generate pagination info
@@ -2264,20 +2678,84 @@ function wcb_ajax_load_student_profile_overlay() {
                 <?php
                 // Get subscription display using safe helper
                 $membership_display = WCB_MemberPress_Helper::get_membership_display($student_id);
-                
-                                 if ($membership_display !== 'No active membership'): 
-                     $bg_color = wcb_get_membership_color($membership_display);
-                     $text_color = wcb_get_text_color_for_background($bg_color);
-                 ?>
-                     <div class="overlay-membership-item" style="background-color: <?php echo esc_attr($bg_color); ?>;">
-                         <div class="overlay-membership-name" style="color: <?php echo esc_attr($text_color); ?>;"><?php echo esc_html($membership_display); ?></div>
-                         <div class="overlay-membership-status" style="color: <?php echo esc_attr($text_color); ?>; opacity: 0.8;">Active subscription</div>
-                     </div>
-                 <?php else: ?>
-                     <div class="overlay-info-item">
-                         <div class="overlay-info-value">No active memberships found</div>
-                     </div>
-                 <?php endif; ?>
+
+                if ($membership_display !== 'No active membership'):
+                    $bg_color = wcb_get_membership_color($membership_display);
+                    $text_color = wcb_get_text_color_for_background($bg_color);
+
+                    // Get payment status and subscription details
+                    $payment_status_info = wcb_get_student_detailed_payment_info($student_id);
+                ?>
+                    <div class="overlay-membership-item" style="background-color: <?php echo esc_attr($bg_color); ?>;">
+                        <div class="overlay-membership-name" style="color: <?php echo esc_attr($text_color); ?>;"><?php echo esc_html($membership_display); ?></div>
+                        <div class="overlay-membership-status" style="color: <?php echo esc_attr($text_color); ?>; opacity: 0.8;">Active subscription</div>
+                    </div>
+
+                    <!-- Subscription Details & Recent Payments -->
+                    <?php if ($payment_status_info['is_stripe']): ?>
+                        <div class="overlay-three-column-grid" style="grid-template-columns: 1fr 1fr; margin-top: 20px;">
+                            <!-- Subscription Details Column -->
+                            <div class="info-column">
+                                <h4 class="column-header">
+                                    <span class="dashicons dashicons-admin-settings"></span> Subscription Details
+                                </h4>
+                                <div class="column-content">
+                                    <?php foreach ($payment_status_info['subscription_details'] as $label => $value): ?>
+                                    <div class="info-row">
+                                        <div class="info-label"><?php echo esc_html($label); ?></div>
+                                        <div class="info-value"><?php echo esc_html($value); ?></div>
+                                    </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+
+                            <!-- Recent Payments Column -->
+                            <div class="info-column">
+                                <h4 class="column-header">
+                                    <span class="dashicons dashicons-money-alt"></span> Recent Payments
+                                </h4>
+                                <div class="column-content">
+                                    <?php if (!empty($payment_status_info['recent_payments'])): ?>
+                                        <?php foreach ($payment_status_info['recent_payments'] as $payment): ?>
+                                        <div class="info-row payment-row-item">
+                                            <div class="info-label payment-item-label">
+                                                <?php echo esc_html($payment['description']); ?>
+                                                <div class="payment-meta"><?php echo esc_html($payment['date']); ?> • <?php echo esc_html($payment['method']); ?></div>
+                                            </div>
+                                            <div class="info-value payment-amount-value">$<?php echo esc_html($payment['amount']); ?></div>
+                                        </div>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <div class="info-row">
+                                            <div class="info-value not-provided">No recent payments found</div>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                    <?php else: ?>
+                        <!-- Manual Payment - Needs Activation -->
+                        <div class="overlay-three-column-grid" style="grid-template-columns: 1fr; margin-top: 20px;">
+                            <div class="info-column activation-needed-column">
+                                <h4 class="column-header">
+                                    <span class="dashicons dashicons-warning"></span> Payment Status
+                                </h4>
+                                <div class="column-content">
+                                    <div class="info-row">
+                                        <div class="info-value activation-message">
+                                            <span class="activation-badge">Needs Online Payment Activation</span>
+                                            <p class="activation-description">This member has a manual payment that requires online activation to access subscription management features.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                <?php else: ?>
+                    <div class="overlay-info-item">
+                        <div class="overlay-info-value">No active memberships found</div>
+                    </div>
+                <?php endif; ?>
             </div>
             
             <!-- Session History -->
@@ -2505,3 +2983,99 @@ function wcb_ajax_load_student_profile_overlay() {
 }
 add_action('wp_ajax_wcb_load_student_profile_overlay', 'wcb_ajax_load_student_profile_overlay');
 add_action('wp_ajax_nopriv_wcb_load_student_profile_overlay', 'wcb_ajax_load_student_profile_overlay');
+
+// Get detailed payment information for student profile
+function wcb_get_student_detailed_payment_info($user_id) {
+    global $wpdb;
+
+    // Check if MemberPress tables exist
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+    $subs_table = $wpdb->prefix . 'mepr_subscriptions';
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$txn_table'") == $txn_table;
+    $subs_exists = $wpdb->get_var("SHOW TABLES LIKE '$subs_table'") == $subs_table;
+
+    $result = [
+        'is_stripe' => false,
+        'subscription_details' => [],
+        'recent_payments' => []
+    ];
+
+    if (!$table_exists) {
+        return $result;
+    }
+
+    // Get user's most recent active transaction
+    $wcb_mentoring_id = 1738;
+
+    $transaction = $wpdb->get_row($wpdb->prepare("
+        SELECT t.*, p.post_title as product_name
+        FROM {$txn_table} t
+        JOIN {$wpdb->posts} p ON t.product_id = p.ID
+        WHERE t.user_id = %d
+        AND t.status IN ('confirmed', 'complete')
+        AND t.product_id != %d
+        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+        ORDER BY t.created_at DESC
+        LIMIT 1
+    ", $user_id, $wcb_mentoring_id));
+
+    if (!$transaction) {
+        return $result;
+    }
+
+    // Detect payment type
+    $payment_type = wcb_detect_student_payment_type($transaction);
+
+    if ($payment_type === 'stripe') {
+        $result['is_stripe'] = true;
+
+        // Get subscription details
+        $details = [];
+        $details['Product'] = $transaction->product_name ?: 'Unknown';
+        $details['Amount'] = '$' . number_format($transaction->amount, 2);
+        $details['Status'] = ucfirst($transaction->status);
+
+        if (!empty($transaction->created_at) && $transaction->created_at !== '0000-00-00 00:00:00') {
+            $details['Start Date'] = date('M j, Y', strtotime($transaction->created_at));
+        }
+
+        if (!empty($transaction->expires_at) && $transaction->expires_at !== '0000-00-00 00:00:00') {
+            $details['Expires'] = date('M j, Y', strtotime($transaction->expires_at));
+        } else {
+            $details['Expires'] = 'Lifetime';
+        }
+
+        // Get subscription info if available
+        if ($subs_exists && !empty($transaction->subscription_id)) {
+            $subscription = $wpdb->get_row($wpdb->prepare("
+                SELECT * FROM {$subs_table} WHERE id = %d
+            ", $transaction->subscription_id));
+
+            if ($subscription) {
+                $details['Billing Cycle'] = ucfirst($subscription->period_type);
+                if ($subscription->status === 'active') {
+                    $details['Auto-Renewal'] = 'Yes';
+                } else {
+                    $details['Auto-Renewal'] = 'No';
+                }
+            }
+        }
+
+        // Payment method
+        if (!empty($transaction->gateway)) {
+            if (strpos($transaction->gateway, 'stripe') !== false || preg_match('/^sz[a-z0-9\-]+$/', $transaction->gateway)) {
+                $details['Payment Method'] = 'Stripe';
+            } else {
+                $details['Payment Method'] = ucfirst($transaction->gateway);
+            }
+        }
+
+        $result['subscription_details'] = $details;
+
+        // Get recent payments (last 5)
+        $recent_payments = wcb_get_user_recent_payments($user_id, 5);
+        $result['recent_payments'] = $recent_payments;
+    }
+
+    return $result;
+}

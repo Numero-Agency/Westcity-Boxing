@@ -61,8 +61,8 @@ function community_class_shortcode($atts) {
                         <tr>
                             <th><span class="dashicons dashicons-admin-users"></span> Name</th>
                             <th><span class="dashicons dashicons-email"></span> Email</th>
-                            <th><span class="dashicons dashicons-awards"></span> Membership</th>
                             <th><span class="dashicons dashicons-yes-alt"></span> Status</th>
+                            <th><span class="dashicons dashicons-calendar-alt"></span> Expires</th>
                             <th><span class="dashicons dashicons-chart-bar"></span> Sessions</th>
                             <th><span class="dashicons dashicons-calendar-alt"></span> Joined</th>
                             <th><span class="dashicons dashicons-admin-tools"></span> Actions</th>
@@ -190,8 +190,23 @@ function community_class_shortcode($atts) {
                 </div>
             </div>
         </div>
+
+        <!-- Member Details Popup -->
+        <div id="member-details-popup" class="wcb-popup-overlay" style="display: none;">
+            <div class="wcb-popup-content">
+                <div class="wcb-popup-header">
+                    <h3 id="member-details-popup-title">Member Details</h3>
+                    <button type="button" class="wcb-popup-close">&times;</button>
+                </div>
+                <div class="wcb-popup-body">
+                    <div id="member-details-content">
+                        <!-- Member details will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-    
+
     <script>
     jQuery(document).ready(function($) {
         var currentPage = 1;
@@ -339,12 +354,12 @@ function community_class_shortcode($atts) {
                             $(this).delay(index * 50).fadeIn(200);
                         });
                     } else {
-                        $('#members-table-body').html('<tr><td colspan="6" class="error">' + response.data + '</td></tr>');
+                        $('#members-table-body').html('<tr><td colspan="7" class="error">' + response.data + '</td></tr>');
                     }
                 },
                 error: function() {
                     $('#members-loading').hide();
-                    $('#members-table-body').html('<tr><td colspan="6" class="error">Failed to load members.</td></tr>');
+                    $('#members-table-body').html('<tr><td colspan="7" class="error">Failed to load members.</td></tr>');
                 }
             });
         }
@@ -414,11 +429,38 @@ function community_class_shortcode($atts) {
         $(document).on('click', '.btn-view-member', function(e) {
             e.preventDefault();
             var userId = $(this).data('user-id');
+            var userName = $(this).closest('tr').find('td:first strong').text();
 
             if (userId) {
-                // Open member profile in new tab/window
-                var memberUrl = '/wp-admin/user-edit.php?user_id=' + userId;
-                window.open(memberUrl, '_blank');
+                // Update popup title
+                $('#member-details-popup-title').text(userName + ' - Member Details');
+
+                // Show loading in popup
+                $('#member-details-content').html('<div style="text-align: center; padding: 40px;"><span class="dashicons dashicons-update-alt" style="animation: spin 1s linear infinite;"></span> Loading member details...</div>');
+
+                // Show popup
+                $('#member-details-popup').fadeIn(300);
+
+                // Load member details via AJAX
+                $.ajax({
+                    url: wcb_ajax.ajax_url,
+                    type: 'POST',
+                    data: {
+                        action: 'wcb_get_community_member_details',
+                        user_id: userId,
+                        nonce: wcb_ajax.nonce
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            $('#member-details-content').html(response.data.html);
+                        } else {
+                            $('#member-details-content').html('<div style="text-align: center; padding: 40px; color: #dc3545;">Error loading member details: ' + response.data + '</div>');
+                        }
+                    },
+                    error: function() {
+                        $('#member-details-content').html('<div style="text-align: center; padding: 40px; color: #dc3545;">Connection error. Please try again.</div>');
+                    }
+                });
             }
         });
 
@@ -528,6 +570,18 @@ function community_class_shortcode($atts) {
             window.open(editUrl, '_blank');
             closeSessionDetailsModal();
         };
+
+        // Close member details popup
+        $('.wcb-popup-close, .wcb-popup-overlay').on('click', function(e) {
+            if (e.target === this) {
+                $('#member-details-popup').fadeOut(300);
+            }
+        });
+
+        // Prevent popup content clicks from closing popup
+        $('.wcb-popup-content').on('click', function(e) {
+            e.stopPropagation();
+        });
     });
     </script>
     
@@ -1120,6 +1174,160 @@ function community_class_shortcode($atts) {
         color: #004085;
         border: 1px solid #b3d7ff;
     }
+
+    /* Member Details Popup - Matching Family Dashboard Design */
+    .wcb-popup-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+
+    .wcb-popup-content {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        max-width: 600px;
+        width: 100%;
+        max-height: 80vh;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .wcb-popup-header {
+        background: #000000;
+        color: #ffffff;
+        padding: 20px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .wcb-popup-header h3 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 600;
+        color: #fff !important;
+    }
+
+    .wcb-popup-close {
+        background: none;
+        border: none;
+        color: #ffffff;
+        font-size: 24px;
+        cursor: pointer;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: background-color 0.2s;
+    }
+
+    .wcb-popup-close:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .wcb-popup-body {
+        padding: 24px;
+        max-height: 60vh;
+        overflow-y: auto;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    /* Member details sections - matching family dashboard */
+    .current-subscription-info,
+    .subscription-actions-section,
+    .change-membership-section {
+        margin-bottom: 24px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .change-membership-section {
+        border-bottom: none;
+    }
+
+    .current-info-card {
+        background: #f8f9fa;
+        padding: 16px;
+        border-radius: 8px;
+        margin-top: 12px;
+    }
+
+    .current-info-card p {
+        margin: 8px 0;
+        font-size: 14px;
+    }
+
+    /* Recent Payments Section - matching family dashboard */
+    .payments-list {
+        margin-top: 16px;
+    }
+
+    .payment-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .payment-item:last-child {
+        border-bottom: none;
+    }
+
+    .payment-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .payment-product {
+        font-weight: 600;
+        font-size: 14px;
+        color: #000000;
+    }
+
+    .payment-date {
+        font-size: 12px;
+        color: #666666;
+    }
+
+    .payment-amount {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 4px;
+    }
+
+    .amount {
+        font-weight: 700;
+        font-size: 14px;
+        color: #28a745;
+    }
+
+    .expires {
+        font-size: 11px;
+        color: #666666;
+    }
+
+    .no-payments {
+        text-align: center;
+        color: #666666;
+        font-style: italic;
+        padding: 20px;
+        font-size: 14px;
+    }
     </style>
     <?php
     return ob_get_clean();
@@ -1164,18 +1372,18 @@ function wcb_ajax_load_community_members() {
     
     $rows = '';
     foreach ($users as $user) {
-        $membership = wcb_get_user_membership($user->ID);
         $session_count = wcb_get_user_community_session_count($user->ID);
         $join_date = date('M j, Y', strtotime($user->user_registered));
 
         // Get member status based on transactions
         $status_info = wcb_get_member_status($user->ID);
+        $expiry_info = wcb_get_member_expiry($user->ID);
 
         $rows .= '<tr>';
         $rows .= '<td><strong>' . esc_html($user->display_name) . '</strong></td>';
         $rows .= '<td>' . esc_html($user->user_email) . '</td>';
-        $rows .= '<td>' . esc_html($membership) . '</td>';
         $rows .= '<td>' . $status_info['html'] . '</td>';
+        $rows .= '<td>' . $expiry_info . '</td>';
         $rows .= '<td>' . intval($session_count) . '</td>';
         $rows .= '<td>' . esc_html($join_date) . '</td>';
         $rows .= '<td><button class="btn-view-member" data-user-id="' . $user->ID . '">View</button></td>';
@@ -1578,10 +1786,19 @@ function wcb_get_user_membership($user_id) {
     // Check if MemberPress is active
     if (class_exists('MeprUser')) {
         $mepr_user = new MeprUser($user_id);
-        $active_memberships = $mepr_user->active_product_subscriptions();
 
-        if (!empty($active_memberships)) {
-            $membership = get_post($active_memberships[0]);
+        // Use get_active_subscription_titles() method which properly formats membership names
+        $subscription_titles = $mepr_user->get_active_subscription_titles();
+
+        if (!empty($subscription_titles)) {
+            return $subscription_titles;
+        }
+
+        // Fallback: try active_product_subscriptions with 'ids' return type
+        $active_membership_ids = $mepr_user->active_product_subscriptions('ids');
+
+        if (!empty($active_membership_ids)) {
+            $membership = get_post($active_membership_ids[0]);
             return $membership ? $membership->post_title : 'Member';
         }
     }
@@ -1766,15 +1983,15 @@ function wcb_get_member_status($user_id) {
             $expiry_timestamp = strtotime($latest_txn->expires_at);
             $days_until_expiry = ceil(($expiry_timestamp - time()) / (24 * 60 * 60));
 
-            if ($days_until_expiry <= 7) {
-                // Expires within 7 days
+            if ($days_until_expiry <= 2) {
+                // Expires within 2 days (weekly membership adjustment)
                 $expiry_date = date('M j', $expiry_timestamp);
                 return [
                     'status' => 'expiring_soon',
                     'html' => '<span class="status-badge status-warning" title="Expires ' . $expiry_date . '">Expires Soon</span>'
                 ];
             } else {
-                // Active with good time remaining
+                // Active with good time remaining (5+ days)
                 $expiry_date = date('M j', $expiry_timestamp);
                 return [
                     'status' => 'active',
@@ -1809,5 +2026,578 @@ function wcb_get_member_status($user_id) {
                 'html' => '<span class="status-badge status-inactive">No Active Membership</span>'
             ];
         }
+    }
+}
+
+// Get member expiry date for display
+function wcb_get_member_expiry($user_id) {
+    global $wpdb;
+
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$txn_table'") == $txn_table;
+
+    if (!$table_exists) {
+        return 'Unknown';
+    }
+
+    // Get user's active transactions
+    $transactions = $wpdb->get_results($wpdb->prepare("
+        SELECT expires_at
+        FROM {$txn_table}
+        WHERE user_id = %d
+        AND status IN ('confirmed', 'complete')
+        ORDER BY created_at DESC
+    ", $user_id));
+
+    if (empty($transactions)) {
+        return 'No Membership';
+    }
+
+    foreach ($transactions as $txn) {
+        $expires_at = $txn->expires_at;
+
+        if (empty($expires_at) || $expires_at === '0000-00-00 00:00:00') {
+            return 'Lifetime';
+        }
+
+        $expiry_timestamp = strtotime($expires_at);
+        if ($expiry_timestamp > time()) {
+            return date('M j, Y', $expiry_timestamp);
+        }
+    }
+
+    // All transactions expired
+    $latest_expired = $transactions[0];
+    if (!empty($latest_expired->expires_at) && $latest_expired->expires_at !== '0000-00-00 00:00:00') {
+        return date('M j, Y', strtotime($latest_expired->expires_at)) . ' (Expired)';
+    }
+
+    return 'Expired';
+}
+
+// AJAX handler for getting community member details
+function wcb_ajax_get_community_member_details() {
+    if (!wp_verify_nonce($_POST['nonce'], 'wcb_nonce')) {
+        wp_die('Security check failed');
+    }
+
+    $user_id = intval($_POST['user_id']);
+
+    if (!$user_id) {
+        wp_send_json_error('Invalid user ID');
+        return;
+    }
+
+    $user = get_user_by('ID', $user_id);
+    if (!$user) {
+        wp_send_json_error('User not found');
+        return;
+    }
+
+    // Get member details
+    $membership = wcb_get_user_membership($user_id);
+    $status_info = wcb_get_member_status($user_id);
+    $expiry_info = wcb_get_member_expiry($user_id);
+    $session_count = wcb_get_user_community_session_count($user_id);
+    $join_date = date('M j, Y', strtotime($user->user_registered));
+
+    // Get subscription details
+    $subscription_details = wcb_get_user_subscription_details($user_id);
+
+    // Get recent payments
+    $recent_payments = wcb_get_user_recent_payments($user_id, 5);
+
+    // Build HTML content
+    ob_start();
+    ?>
+    <div class="current-subscription-info">
+        <h4 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #2c3e50;">
+            <span class="dashicons dashicons-admin-users" style="margin-right: 8px;"></span>Member Information
+        </h4>
+        <div class="current-info-card">
+            <p><strong>Name:</strong> <?php echo esc_html($user->display_name); ?></p>
+            <p><strong>Email:</strong> <?php echo esc_html($user->user_email); ?></p>
+            <p><strong>Membership:</strong> <?php echo esc_html($membership); ?></p>
+            <p><strong>Status:</strong> <?php echo $status_info['html']; ?></p>
+            <p><strong>Expires:</strong> <?php echo esc_html($expiry_info); ?></p>
+            <p><strong>Sessions Attended:</strong> <?php echo intval($session_count); ?></p>
+            <p><strong>Joined:</strong> <?php echo esc_html($join_date); ?></p>
+        </div>
+    </div>
+
+    <?php if (!empty($subscription_details)): ?>
+    <div class="subscription-actions-section">
+        <h4 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #2c3e50;">
+            <span class="dashicons dashicons-admin-settings" style="margin-right: 8px;"></span>Subscription Details
+        </h4>
+        <div class="current-info-card">
+            <?php foreach ($subscription_details as $label => $value): ?>
+            <p><strong><?php echo esc_html($label); ?>:</strong> <?php echo esc_html($value); ?></p>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <div class="change-membership-section">
+        <h4 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #2c3e50;">
+            <span class="dashicons dashicons-money-alt" style="margin-right: 8px;"></span>Recent Payments
+        </h4>
+        <?php if (!empty($recent_payments)): ?>
+            <div class="payments-list">
+                <?php foreach ($recent_payments as $payment): ?>
+                <div class="payment-item">
+                    <div class="payment-info">
+                        <div class="payment-product"><?php echo esc_html($payment['description']); ?></div>
+                        <div class="payment-date"><?php echo esc_html($payment['date']); ?> • <?php echo esc_html($payment['method']); ?></div>
+                    </div>
+                    <div class="payment-amount">
+                        <div class="amount">$<?php echo esc_html($payment['amount']); ?></div>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        <?php else: ?>
+            <div class="no-payments">No recent payments found</div>
+        <?php endif; ?>
+    </div>
+    <?php
+
+    $html = ob_get_clean();
+
+    wp_send_json_success([
+        'html' => $html
+    ]);
+}
+add_action('wp_ajax_wcb_get_community_member_details', 'wcb_ajax_get_community_member_details');
+add_action('wp_ajax_nopriv_wcb_get_community_member_details', 'wcb_ajax_get_community_member_details');
+
+// Helper function to get user subscription details
+function wcb_get_user_subscription_details($user_id) {
+    global $wpdb;
+
+    $details = [];
+
+    // Check if MemberPress tables exist
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+    $subs_table = $wpdb->prefix . 'mepr_subscriptions';
+
+    $txn_exists = $wpdb->get_var("SHOW TABLES LIKE '$txn_table'") == $txn_table;
+    $subs_exists = $wpdb->get_var("SHOW TABLES LIKE '$subs_table'") == $subs_table;
+
+    if (!$txn_exists) {
+        return $details;
+    }
+
+    // Get latest transaction
+    $transaction = $wpdb->get_row($wpdb->prepare("
+        SELECT t.*, p.post_title as product_name
+        FROM {$txn_table} t
+        LEFT JOIN {$wpdb->posts} p ON t.product_id = p.ID
+        WHERE t.user_id = %d
+        AND t.status IN ('confirmed', 'complete')
+        ORDER BY t.created_at DESC
+        LIMIT 1
+    ", $user_id));
+
+    if ($transaction) {
+        $details['Product'] = $transaction->product_name ?: 'Unknown';
+        $details['Amount'] = '$' . number_format($transaction->amount, 2);
+        $details['Status'] = ucfirst($transaction->status);
+
+        if (!empty($transaction->created_at) && $transaction->created_at !== '0000-00-00 00:00:00') {
+            $details['Start Date'] = date('M j, Y', strtotime($transaction->created_at));
+        }
+
+        if (!empty($transaction->expires_at) && $transaction->expires_at !== '0000-00-00 00:00:00') {
+            $details['Expires'] = date('M j, Y', strtotime($transaction->expires_at));
+        } else {
+            $details['Expires'] = 'Lifetime';
+        }
+
+        // Get subscription info if available
+        if ($subs_exists && !empty($transaction->subscription_id)) {
+            $subscription = $wpdb->get_row($wpdb->prepare("
+                SELECT * FROM {$subs_table} WHERE id = %d
+            ", $transaction->subscription_id));
+
+            if ($subscription) {
+                $details['Billing Cycle'] = ucfirst($subscription->period_type);
+                if ($subscription->status === 'active') {
+                    $details['Auto-Renewal'] = 'Yes';
+                } else {
+                    $details['Auto-Renewal'] = 'No';
+                }
+            }
+        }
+
+        // Payment method
+        if (!empty($transaction->gateway)) {
+            // Check if it's a Stripe gateway (contains stripe or starts with sz)
+            if (strpos($transaction->gateway, 'stripe') !== false || preg_match('/^sz[a-z0-9\-]+$/', $transaction->gateway)) {
+                $details['Payment Method'] = 'Stripe';
+            } elseif ($transaction->gateway === 'manual') {
+                $details['Payment Method'] = 'Manual Payment';
+            } else {
+                $details['Payment Method'] = ucfirst($transaction->gateway);
+            }
+        }
+    }
+
+    return $details;
+}
+
+// Helper function to get user recent payments
+function wcb_get_user_recent_payments($user_id, $limit = 5) {
+    global $wpdb;
+
+    $payments = [];
+
+    // Check if MemberPress tables exist
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$txn_table'") == $txn_table;
+
+    if (!$table_exists) {
+        return $payments;
+    }
+
+    // Get recent transactions
+    $transactions = $wpdb->get_results($wpdb->prepare("
+        SELECT t.*, p.post_title as product_name
+        FROM {$txn_table} t
+        LEFT JOIN {$wpdb->posts} p ON t.product_id = p.ID
+        WHERE t.user_id = %d
+        AND t.status IN ('confirmed', 'complete')
+        ORDER BY t.created_at DESC
+        LIMIT %d
+    ", $user_id, $limit));
+
+    foreach ($transactions as $txn) {
+        // Determine payment method
+        $method = 'Unknown';
+        if (!empty($txn->gateway)) {
+            // Check if it's a Stripe gateway (contains stripe or starts with sz)
+            if (strpos($txn->gateway, 'stripe') !== false || preg_match('/^sz[a-z0-9\-]+$/', $txn->gateway)) {
+                $method = 'Stripe';
+            } elseif ($txn->gateway === 'manual') {
+                $method = 'Manual';
+            } else {
+                $method = ucfirst($txn->gateway);
+            }
+        }
+
+        $payment = [
+            'amount' => number_format($txn->amount, 2),
+            'date' => date('M j, Y', strtotime($txn->created_at)),
+            'method' => $method,
+            'description' => $txn->product_name ?: 'Community Class'
+        ];
+
+        $payments[] = $payment;
+    }
+
+    return $payments;
+}
+
+// Community Class Session Form Shortcode
+function wcb_community_session_form_shortcode($atts) {
+    $atts = shortcode_atts([
+        'display' => 'block'
+    ], $atts);
+
+    // Handle form submission
+    if (isset($_POST['submit_community_session']) && wp_verify_nonce($_POST['community_session_nonce'], 'submit_community_session')) {
+        $result = wcb_handle_community_session_submission();
+        if ($result['success']) {
+            echo '<div class="form-success">✅ Community Class session logged successfully!</div>';
+        } else {
+            echo '<div class="form-error">❌ Error: ' . $result['message'] . '</div>';
+        }
+    }
+
+    // Get instructors (users with appropriate roles)
+    $instructors = get_users([
+        'role__in' => ['administrator', 'editor', 'author', 'contributor'],
+        'orderby' => 'display_name',
+        'order' => 'ASC'
+    ]);
+
+    ob_start();
+    ?>
+    <div class="wcb-community-session-form <?php echo $atts['display'] === 'inline' ? 'inline-form' : 'block-form'; ?>">
+        <div class="form-header">
+            <h3><span class="dashicons dashicons-plus"></span> Log Community Class Session</h3>
+        </div>
+
+        <form method="post" class="community-session-form">
+            <?php wp_nonce_field('submit_community_session', 'community_session_nonce'); ?>
+
+            <!-- Date & Time -->
+            <div class="form-row">
+                <label for="session_date">Date & Time *</label>
+                <input type="datetime-local" id="session_date" name="session_date" required>
+            </div>
+
+            <!-- Instructor -->
+            <div class="form-row">
+                <label for="instructor">Instructor *</label>
+                <select id="instructor" name="instructor" required>
+                    <option value="">Select Instructor</option>
+                    <?php foreach ($instructors as $instructor): ?>
+                        <option value="<?php echo $instructor->ID; ?>"><?php echo esc_html($instructor->display_name); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <!-- Attendance -->
+            <div class="form-row">
+                <label>Attendance *</label>
+                <div class="attendance-section">
+                    <button type="button" id="load-community-members" class="btn-load-members">Load Community Class Members</button>
+                    <div id="community-members-list" class="members-list" style="display: none;">
+                        <!-- Members will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notes -->
+            <div class="form-row">
+                <label for="session_notes">Session Notes</label>
+                <textarea id="session_notes" name="session_notes" rows="4"
+                    placeholder="Any notes about this session..."></textarea>
+            </div>
+
+            <!-- Submit -->
+            <div class="form-actions">
+                <button type="submit" name="submit_community_session" class="btn-submit">
+                    <span class="dashicons dashicons-yes"></span> Log Session
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <style>
+    .wcb-community-session-form {
+        background: #ffffff;
+        border: 1px solid #e5e5e5;
+        border-radius: 8px;
+        padding: 24px;
+        margin: 20px 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    .inline-form {
+        max-width: 600px;
+        margin: 20px auto;
+    }
+
+    .block-form {
+        max-width: 800px;
+    }
+
+    .form-header {
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 2px solid #000000;
+    }
+
+    .form-header h3 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 600;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .form-row {
+        margin-bottom: 20px;
+    }
+
+    .form-row label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #000000;
+        font-size: 14px;
+    }
+
+    .form-row input,
+    .form-row select,
+    .form-row textarea {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #e5e5e5;
+        border-radius: 4px;
+        font-size: 14px;
+        font-family: inherit;
+        transition: border-color 0.2s ease;
+    }
+
+    .form-row input:focus,
+    .form-row select:focus,
+    .form-row textarea:focus {
+        outline: none;
+        border-color: #000000;
+    }
+
+    .btn-load-members {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: background-color 0.2s ease;
+    }
+
+    .btn-load-members:hover {
+        background: #0056b3;
+    }
+
+    .members-list {
+        margin-top: 16px;
+        padding: 16px;
+        background: #f8f9fa;
+        border-radius: 4px;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .checkbox-item {
+        display: block;
+        margin-bottom: 8px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    .checkbox-item input {
+        width: auto;
+        margin-right: 8px;
+    }
+
+    .btn-submit {
+        background: #000000;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: background-color 0.2s ease;
+    }
+
+    .btn-submit:hover {
+        background: #333333;
+    }
+
+    .form-success {
+        background: #d4edda;
+        color: #155724;
+        padding: 12px 16px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+        border: 1px solid #c3e6cb;
+    }
+
+    .form-error {
+        background: #f8d7da;
+        color: #721c24;
+        padding: 12px 16px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+        border: 1px solid #f5c6cb;
+    }
+
+    @media (max-width: 768px) {
+        .wcb-community-session-form {
+            padding: 16px;
+        }
+
+        .form-header h3 {
+            font-size: 18px;
+        }
+    }
+    </style>
+
+    <script>
+    jQuery(document).ready(function($) {
+        // Load community members
+        $('#load-community-members').on('click', function() {
+            var $btn = $(this);
+            var originalText = $btn.text();
+
+            $btn.text('Loading...').prop('disabled', true);
+
+            $.ajax({
+                url: wcb_ajax.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'wcb_load_members_for_attendance',
+                    nonce: wcb_ajax.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $('#community-members-list').html(response.data).show();
+                        $btn.text('Refresh Members').prop('disabled', false);
+                    } else {
+                        alert('Error loading members: ' + response.data);
+                        $btn.text(originalText).prop('disabled', false);
+                    }
+                },
+                error: function() {
+                    alert('Failed to load members. Please try again.');
+                    $btn.text(originalText).prop('disabled', false);
+                }
+            });
+        });
+    });
+    </script>
+    <?php
+
+    return ob_get_clean();
+}
+add_shortcode('wcb_community_session_form', 'wcb_community_session_form_shortcode');
+
+// Handle Community Session Form Submission
+function wcb_handle_community_session_submission() {
+    $session_date = sanitize_text_field($_POST['session_date']);
+    $instructor = intval($_POST['instructor']);
+    $attendance = isset($_POST['attendance']) ? array_map('intval', $_POST['attendance']) : [];
+    $notes = sanitize_textarea_field($_POST['session_notes']);
+
+    // Validate required fields
+    if (empty($session_date)) {
+        return ['success' => false, 'message' => 'Session date is required'];
+    }
+
+    if (empty($instructor)) {
+        return ['success' => false, 'message' => 'Instructor is required'];
+    }
+
+    // Create post
+    $post_id = wp_insert_post([
+        'post_type' => 'community_session',
+        'post_title' => 'Community Session - ' . date('M j, Y', strtotime($session_date)),
+        'post_status' => 'publish',
+        'post_author' => get_current_user_id()
+    ]);
+
+    if ($post_id) {
+        // Save meta fields
+        update_field('session_date', $session_date, $post_id);
+        update_field('instructor', $instructor, $post_id);
+        update_field('attendance', $attendance, $post_id);
+        update_field('session_notes', $notes, $post_id);
+
+        return ['success' => true, 'message' => 'Session logged successfully'];
+    } else {
+        return ['success' => false, 'message' => 'Failed to create session'];
     }
 }
