@@ -70,8 +70,8 @@ function all_sessions_list_shortcode() {
                         <th><span class="dashicons dashicons-category"></span> Type</th>
                         <th><span class="dashicons dashicons-groups"></span> Class/Program</th>
                         <th><span class="dashicons dashicons-yes"></span> Present</th>
-                        <th><span class="dashicons dashicons-info"></span> Excused</th>
                         <th><span class="dashicons dashicons-chart-bar"></span> Total</th>
+                        <th><span class="dashicons dashicons-chart-pie"></span> Attendance</th>
                         <th><span class="dashicons dashicons-admin-tools"></span> Actions</th>
                     </tr>
                 </thead>
@@ -82,7 +82,17 @@ function all_sessions_list_shortcode() {
                         $session_id = $session->ID;
                         $date = get_field('session_date', $session_id);
                         $intervention_date = get_field('intervention_date_', $session_id);
-                        $membership_id = get_field('selected_membership', $session_id);
+
+                        // If no session_date found, try alternative methods
+                        if (empty($date)) {
+                            // Try raw meta value
+                            $date = get_post_meta($session_id, 'session_date', true);
+                        }
+
+                        // Check for both old and new field names for backward compatibility
+                        $membership_id = get_field('selected_membership', $session_id); // Old format
+                        $group_id = get_field('selected_group', $session_id); // New format from updated form
+
                         $associated_student = get_field('associated_student', $session_id);
                         $student_involved = get_field('student_involved', $session_id); // For interventions
                         
@@ -96,9 +106,18 @@ function all_sessions_list_shortcode() {
                         $session_type_raw = $session_type_data['name'];
                         $session_type_slug = $session_type_data['slug'];
                         
-                        // Get class name from membership
+                        // Get class name from membership or group
                         $class_name = 'Unknown Class';
-                        if ($membership_id) {
+
+                        // Try new format first (selected_group)
+                        if ($group_id) {
+                            $group_post = get_post($group_id);
+                            if($group_post) {
+                                $class_name = $group_post->post_title;
+                            }
+                        }
+                        // Fallback to old format (selected_membership)
+                        elseif ($membership_id) {
                             $membership_post = get_post($membership_id);
                             if($membership_post) {
                                 $class_name = $membership_post->post_title;
@@ -107,7 +126,12 @@ function all_sessions_list_shortcode() {
                         
                         // Get class type field for proper display
                         $class_type = get_field('class_type', $session_id);
-                        
+
+                        // Debug info for administrators
+                        if (current_user_can('administrator') && isset($_GET['debug'])) {
+                            echo "<!-- Session ID: $session_id, Type: $session_type_raw, Class Type: $class_type, Group ID: $group_id, Membership ID: $membership_id, Date: '$date', Intervention Date: '$intervention_date' -->";
+                        }
+
                         // Determine display name based on taxonomy + class type
                         if ($session_type_raw === 'Class' && $class_type === 'School') {
                             $session_type = 'School Session';
@@ -123,12 +147,30 @@ function all_sessions_list_shortcode() {
                         }
                         
                         // Format date - use intervention_date for mentoring sessions
-                        if ($session_type_raw === 'Mentoring' && $intervention_date) {
-                            $formatted_date = date('d/m/Y', strtotime($intervention_date));
-                        } elseif ($date) {
-                            $formatted_date = date('d/m/Y', strtotime($date));
+                        if ($session_type_raw === 'Mentoring' && !empty($intervention_date)) {
+                            $date_timestamp = strtotime($intervention_date);
+                            if ($date_timestamp) {
+                                $formatted_date = date('d/m/Y', $date_timestamp);
+                            } else {
+                                $formatted_date = date('d/m/Y', strtotime($session->post_date));
+                            }
+                        } elseif (!empty($date)) {
+                            // Handle both datetime-local format (2024-03-15T14:30) and regular date formats
+                            $date_timestamp = strtotime($date);
+                            if ($date_timestamp && $date_timestamp > 0) {
+                                $formatted_date = date('d/m/Y', $date_timestamp);
+                            } else {
+                                // Try to parse datetime-local format manually
+                                if (preg_match('/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/', $date, $matches)) {
+                                    $formatted_date = $matches[3] . '/' . $matches[2] . '/' . $matches[1];
+                                } else {
+                                    // Fallback to post creation date
+                                    $formatted_date = date('d/m/Y', strtotime($session->post_date));
+                                }
+                            }
                         } else {
-                            $formatted_date = 'Unknown Date';
+                            // Fallback to post creation date
+                            $formatted_date = date('d/m/Y', strtotime($session->post_date));
                         }
                         
                         // Calculate totals and student info based on session type
@@ -167,10 +209,18 @@ function all_sessions_list_shortcode() {
                                 $student_info = $student ? $student->display_name : 'Unknown Student';
                             }
                         } else {
-                            // Group session - use real attendance data
+                            // Group session - use real attendance data and group member count
                             $total_present = count($attended_students);
                             $total_excused = count($excused_students);
-                            $total_students = $total_present + $total_excused;
+
+                            // Get actual group member count for new format sessions
+                            if ($group_id) {
+                                $total_students = wcb_get_group_member_count($group_id);
+                            } else {
+                                // Fallback for old format sessions
+                                $total_students = $total_present + $total_excused;
+                            }
+
                             $student_info = '';
                         }
                         ?>
@@ -220,16 +270,21 @@ function all_sessions_list_shortcode() {
                                     <span class="count-label">Present</span>
                                 </div>
                             </td>
-                            <td class="excused-count">
-                                <div class="attendance-count excused">
-                                    <span class="count-number"><?php echo $total_excused; ?></span>
-                                    <span class="count-label">Excused</span>
-                                </div>
-                            </td>
                             <td class="total-count">
                                 <div class="attendance-count total">
                                     <span class="count-number"><?php echo $total_students; ?></span>
                                     <span class="count-label">Total</span>
+                                </div>
+                            </td>
+                            <td class="attendance-percentage">
+                                <div class="attendance-count percentage">
+                                    <span class="count-number">
+                                        <?php
+                                        $attendance_percentage = $total_students > 0 ? round(($total_present / $total_students) * 100) : 0;
+                                        echo $attendance_percentage . '%';
+                                        ?>
+                                    </span>
+                                    <span class="count-label">Attendance</span>
                                 </div>
                             </td>
                             <td class="session-actions">

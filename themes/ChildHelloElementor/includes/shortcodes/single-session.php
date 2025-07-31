@@ -49,13 +49,27 @@ function single_session_shortcode($atts) {
         // Get student info
         $student = $student_involved ? get_user_by('ID', $student_involved) : null;
         
-        // Get staff members info
+        // Get staff members info - handle both old format (user IDs) and new format (text names)
         $staff_members = [];
         if (is_array($staff_members_who_attended)) {
-            foreach ($staff_members_who_attended as $staff_id) {
-                $staff_user = get_user_by('ID', $staff_id);
-                if ($staff_user) {
-                    $staff_members[] = $staff_user;
+            foreach ($staff_members_who_attended as $staff_item) {
+                if (is_numeric($staff_item)) {
+                    // Old format: user ID
+                    $staff_user = get_user_by('ID', $staff_item);
+                    if ($staff_user) {
+                        $staff_members[] = (object) [
+                            'display_name' => $staff_user->display_name,
+                            'user_email' => $staff_user->user_email,
+                            'is_user' => true
+                        ];
+                    }
+                } else {
+                    // New format: text name
+                    $staff_members[] = (object) [
+                        'display_name' => $staff_item,
+                        'user_email' => 'Coach',
+                        'is_user' => false
+                    ];
                 }
             }
         }
@@ -82,8 +96,8 @@ function single_session_shortcode($atts) {
             $formatted_time = '';
         }
         
-        // Format duration
-        $formatted_duration = $duration ? date('g:i A', strtotime($duration)) : '';
+        // Format duration (duration is stored in minutes)
+        $formatted_duration = $duration ? $duration . ' minutes' : '';
         
     } else {
         // Handle regular session data
@@ -108,12 +122,26 @@ function single_session_shortcode($atts) {
             $associated_student = null;
         }
         
-        // Get class name
+        // Get class name and total member count
         $class_name = 'Unknown Class';
-        if ($membership_id) {
+        $total_group_members = 0;
+
+        // Check for new format (selected_group) first
+        $selected_group = get_field('selected_group', $session_id);
+        if ($selected_group) {
+            $group_post = get_post($selected_group);
+            if ($group_post) {
+                $class_name = $group_post->post_title;
+                // Get total members in this group
+                $total_group_members = wcb_get_group_member_count($selected_group);
+            }
+        } elseif ($membership_id) {
+            // Fallback to old format (selected_membership)
             $membership_post = get_post($membership_id);
             if ($membership_post) {
                 $class_name = $membership_post->post_title;
+                // For old format, we don't have easy access to member count
+                $total_group_members = count($attended_students); // Fallback to attended count
             }
         }
         
@@ -163,7 +191,7 @@ function single_session_shortcode($atts) {
             <div class="session-title-section">
                 <h1 class="session-title"><?php echo esc_html($class_name); ?></h1>
                 <div class="session-meta">
-                    <span class="session-date"><span class="dashicons dashicons-calendar-alt"></span> <?php echo esc_html($formatted_date); ?></span>
+                    <span class="session-date"><span class="dashicons dashicons-calendar-alt"></span> <?php echo get_the_date('d/m/Y', $session); ?></span>
                     <?php if ($formatted_time): ?>
                     <span class="session-time"><span class="dashicons dashicons-clock"></span> <?php echo esc_html($formatted_time); ?></span>
                     <?php endif; ?>
@@ -365,13 +393,7 @@ function single_session_shortcode($atts) {
                                 </div>
                             </div>
                             
-                            <div class="detail-item">
-                                <div class="detail-icon"><span class="dashicons dashicons-plus-alt"></span></div>
-                                <div class="detail-content">
-                                    <div class="detail-label">Created</div>
-                                    <div class="detail-value"><?php echo get_the_date('M j, Y g:i A', $session); ?></div>
-                                </div>
-                            </div>
+
                         </div>
                     </div>
                 </div>
@@ -414,8 +436,20 @@ function single_session_shortcode($atts) {
                                 <div class="summary-item">
                                     <div class="summary-icon"><span class="dashicons dashicons-chart-bar"></span></div>
                                     <div class="summary-content">
-                                        <div class="summary-number"><?php echo count($attended_students); ?></div>
+                                        <div class="summary-number"><?php echo $total_group_members; ?></div>
                                         <div class="summary-label">Total</div>
+                                    </div>
+                                </div>
+                                <div class="summary-item">
+                                    <div class="summary-icon"><span class="dashicons dashicons-chart-pie"></span></div>
+                                    <div class="summary-content">
+                                        <div class="summary-number">
+                                            <?php
+                                            $attendance_percentage = $total_group_members > 0 ? round((count($attended_students) / $total_group_members) * 100) : 0;
+                                            echo $attendance_percentage . '%';
+                                            ?>
+                                        </div>
+                                        <div class="summary-label">Attendance</div>
                                     </div>
                                 </div>
                             <?php endif; ?>
@@ -444,7 +478,95 @@ function single_session_shortcode($atts) {
                             </div>
                         </div>
                         <?php endif; ?>
-                        
+
+                        <!-- Instructor Section -->
+                        <div class="attendee-section">
+                            <h4 class="column-header">Instructor</h4>
+                            <?php
+                            // Get instructor from ACF field - now stored as text name
+                            $instructor_field = get_field('instructor', $session_id);
+
+                            // Debug instructor field if enabled
+                            if (current_user_can('administrator') && isset($_GET['debug'])) {
+                                error_log('Instructor Debug for Session ID: ' . $session_id);
+                                error_log('ACF Instructor Field: ' . print_r($instructor_field, true));
+                                error_log('Post Author: ' . $session->post_author);
+                            }
+
+                            // Handle both old format (user ID) and new format (text name)
+                            $instructor_name = '';
+                            $instructor_user = null;
+
+                            if (!empty($instructor_field)) {
+                                // Check if it's a numeric user ID (old format)
+                                if (is_numeric($instructor_field)) {
+                                    $instructor_user = get_user_by('ID', $instructor_field);
+                                    if ($instructor_user) {
+                                        $instructor_name = $instructor_user->display_name;
+                                    }
+                                }
+                                // Check if it's an array with user data (old format)
+                                elseif (is_array($instructor_field) && isset($instructor_field[0])) {
+                                    if (is_object($instructor_field[0]) && isset($instructor_field[0]->ID)) {
+                                        $instructor_user = $instructor_field[0];
+                                        $instructor_name = $instructor_user->display_name;
+                                    } elseif (is_numeric($instructor_field[0])) {
+                                        $instructor_user = get_user_by('ID', $instructor_field[0]);
+                                        if ($instructor_user) {
+                                            $instructor_name = $instructor_user->display_name;
+                                        }
+                                    }
+                                }
+                                // Check if it's an object with user data (old format)
+                                elseif (is_object($instructor_field) && isset($instructor_field->ID)) {
+                                    $instructor_user = $instructor_field;
+                                    $instructor_name = $instructor_user->display_name;
+                                }
+                                // It's a text name (new format) - this should be the main case now
+                                elseif (is_string($instructor_field) && !empty(trim($instructor_field))) {
+                                    $instructor_name = trim($instructor_field);
+                                    $instructor_user = null; // No user object for text names
+                                }
+                            }
+
+                            // Only fallback to post author if absolutely no instructor found
+                            if (empty($instructor_name)) {
+                                $instructor_user = get_user_by('ID', $session->post_author);
+                                if ($instructor_user) {
+                                    $instructor_name = $instructor_user->display_name;
+                                }
+                            }
+
+                            if (current_user_can('administrator') && isset($_GET['debug'])) {
+                                error_log('Final Instructor Name: ' . $instructor_name);
+                                error_log('Instructor User Object: ' . ($instructor_user ? 'Found' : 'Not found'));
+                                error_log('Raw Instructor Field: ' . print_r($instructor_field, true));
+                                error_log('Raw Instructor Field Type: ' . gettype($instructor_field));
+                                error_log('Is Empty Check: ' . (empty($instructor_field) ? 'Yes' : 'No'));
+                            }
+                            ?>
+                            <?php if (!empty($instructor_name)): ?>
+                            <div class="attendee-card instructor-card">
+                                <div class="attendee-avatar">
+                                    <div class="avatar-placeholder staff-avatar">
+                                        <span class="dashicons dashicons-businessman"></span>
+                                    </div>
+                                </div>
+                                <div class="attendee-info">
+                                    <div class="attendee-name"><?php echo esc_html($instructor_name); ?></div>
+                                    <?php if ($instructor_user && $instructor_user->user_email): ?>
+                                    <div class="attendee-email"><?php echo esc_html($instructor_user->user_email); ?></div>
+                                    <?php else: ?>
+                                    <div class="attendee-email">Coach</div>
+                                    <?php endif; ?>
+                                    <div class="attendee-role">Instructor</div>
+                                </div>
+                            </div>
+                            <?php else: ?>
+                            <p class="no-instructor">No instructor assigned</p>
+                            <?php endif; ?>
+                        </div>
+
                         <!-- 1-on-1 Student -->
                         <?php if ($associated_student): ?>
                         <div class="attendee-section">
@@ -476,74 +598,8 @@ function single_session_shortcode($atts) {
                         <?php endif; ?>
                     </div>
                     
-                    <!-- Right Column: Instructor & Session Information -->
+                    <!-- Right Column: Session Information -->
                     <div class="session-info-column">
-                        <!-- Instructor Section -->
-                        <div class="instructor-box">
-                            <h3 class="section-title"><span class="dashicons dashicons-businessman"></span> Instructor</h3>
-                            <?php 
-                            // Try to get instructor from ACF field first, then fallback to post author
-                            $instructor_field = get_field('instructor', $session_id);
-                            
-                            // Debug instructor field if enabled
-                            if (current_user_can('administrator') && isset($_GET['debug'])) {
-                                error_log('Instructor Debug for Session ID: ' . $session_id);
-                                error_log('ACF Instructor Field: ' . print_r($instructor_field, true));
-                                error_log('Post Author: ' . $session->post_author);
-                            }
-                            
-                            // Handle ACF user selection field which might return an array or object
-                            if ($instructor_field) {
-                                if (is_array($instructor_field)) {
-                                    // If it's an array, get the first user ID
-                                    if (isset($instructor_field[0])) {
-                                        if (is_object($instructor_field[0]) && isset($instructor_field[0]->ID)) {
-                                            $instructor_id = $instructor_field[0]->ID;
-                                        } elseif (is_numeric($instructor_field[0])) {
-                                            $instructor_id = $instructor_field[0];
-                                        } else {
-                                            $instructor_id = $session->post_author;
-                                        }
-                                    } elseif (isset($instructor_field['ID'])) {
-                                        $instructor_id = $instructor_field['ID'];
-                                    } else {
-                                        $instructor_id = $session->post_author;
-                                    }
-                                } elseif (is_object($instructor_field) && isset($instructor_field->ID)) {
-                                    $instructor_id = $instructor_field->ID;
-                                } elseif (is_numeric($instructor_field)) {
-                                    $instructor_id = $instructor_field;
-                                } else {
-                                    $instructor_id = $session->post_author;
-                                }
-                            } else {
-                                $instructor_id = $session->post_author;
-                            }
-                            
-                            $instructor_user = get_user_by('ID', $instructor_id);
-                            
-                            if (current_user_can('administrator') && isset($_GET['debug'])) {
-                                error_log('Final Instructor ID: ' . $instructor_id);
-                                error_log('Instructor User: ' . ($instructor_user ? $instructor_user->display_name : 'None found'));
-                            }
-                            ?>
-                            <?php if ($instructor_user): ?>
-                            <div class="instructor-details">
-                                <div class="attendee-card instructor-card">
-                                    <div class="attendee-avatar">
-                                        <div class="avatar-placeholder staff-avatar">
-                                            <span class="dashicons dashicons-businessman"></span>
-                                        </div>
-                                    </div>
-                                    <div class="attendee-info">
-                                        <div class="attendee-name"><?php echo esc_html($instructor_user->display_name); ?></div>
-                                        <div class="attendee-email"><?php echo esc_html($instructor_user->user_email); ?></div>
-                                        <div class="attendee-role">Instructor</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <?php endif; ?>
-                        </div>
                         
                         <!-- Session Information Section -->
                         <div class="session-details-box">
@@ -555,7 +611,7 @@ function single_session_shortcode($atts) {
                                     <div class="detail-icon"><span class="dashicons dashicons-calendar-alt"></span></div>
                                     <div class="detail-content">
                                         <div class="detail-label">Date</div>
-                                        <div class="detail-value"><?php echo esc_html($formatted_date); ?></div>
+                                        <div class="detail-value"><?php echo get_the_date('M j, Y', $session); ?></div>
                                     </div>
                                 </div>
                                 
@@ -597,13 +653,7 @@ function single_session_shortcode($atts) {
                                     </div>
                                 </div>
                                 
-                                <div class="detail-item">
-                                    <div class="detail-icon"><span class="dashicons dashicons-plus-alt"></span></div>
-                                    <div class="detail-content">
-                                        <div class="detail-label">Created</div>
-                                        <div class="detail-value"><?php echo get_the_date('M j, Y g:i A', $session); ?></div>
-                                    </div>
-                                </div>
+
                             </div>
                         </div>
                     </div>
@@ -1221,7 +1271,6 @@ function single_session_shortcode($atts) {
     .scrollable-attendees {
         max-height: 400px;
         overflow-y: auto;
-        border: 1px solid #e5e5e5;
         border-top: none;
         border-bottom-left-radius: 6px;
         border-bottom-right-radius: 6px;
@@ -1239,7 +1288,6 @@ function single_session_shortcode($atts) {
     /* Session Details Box */
     .session-details-box {
         background: white;
-        border: 1px solid #e5e5e5;
         border-radius: 8px;
         overflow: hidden;
     }
@@ -1375,7 +1423,6 @@ function single_session_shortcode($atts) {
         text-align: left;
         font-weight: 700;
         border: 1px solid #e5e5e5;
-        border-bottom: 2px solid #e5e5e5;
         border-top-left-radius: 6px;
         border-top-right-radius: 6px;
         font-size: 14px !important;
@@ -1412,10 +1459,6 @@ function single_session_shortcode($atts) {
     
     .attendee-section {
         margin-bottom: 24px;
-    }
-    
-    .attendee-section:last-child {
-        margin-bottom: 0;
     }
     
     .attendee-card:hover {
@@ -1966,3 +2009,5 @@ function single_session_shortcode($atts) {
     return ob_get_clean();
 }
 add_shortcode('single_session', 'single_session_shortcode');
+
+

@@ -6,14 +6,112 @@ function wcb_intervention_form_shortcode() {
     if (isset($_POST['submit_intervention']) && wp_verify_nonce($_POST['intervention_nonce'], 'submit_intervention')) {
         $result = wcb_handle_intervention_submission();
         if ($result['success']) {
-            echo '<div class="form-success">✅ Intervention logged successfully!</div>';
+            // Show popup success message and redirect
+            echo '
+            <div id="success-popup" class="wcb-success-popup">
+                <div class="popup-content">
+                    <div class="popup-icon">✅</div>
+                    <h3>Intervention Logged Successfully!</h3>
+                    <p>Your intervention session has been recorded and saved.</p>
+                    <p class="redirect-message">Refreshing form...</p>
+                    <div class="popup-loader"></div>
+                </div>
+            </div>
+            <style>
+                .wcb-success-popup {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.7);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 10000;
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                }
+                .popup-content {
+                    background: white;
+                    padding: 40px;
+                    border-radius: 12px;
+                    text-align: center;
+                    max-width: 400px;
+                    width: 90%;
+                    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+                }
+                .popup-icon {
+                    font-size: 48px;
+                    margin-bottom: 20px;
+                    display: block;
+                }
+                .popup-content h3 {
+                    margin: 0 0 15px 0;
+                    font-size: 24px;
+                    font-weight: 600;
+                    color: #000000;
+                }
+                .popup-content p {
+                    margin: 0 0 10px 0;
+                    font-size: 16px;
+                    color: #666666;
+                    line-height: 1.5;
+                }
+                .redirect-message {
+                    font-weight: 500;
+                    color: #007bff !important;
+                    margin-top: 20px !important;
+                }
+                .popup-loader {
+                    width: 30px;
+                    height: 30px;
+                    border: 3px solid #f3f3f3;
+                    border-top: 3px solid #007bff;
+                    border-radius: 50%;
+                    animation: spin 1s linear infinite;
+                    margin: 20px auto 0;
+                }
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+                @media (max-width: 768px) {
+                    .popup-content {
+                        padding: 30px 20px;
+                        margin: 20px;
+                    }
+                    .popup-icon {
+                        font-size: 40px;
+                    }
+                    .popup-content h3 {
+                        font-size: 20px;
+                    }
+                    .popup-content p {
+                        font-size: 14px;
+                    }
+                }
+            </style>
+            <script>
+                // Redirect to same page after 3 seconds (prevents form resubmission)
+                setTimeout(function() {
+                    window.location.href = window.location.pathname;
+                }, 3000);
+            </script>';
+            return; // Stop further execution
         } else {
             echo '<div class="form-error">❌ Error: ' . $result['message'] . '</div>';
         }
     }
     
-    // Get all users for staff selection
-    $all_users = get_users(['role__in' => ['administrator', 'editor', 'author', 'contributor']]);
+    // Define staff members list
+    $staff_members = [
+        'Xarisma Paga',
+        'Dion Tafa',
+        'Hala Houma',
+        'Jasmin bunton',
+        'Zarah Kumar',
+        'Sebastian Grey'
+    ];
 
     // Get students who are part of WBC Mentoring program (ID: 1738) using proven logic
     $mentoring_students = wcb_get_mentoring_program_members();
@@ -32,14 +130,14 @@ function wcb_intervention_form_shortcode() {
             <div class="form-row">
                 <label>Staff Members Who Attended *</label>
                 <div class="checkbox-group">
-                    <?php foreach ($all_users as $user): ?>
+                    <?php foreach ($staff_members as $index => $staff_member): ?>
                         <div class="checkbox-item">
-                            <input type="checkbox" 
-                                  id="staff_<?php echo $user->ID; ?>" 
-                                  name="staff_members_who_attended[]" 
-                                  value="<?php echo $user->ID; ?>">
-                            <label for="staff_<?php echo $user->ID; ?>">
-                                <?php echo esc_html($user->display_name); ?>
+                            <input type="checkbox"
+                                  id="staff_<?php echo $index; ?>"
+                                  name="staff_members_who_attended[]"
+                                  value="<?php echo esc_attr($staff_member); ?>">
+                            <label for="staff_<?php echo $index; ?>">
+                                <?php echo esc_html($staff_member); ?>
                             </label>
                         </div>
                     <?php endforeach; ?>
@@ -176,6 +274,18 @@ add_shortcode('wcb_intervention_form', 'wcb_intervention_form_shortcode');
 
 // Handle intervention form submission
 function wcb_handle_intervention_submission() {
+    // Simple duplicate prevention - just prevent rapid submissions
+    $user_identifier = get_current_user_id() ?: $_SERVER['REMOTE_ADDR'];
+    $submission_key = 'wcb_intervention_cooldown_' . md5($user_identifier);
+
+    // Check if user submitted recently (within 5 seconds)
+    if (get_transient($submission_key)) {
+        return ['success' => false, 'message' => 'Please wait a moment before submitting another intervention.'];
+    }
+
+    // Set submission cooldown for 5 seconds
+    set_transient($submission_key, true, 5);
+
     // Basic validation
     if (empty($_POST['intervention_date_']) || empty($_POST['student_involved'])) {
         return ['success' => false, 'message' => 'Please fill in all required fields'];
@@ -197,9 +307,9 @@ function wcb_handle_intervention_submission() {
         'post_title' => $session_title,
         'post_type' => 'session_log',
         'post_status' => 'publish',
-        'post_author' => get_current_user_id(),
+        'post_author' => get_current_user_id() ?: 1, // Use current user or fallback to admin (ID 1)
         'meta_input' => [
-            'staff_members_who_attended' => $_POST['staff_members_who_attended'], // Array of user IDs
+            'staff_members_who_attended' => array_map('sanitize_text_field', $_POST['staff_members_who_attended']), // Array of staff names
             'intervention_date_' => $_POST['intervention_date_'],
             'duration' => $_POST['duration'],
             'meeting_location' => sanitize_text_field($_POST['meeting_location']),
@@ -218,7 +328,7 @@ function wcb_handle_intervention_submission() {
     
     // Set the session type taxonomy to "Mentoring"
     wp_set_object_terms($post_id, 'mentoring', 'session_type');
-    
+
     return ['success' => true, 'message' => 'Intervention logged successfully', 'post_id' => $post_id];
 }
 

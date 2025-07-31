@@ -2,15 +2,112 @@
 // Class Session Form (handles both Class and School types)
 
 function wcb_class_session_form_shortcode() {
-    // Handle form submission
-    if (isset($_POST['submit_class_session']) && wp_verify_nonce($_POST['class_session_nonce'], 'submit_class_session')) {
+
+
+    // Handle form submission - check for nonce and form fields instead of just submit button
+    $is_form_submission = !empty($_POST) && isset($_POST['class_session_nonce']) && isset($_POST['session_date']);
+
+    if ($is_form_submission && wp_verify_nonce($_POST['class_session_nonce'], 'submit_class_session')) {
         $result = wcb_handle_class_session_submission();
         if ($result['success']) {
-            echo '<div class="form-success">✅ Session logged successfully!</div>';
+            // Show popup success message and redirect
+            echo '
+            <div id="success-popup" class="wcb-success-popup">
+                <div class="popup-content">
+                    <div class="popup-icon">✅</div>
+                    <h3>Session Logged Successfully!</h3>
+                    <p>Your session has been recorded and saved.</p>
+                    <p class="redirect-message">Refreshing form...</p>
+                    <div class="popup-loader"></div>
+                </div>
+            </div>
+            <style>
+                .wcb-success-popup {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.7);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 10000;
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                }
+                .popup-content {
+                    background: white;
+                    padding: 40px;
+                    border-radius: 12px;
+                    text-align: center;
+                    max-width: 400px;
+                    width: 90%;
+                    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+                }
+                .popup-icon {
+                    font-size: 48px;
+                    margin-bottom: 20px;
+                    display: block;
+                }
+                .popup-content h3 {
+                    margin: 0 0 15px 0;
+                    font-size: 24px;
+                    font-weight: 600;
+                    color: #000000;
+                }
+                .popup-content p {
+                    margin: 0 0 10px 0;
+                    font-size: 16px;
+                    color: #666666;
+                    line-height: 1.5;
+                }
+                .redirect-message {
+                    font-weight: 500;
+                    color: #007bff !important;
+                    margin-top: 20px !important;
+                }
+                .popup-loader {
+                    width: 30px;
+                    height: 30px;
+                    border: 3px solid #f3f3f3;
+                    border-top: 3px solid #007bff;
+                    border-radius: 50%;
+                    animation: spin 1s linear infinite;
+                    margin: 20px auto 0;
+                }
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+                @media (max-width: 768px) {
+                    .popup-content {
+                        padding: 30px 20px;
+                        margin: 20px;
+                    }
+                    .popup-icon {
+                        font-size: 40px;
+                    }
+                    .popup-content h3 {
+                        font-size: 20px;
+                    }
+                    .popup-content p {
+                        font-size: 14px;
+                    }
+                }
+            </style>
+            <script>
+                // Redirect to same page after 3 seconds (prevents form resubmission)
+                setTimeout(function() {
+                    window.location.href = window.location.pathname;
+                }, 3000);
+            </script>';
+            return; // Stop further execution
         } else {
             echo '<div class="form-error">❌ Error: ' . $result['message'] . '</div>';
         }
     }
+
+
     
     // Get groups for dropdown using proven logic from active-members-test.php
     $groups = wcb_get_all_groups();
@@ -23,8 +120,15 @@ function wcb_class_session_form_shortcode() {
     
     // Note: Members will be loaded dynamically via AJAX when a group is selected
     
-    // Get instructors (assuming they have a specific role or capability)
-    $instructors = get_users(['role__in' => ['administrator', 'editor', 'instructor']]);
+    // Define coaches list
+    $coaches = [
+        'Xarisma Paga',
+        'Dion Tafa',
+        'Hala Houma',
+        'Jasmin bunton',
+        'Zarah Kumar',
+        'Sebastian Grey'
+    ];
     
     ob_start();
     ?>
@@ -41,7 +145,8 @@ function wcb_class_session_form_shortcode() {
             <div class="form-row">
                 <label for="session_date">Date of Session *</label>
                 <div class="date-input-wrapper">
-                    <input type="datetime-local" id="session_date" name="session_date" required>
+                    <input type="datetime-local" id="session_date" name="session_date" required
+                           value="<?php echo wp_date('Y-m-d\TH:i'); ?>">
                 </div>
             </div>
             
@@ -112,9 +217,9 @@ function wcb_class_session_form_shortcode() {
                 <label for="instructor">Instructor</label>
                 <select id="instructor" name="instructor">
                     <option value="">Select Instructor</option>
-                    <?php foreach ($instructors as $instructor): ?>
-                        <option value="<?php echo $instructor->ID; ?>">
-                            <?php echo esc_html($instructor->display_name); ?>
+                    <?php foreach ($coaches as $coach): ?>
+                        <option value="<?php echo esc_attr($coach); ?>">
+                            <?php echo esc_html($coach); ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
@@ -307,15 +412,145 @@ function wcb_class_session_form_shortcode() {
         document.getElementById('group-info').style.display = 'none';
     }
 
-    // Add CSS for spinning animation
+    // Add CSS for spinning animation and popup
     const style = document.createElement('style');
     style.textContent = `
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        /* Success Popup Modal */
+        .wcb-success-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .popup-content {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            position: relative;
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .popup-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .popup-content h3 {
+            margin: 0 0 15px 0;
+            font-size: 24px;
+            font-weight: 600;
+            color: #000000;
+        }
+
+        .popup-content p {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            color: #666666;
+            line-height: 1.5;
+        }
+
+        .redirect-message {
+            font-weight: 500;
+            color: #007bff !important;
+            margin-top: 20px !important;
+        }
+
+        .popup-loader {
+            width: 30px;
+            height: 30px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto 0;
+        }
+
+
+
+        @media (max-width: 768px) {
+            .popup-content {
+                padding: 30px 20px;
+                margin: 20px;
+            }
+
+            .popup-icon {
+                font-size: 40px;
+            }
+
+            .popup-content h3 {
+                font-size: 20px;
+            }
+
+            .popup-content p {
+                font-size: 14px;
+            }
+        }
+
+        /* Fix red outline on required fields */
+        .wcb-session-form input:required,
+        .wcb-session-form select:required {
+            box-shadow: none !important;
+            border-color: #ddd !important;
+        }
+
+        .wcb-session-form input:required:valid,
+        .wcb-session-form select:required:valid {
+            border-color: #28a745 !important;
+        }
+
+        .wcb-session-form input:required:invalid,
+        .wcb-session-form select:required:invalid {
+            border-color: #ddd !important;
+        }
+
+        .wcb-session-form input:focus,
+        .wcb-session-form select:focus {
+            border-color: #007bff !important;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25) !important;
+        }
     `;
     document.head.appendChild(style);
+
+    // Prevent double submission
+    const form = document.querySelector('.wcb-session-form');
+    const submitBtn = document.querySelector('.btn-submit');
+
+    if (form && submitBtn) {
+        form.addEventListener('submit', function(e) {
+            if (submitBtn.disabled) {
+                e.preventDefault();
+                return false;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+
+            // Re-enable after 5 seconds as fallback
+            setTimeout(function() {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Log Session';
+            }, 5000);
+        });
+    }
     </script>
     <?php
     return ob_get_clean();
@@ -324,8 +559,23 @@ add_shortcode('wcb_class_session_form', 'wcb_class_session_form_shortcode');
 
 // Handle class session form submission
 function wcb_handle_class_session_submission() {
+    // Simple duplicate prevention - just prevent rapid submissions
+    $user_identifier = get_current_user_id() ?: $_SERVER['REMOTE_ADDR'];
+    $submission_key = 'wcb_session_cooldown_' . md5($user_identifier);
+
+    // Check if user submitted recently (within 5 seconds)
+    if (get_transient($submission_key)) {
+        return ['success' => false, 'message' => 'Please wait a moment before submitting another session.'];
+    }
+
+    // Set submission cooldown for 5 seconds
+    set_transient($submission_key, true, 5);
+
     // Validate required fields
-    if (empty($_POST['session_date']) || empty($_POST['class_type'])) {
+    $session_date = $_POST['session_date'] ?? '';
+    $class_type = $_POST['class_type'] ?? '';
+
+    if (empty($session_date) || empty($class_type)) {
         return ['success' => false, 'message' => 'Please fill in all required fields'];
     }
     
@@ -347,13 +597,14 @@ function wcb_handle_class_session_submission() {
         'post_title' => $session_title,
         'post_type' => 'session_log',
         'post_status' => 'publish',
-        'post_content' => '' // We'll use custom fields for content
+        'post_content' => '', // We'll use custom fields for content
+        'post_author' => get_current_user_id() ?: 1 // Use current user or fallback to admin (ID 1)
     ];
     
     $post_id = wp_insert_post($post_data);
-    
+
     if (is_wp_error($post_id)) {
-        return ['success' => false, 'message' => 'Failed to create session'];
+        return ['success' => false, 'message' => 'Failed to create session: ' . $post_id->get_error_message()];
     }
     
     // Save basic fields
@@ -385,7 +636,7 @@ function wcb_handle_class_session_submission() {
     
     // Save instructor
     if (!empty($_POST['instructor'])) {
-        update_field('instructor', intval($_POST['instructor']), $post_id);
+        update_field('instructor', sanitize_text_field($_POST['instructor']), $post_id);
     }
     
     // Save text area fields
@@ -417,7 +668,7 @@ function wcb_handle_class_session_submission() {
     
     // Set session type taxonomy to "Class"
     wp_set_object_terms($post_id, 'Class', 'session_type');
-    
+
     return ['success' => true, 'post_id' => $post_id];
 }
 
@@ -494,6 +745,6 @@ function wcb_ajax_load_group_members() {
     ]);
 }
 
-// Register AJAX handlers
+// Register AJAX handlers for both logged-in and non-logged-in users
 add_action('wp_ajax_wcb_load_group_members', 'wcb_ajax_load_group_members');
 add_action('wp_ajax_nopriv_wcb_load_group_members', 'wcb_ajax_load_group_members');

@@ -234,3 +234,5 @@ function wcb_dashboard_styles_and_scripts() {
 // Hook the styles and scripts
 add_action('wp_head', 'wcb_dashboard_styles_and_scripts');
 add_action('admin_head', 'wcb_dashboard_styles_and_scripts');
+
+
