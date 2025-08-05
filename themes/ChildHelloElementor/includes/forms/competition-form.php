@@ -16,7 +16,7 @@ function wcb_competition_form_shortcode() {
     }
 
     // Get only users with Competitive Team membership for student selection
-    $competitive_team_id = 1931;
+    $competitive_team_id = 1932;
     $users = wcb_get_competitive_team_members();
 
     ob_start();
@@ -136,7 +136,7 @@ function wcb_handle_competition_submission() {
 function wcb_get_competitive_team_members() {
     global $wpdb;
 
-    $competitive_team_id = 1931;
+    $competitive_team_id = 1932;
     $txn_table = $wpdb->prefix . 'mepr_transactions';
 
     // Get users with active Competitive Team transactions

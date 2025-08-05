@@ -1909,7 +1909,7 @@ function wcb_ajax_load_students_table() {
         if ($membership_status === 'active') {
             // Use EXACT same two-step approach as active-members-test.php
             $wcb_mentoring_id = 1738;
-            $competitive_team_id = 1931; // Competitive Team membership ID
+            $competitive_team_id = 1932; // Competitive Team membership ID
 
             // Step 1: Get ALL active members first (same as active-members-test.php)
             $all_active_members = $wpdb->get_results($wpdb->prepare("

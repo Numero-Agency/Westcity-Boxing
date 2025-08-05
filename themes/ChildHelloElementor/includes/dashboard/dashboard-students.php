@@ -969,7 +969,7 @@ function wcb_ajax_load_dashboard_students_table() {
     // Use EXACT same two-step approach as active-members-test.php
     $txn_table = $wpdb->prefix . 'mepr_transactions';
     $wcb_mentoring_id = 1738;
-    $competitive_team_id = 1931; // Competitive Team membership ID
+    $competitive_team_id = 1932; // Competitive Team membership ID
 
     // Step 1: Get ALL active members first (same as active-members-test.php)
     $all_active_members = $wpdb->get_results($wpdb->prepare("
