@@ -15,8 +15,9 @@ function wcb_competition_form_shortcode() {
         }
     }
 
-    // Get all users for student selection
-    $users = get_users(['role__in' => ['subscriber', 'member', 'customer']]);
+    // Get only users with Competitive Team membership for student selection
+    $competitive_team_id = 1931;
+    $users = wcb_get_competitive_team_members();
 
     ob_start();
     ?>
@@ -25,7 +26,15 @@ function wcb_competition_form_shortcode() {
             <h2><span class="dashicons dashicons-awards"></span> Competition Form</h2>
             <p>Log a new competition event below</p>
         </div>
-        <form method="post" class="competition-form">
+
+        <?php if (empty($users)): ?>
+            <div class="form-info">
+                <p><strong>ℹ️ No Competitive Team Members Found</strong></p>
+                <p>To log a competition, you need students who are part of the Competitive Team program. Please add students to the Competitive Team membership first.</p>
+            </div>
+        <?php endif; ?>
+
+        <form method="post" class="competition-form"<?php echo empty($users) ? ' style="opacity: 0.6; pointer-events: none;"' : ''; ?>>
             <?php wp_nonce_field('submit_competition', 'competition_nonce'); ?>
             <div class="form-group">
                 <label for="event_name">Event Name *</label>
@@ -40,13 +49,16 @@ function wcb_competition_form_shortcode() {
                 <input type="text" name="where_was_it_hosted" id="where_was_it_hosted" required>
             </div>
             <div class="form-group">
-                <label for="student_involved">Student involved *</label>
+                <label for="student_involved">Student involved * <small>(Competitive Team members only)</small></label>
                 <select name="student_involved" id="student_involved" required>
-                    <option value="">Select student</option>
-                    <?php foreach (
-                        $users as $user): ?>
-                        <option value="<?php echo esc_attr($user->ID); ?>"><?php echo esc_html($user->display_name); ?></option>
-                    <?php endforeach; ?>
+                    <?php if (empty($users)): ?>
+                        <option value="">No competitive team members found</option>
+                    <?php else: ?>
+                        <option value="">Select competitive team student</option>
+                        <?php foreach ($users as $user): ?>
+                            <option value="<?php echo esc_attr($user->ID); ?>"><?php echo esc_html($user->display_name); ?></option>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </select>
             </div>
             <div class="form-group">
@@ -82,6 +94,7 @@ function wcb_competition_form_shortcode() {
     .competition-form .btn-primary:hover { background: #c0392b; }
     .form-success { background: #d4edda; color: #155724; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
     .form-error { background: #f8d7da; color: #721c24; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
+    .form-info { background: #d1ecf1; color: #0c5460; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #bee5eb; }
     </style>
     <?php
     return ob_get_clean();
@@ -115,4 +128,28 @@ function wcb_handle_competition_submission() {
     update_field('highlights', sanitize_textarea_field($_POST['highlights']), $post_id);
 
     return ['success' => true, 'post_id' => $post_id];
+}
+
+/**
+ * Get users who have Competitive Team membership
+ */
+function wcb_get_competitive_team_members() {
+    global $wpdb;
+
+    $competitive_team_id = 1931;
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+
+    // Get users with active Competitive Team transactions
+    $competitive_users = $wpdb->get_results($wpdb->prepare("
+        SELECT DISTINCT u.ID, u.display_name, u.user_email
+        FROM {$wpdb->users} u
+        JOIN {$txn_table} t ON u.ID = t.user_id
+        WHERE t.product_id = %d
+        AND t.status IN ('confirmed', 'complete')
+        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+        AND u.user_login != 'bwgdev'
+        ORDER BY u.display_name
+    ", $competitive_team_id));
+
+    return $competitive_users;
 }

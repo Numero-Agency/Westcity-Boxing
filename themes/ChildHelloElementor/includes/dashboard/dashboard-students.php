@@ -969,6 +969,7 @@ function wcb_ajax_load_dashboard_students_table() {
     // Use EXACT same two-step approach as active-members-test.php
     $txn_table = $wpdb->prefix . 'mepr_transactions';
     $wcb_mentoring_id = 1738;
+    $competitive_team_id = 1931; // Competitive Team membership ID
 
     // Step 1: Get ALL active members first (same as active-members-test.php)
     $all_active_members = $wpdb->get_results($wpdb->prepare("
@@ -1024,6 +1025,24 @@ function wcb_ajax_load_dashboard_students_table() {
                     $all_program_members[$active_member->ID] = $active_member;
                 }
             }
+        }
+    }
+
+    // Step 3: Also include Competitive Team members (they should remain active)
+    foreach ($all_active_members as $active_member) {
+        // Check if they have Competitive Team membership
+        $competitive_transaction = $wpdb->get_row($wpdb->prepare("
+            SELECT t.*
+            FROM {$txn_table} t
+            WHERE t.user_id = %d
+            AND t.product_id = %d
+            AND t.status IN ('confirmed', 'complete')
+            AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+            LIMIT 1
+        ", $active_member->ID, $competitive_team_id));
+
+        if ($competitive_transaction) {
+            $all_program_members[$active_member->ID] = $active_member;
         }
     }
 

@@ -19,9 +19,9 @@ function all_sessions_list_shortcode() {
                 <span class="sessions-count"><?php echo count($sessions); ?> sessions total</span>
             </div>
             <div class="sessions-filter-actions">
-                <a href="https://westcityboxing.local/class-session-log/" 
+                <a href="https://westcityboxing.nz/class-session-log/" 
                    class="btn-log-simple btn-log-class">Log Class Session</a>
-                <a href="https://westcityboxing.local/intervention-session-log/" 
+                <a href="https://westcityboxing.nz/intervention-session-log/" 
                    class="btn-log-simple btn-log-mentoring">Log Mentoring Session</a>
                 <select id="session-type-filter">
                     <option value="">All Session Types</option>
