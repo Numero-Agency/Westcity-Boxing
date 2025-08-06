@@ -1653,8 +1653,9 @@ function wcb_get_student_payment_status($user_id) {
         return '<span class="payment-status-badge payment-unknown">Unknown</span>';
     }
 
-    // Get user's most recent active transaction (same logic as family dashboard)
+    // Get user's most recent active transaction (excluding competitive membership for payment status)
     $wcb_mentoring_id = 1738;
+    $competitive_team_id = 1932; // Exclude competitive team from payment status check
 
     $transaction = $wpdb->get_row($wpdb->prepare("
         SELECT t.*, p.post_title as product_name
@@ -1663,10 +1664,11 @@ function wcb_get_student_payment_status($user_id) {
         WHERE t.user_id = %d
         AND t.status IN ('confirmed', 'complete')
         AND t.product_id != %d
+        AND t.product_id != %d
         AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
         ORDER BY t.created_at DESC
         LIMIT 1
-    ", $user_id, $wcb_mentoring_id));
+    ", $user_id, $wcb_mentoring_id, $competitive_team_id));
 
     if (!$transaction) {
         return '<span class="payment-status-badge payment-no-membership">No Membership</span>';
@@ -1676,8 +1678,46 @@ function wcb_get_student_payment_status($user_id) {
     $payment_type = wcb_detect_student_payment_type($transaction);
 
     if ($payment_type === 'manual') {
-        // Manual payment - needs activation
-        return '<span class="payment-status-badge payment-needs-activation">Needs Activation</span>';
+        // For manual payments, always show "Needs Activation" for group memberships
+        // (Competitive Team is already excluded from the query above)
+        if (wcb_is_group_membership($transaction->product_id)) {
+            // Group membership with manual payment - needs activation
+            return '<span class="payment-status-badge payment-needs-activation">Needs Activation</span>';
+        } else {
+            // Non-group manual payment (like Community Class) - show as active
+            $start_date = '';
+            if (!empty($transaction->created_at) && $transaction->created_at !== '0000-00-00 00:00:00') {
+                $start_date = date('M j', strtotime($transaction->created_at));
+            }
+            
+            $expires_date = '';
+            $status_class = 'payment-active';
+            if (!empty($transaction->expires_at) && $transaction->expires_at !== '0000-00-00 00:00:00') {
+                $expires_timestamp = strtotime($transaction->expires_at);
+                $expires_date = date('M j', $expires_timestamp);
+                
+                // Check if expired or expiring soon
+                if ($expires_timestamp < time()) {
+                    $status_class = 'payment-expired';
+                } elseif (($expires_timestamp - time()) / (60 * 60 * 24) <= 7) {
+                    $status_class = 'payment-expiring';
+                }
+            }
+            
+            $dates_text = $start_date;
+            if ($expires_date) {
+                $dates_text .= ' | Due: ' . $expires_date;
+            }
+            
+            return '<div class="payment-status-stripe">
+                        <div class="stripe-dates-line">
+                            ' . $dates_text . '
+                        </div>
+                        <div class="stripe-label-line">
+                            <span class="stripe-status-label ' . $status_class . '">Active</span>
+                        </div>
+                    </div>';
+        }
     } else {
         // Stripe payment - show status and dates
         $expires_at = $transaction->expires_at;
@@ -2229,6 +2269,70 @@ function wcb_get_all_groups() {
 // Helper function to check if a membership is monthly (should be excluded from displays)
 function wcb_is_monthly_membership($membership_title) {
     return (stripos($membership_title, 'monthly') !== false);
+}
+
+// Helper function to check if a membership belongs to one of the 7 defined groups
+function wcb_is_group_membership($product_id) {
+    global $wpdb;
+
+    // Get the 7 defined group IDs
+    $defined_groups = [
+        1767, // Mini Cadet Boys
+        1786, // Cadet Boys Group 1
+        1790, // Cadet Boys Group 2
+        1803, // Youth Boys Group 1
+        1809, // Youth Boys Group 2
+        1812, // Mini Cadets Girls
+        1815  // Youth Girls
+    ];
+
+    // Check if this product belongs to any of the defined groups
+    $group_id = $wpdb->get_var($wpdb->prepare("
+        SELECT meta_value
+        FROM {$wpdb->postmeta}
+        WHERE post_id = %d
+        AND meta_key = '_mepr_group_id'
+    ", $product_id));
+
+    return in_array((int)$group_id, $defined_groups);
+}
+
+// Helper function to format competitive membership status exactly like Stripe memberships
+function wcb_get_stripe_style_status($transaction) {
+    $status_parts = [];
+
+    // Add the payment method (use the group name instead of "Competitive")
+    $group_name = '';
+    if (!empty($transaction->product_name)) {
+        // Extract group name from product name (e.g., "Competitive Team" -> use the actual group)
+        $group_name = $transaction->product_name;
+    }
+
+    // Format like Stripe: "Method Active: Date | Due: Date"
+    $status_parts[] = '<span class="payment-method">Manual Active</span>';
+
+    // Add start date if available
+    if (!empty($transaction->created_at) && $transaction->created_at !== '0000-00-00 00:00:00') {
+        $start_date = date('M j', strtotime($transaction->created_at));
+        $status_parts[] = $start_date;
+    }
+
+    // Add expiry/due date if available
+    if (!empty($transaction->expires_at) && $transaction->expires_at !== '0000-00-00 00:00:00') {
+        $expires_date = date('M j', strtotime($transaction->expires_at));
+        $status_parts[] = 'Due: ' . $expires_date;
+
+        // Check if expiring soon (within 7 days)
+        $days_until_expiry = (strtotime($transaction->expires_at) - time()) / (60 * 60 * 24);
+        if ($days_until_expiry <= 7 && $days_until_expiry > 0) {
+            $status_parts[] = '<span class="expires-soon">Expires Soon</span>';
+        }
+    }
+
+    // Format: "Manual Active: Aug 5 | Due: Sep 5" or "Manual Active: Aug 5" if no expiry
+    $formatted_status = $status_parts[0] . ': ' . implode(' | ', array_slice($status_parts, 1));
+
+    return '<span class="payment-status-badge payment-active">' . $formatted_status . '</span>';
 }
 
 // Helper function to get all memberships within a group
@@ -3060,7 +3164,11 @@ function wcb_get_student_detailed_payment_info($user_id) {
     // Detect payment type
     $payment_type = wcb_detect_student_payment_type($transaction);
 
-    if ($payment_type === 'stripe') {
+    // Check if this is a competitive membership (ID: 1932) - treat as active, not needing activation
+    $competitive_team_id = 1932;
+    $is_competitive = ($transaction->product_id == $competitive_team_id);
+
+    if ($payment_type === 'stripe' || $is_competitive) {
         $result['is_stripe'] = true;
 
         // Get subscription details
@@ -3078,6 +3186,9 @@ function wcb_get_student_detailed_payment_info($user_id) {
         } else {
             $details['Expires'] = 'Lifetime';
         }
+
+        // For competitive memberships, treat exactly like regular memberships
+        // No special labeling needed - they're just for identification purposes
 
         // Get subscription info if available
         if ($subs_exists && !empty($transaction->subscription_id)) {
