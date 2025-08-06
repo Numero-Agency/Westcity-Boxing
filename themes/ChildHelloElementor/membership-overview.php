@@ -1053,10 +1053,19 @@ require_once('includes/dashboard/dashboard-stats.php');
                                 echo '<td class="text-center"><span class="badge badge-primary">' . $member_count . '</span></td>';
                                 echo '<td class="text-sm">';
                                 if (!empty($group_memberships)) {
-                                    $membership_names = array_map(function($m) {
-                                        return esc_html($m->post_title);
-                                    }, $group_memberships);
-                                    echo implode('<br>', $membership_names);
+                                    // Filter out monthly memberships for display only
+                                    $display_memberships = array_filter($group_memberships, function($m) {
+                                        return stripos($m->post_title, 'monthly') === false;
+                                    });
+
+                                    if (!empty($display_memberships)) {
+                                        $membership_names = array_map(function($m) {
+                                            return esc_html($m->post_title);
+                                        }, $display_memberships);
+                                        echo implode('<br>', $membership_names);
+                                    } else {
+                                        echo '<em>No non-monthly memberships</em>';
+                                    }
                                 } else {
                                     echo '<em>No memberships assigned</em>';
                                 }

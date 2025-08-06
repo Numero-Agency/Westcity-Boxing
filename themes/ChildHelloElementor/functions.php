@@ -737,6 +737,19 @@ function wcb_clear_competitions_database() {
         exit;
     }
 }
+
+// Filter to exclude monthly memberships from MemberPress group pages
+function wcb_filter_monthly_memberships_from_group_display($output, $product, $group, $preview) {
+    // Check if this is a monthly membership
+    if (stripos($product->post_title, 'monthly') !== false) {
+        // Return empty string to hide monthly memberships
+        return '';
+    }
+
+    // Return the original output for non-monthly memberships
+    return $output;
+}
+add_filter('mepr-group-page-item-output', 'wcb_filter_monthly_memberships_from_group_display', 10, 4);
 add_action('wp_ajax_wcb_clear_competitions', 'wcb_clear_competitions_database');
 
 // Manual function to create competition page (for testing)

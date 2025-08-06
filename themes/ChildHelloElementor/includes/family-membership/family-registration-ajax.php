@@ -829,8 +829,8 @@ function wcb_ajax_get_subscription_management() {
     }
 
     if ($current_group_id) {
-        // Use the EXACT same function as active-members-test.php
-        $group_memberships = wcb_get_group_memberships($current_group_id);
+        // Get group memberships excluding monthly (for display only)
+        $group_memberships = wcb_get_group_memberships_for_display($current_group_id);
 
         foreach ($group_memberships as $membership) {
             $price = get_post_meta($membership->ID, '_mepr_product_price', true);

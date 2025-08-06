@@ -2226,6 +2226,11 @@ function wcb_get_all_groups() {
     ]);
 }
 
+// Helper function to check if a membership is monthly (should be excluded from displays)
+function wcb_is_monthly_membership($membership_title) {
+    return (stripos($membership_title, 'monthly') !== false);
+}
+
 // Helper function to get all memberships within a group
 function wcb_get_group_memberships($group_id) {
     global $wpdb;
@@ -2242,6 +2247,16 @@ function wcb_get_group_memberships($group_id) {
     ", $group_id));
 
     return $memberships;
+}
+
+// Helper function to get group memberships excluding monthly (for displays)
+function wcb_get_group_memberships_for_display($group_id) {
+    $all_memberships = wcb_get_group_memberships($group_id);
+
+    // Filter out monthly memberships
+    return array_filter($all_memberships, function($membership) {
+        return !wcb_is_monthly_membership($membership->post_title);
+    });
 }
 
 // Helper function to get total member count for a group (across all its memberships)
