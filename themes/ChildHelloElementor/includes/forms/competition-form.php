@@ -84,7 +84,7 @@ function wcb_competition_form_shortcode() {
     .wcb-form-container { max-width: 700px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.07); }
     .form-header { text-align: center; margin-bottom: 30px; }
     .form-header h2 { margin: 0 0 10px 0; color: #2c3e50; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 2rem; }
-    .form-header p { color: #fff; font-size: 1.1rem; margin: 0; }
+    .form-header p { color: #666; font-size: 1.1rem; margin: 0; }
     .competition-form { max-width: 600px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.07); }
     .competition-form .form-group { margin-bottom: 20px; }
     .competition-form label { display: block; font-weight: bold; margin-bottom: 6px; }

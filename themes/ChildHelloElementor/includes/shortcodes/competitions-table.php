@@ -434,12 +434,13 @@ function wcb_competitions_table_shortcode($atts) {
     
     .competition-link {
         font-weight: bold;
-        color: #2c3e50;
+        color: #2c3e50 !important;
         text-decoration: none;
     }
     
     .competition-link:hover {
-        color: #e74c3c;
+        color: #e74c3c !important;
+        text-decoration: none;
     }
     
     .has-highlights {
