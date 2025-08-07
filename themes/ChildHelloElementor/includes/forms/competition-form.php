@@ -149,15 +149,31 @@ function wcb_handle_competition_submission() {
         return ['success' => false, 'message' => 'Failed to create competition'];
     }
 
+    // Debug form submission data
+    if (current_user_can('administrator')) {
+        error_log('Competition Form Submission Debug:');
+        error_log('POST Data: ' . print_r($_POST, true));
+        error_log('Student Involved Raw: ' . $_POST['student_involved']);
+        error_log('Student Involved Intval: ' . intval($_POST['student_involved']));
+    }
+    
     // Save ACF fields
     update_field('event_name', sanitize_text_field($_POST['event_name']), $post_id);
     update_field('event_date', sanitize_text_field($_POST['event_date']), $post_id);
     update_field('where_was_it_hosted', sanitize_text_field($_POST['where_was_it_hosted']), $post_id);
-    update_field('student_involved', intval($_POST['student_involved']), $post_id);
+    // Save student_involved as user ID (ACF User field expects an ID)
+    $student_id = intval($_POST['student_involved']);
+    update_field('student_involved', $student_id, $post_id);
     update_field('who_else_attended', sanitize_text_field($_POST['who_else_attended']), $post_id);
     update_field('results_wins', intval($_POST['results_wins']), $post_id);
     update_field('results_lost', intval($_POST['results_lost']), $post_id);
     update_field('highlights', sanitize_textarea_field($_POST['highlights']), $post_id);
+    
+    // Debug what was actually saved
+    if (current_user_can('administrator')) {
+        error_log('Saved Student Involved: ' . get_field('student_involved', $post_id));
+        error_log('Saved Student Involved Raw Meta: ' . get_post_meta($post_id, 'student_involved', true));
+    }
 
     return ['success' => true, 'post_id' => $post_id];
 }

@@ -138,7 +138,37 @@ function wcb_competitions_table_shortcode($atts) {
                     $results_lost = get_field('results_lost', $competition->ID);
                     $highlights = get_field('highlights', $competition->ID);
                     $formatted_date = $event_date ? date('M j, Y', strtotime($event_date)) : 'Unknown';
-                    $student_name = $student_involved ? get_userdata($student_involved)->display_name : '';
+                    
+                    // Debug student field data (only when debug parameter is set)
+                    if (current_user_can('administrator') && isset($_GET['debug'])) {
+                        error_log('=== COMPETITION DEBUG ID: ' . $competition->ID . ' ===');
+                        error_log('Student Involved Raw: ' . print_r($student_involved, true));
+                        error_log('Student Involved Type: ' . gettype($student_involved));
+                    }
+                    
+                    // Handle ACF User field format
+                    $student_user_data = null;
+                    $student_name = 'Not specified';
+                    
+                    if (!empty($student_involved)) {
+                        // Handle array format (ACF User field returns associative array)
+                        if (is_array($student_involved) && isset($student_involved['display_name'])) {
+                            $student_name = $student_involved['display_name'];
+                            $student_user_data = (object) $student_involved;
+                        }
+                        // Handle object format
+                        elseif (is_object($student_involved) && isset($student_involved->display_name)) {
+                            $student_user_data = $student_involved;
+                            $student_name = $student_involved->display_name;
+                        }
+                        // Fallback: if it's just an ID (legacy or manual entry)
+                        elseif (is_numeric($student_involved) && $student_involved > 0) {
+                            $student_user_data = get_userdata($student_involved);
+                            if ($student_user_data) {
+                                $student_name = $student_user_data->display_name;
+                            }
+                        }
+                    }
                     ?>
                     <tr>
                         <td class="event-name">
@@ -148,7 +178,14 @@ function wcb_competitions_table_shortcode($atts) {
                         </td>
                         <td class="event-date"><?php echo esc_html($formatted_date); ?></td>
                         <td class="event-location"><?php echo esc_html($where_was_it_hosted); ?></td>
-                        <td class="student-involved"><?php echo esc_html($student_name); ?></td>
+                        <td class="student-involved" style="color: #333 !important;">
+                            <?php echo esc_html($student_name); ?>
+                            <?php if (current_user_can('administrator') && isset($_GET['debug'])): ?>
+                                <br><small style="color: #999; font-size: 10px;">
+                                    [ID: <?php echo $competition->ID; ?>] [Type: <?php echo gettype($student_involved); ?>]
+                                </small>
+                            <?php endif; ?>
+                        </td>
                         <td class="results">
                             <span class="wins"><?php echo esc_html($results_wins); ?>W</span>
                             <span class="losses"><?php echo esc_html($results_lost); ?>L</span>

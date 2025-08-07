@@ -55,7 +55,23 @@ function single_competition_shortcode($atts) {
     $formatted_date = $event_date ? date('l, F j, Y', strtotime($event_date)) : 'Unknown Date';
     $total_matches = $results_wins + $results_lost;
     $win_percentage = $total_matches > 0 ? round(($results_wins / $total_matches) * 100, 1) : 0;
-    $student_user = $student_involved ? get_user_by('ID', $student_involved) : null;
+    
+    // Handle ACF User field format
+    $student_user = null;
+    if (!empty($student_involved)) {
+        // Handle array format (ACF User field returns associative array)
+        if (is_array($student_involved) && isset($student_involved['display_name'])) {
+            $student_user = (object) $student_involved;
+        }
+        // Handle object format
+        elseif (is_object($student_involved) && isset($student_involved->display_name)) {
+            $student_user = $student_involved;
+        }
+        // Fallback: if it's just an ID (legacy or manual entry)
+        elseif (is_numeric($student_involved) && $student_involved > 0) {
+            $student_user = get_userdata($student_involved);
+        }
+    }
     ob_start();
     ?>
     <div class="<?php echo esc_attr($atts['class']); ?>" id="single-competition-<?php echo $competition_id; ?>">
@@ -87,6 +103,9 @@ function single_competition_shortcode($atts) {
                     <div class="attendee-info">
                         <div class="attendee-label">Student Involved</div>
                         <div class="attendee-name"><?php echo $student_user ? esc_html($student_user->display_name) : 'Not specified'; ?></div>
+                        <?php if (current_user_can('administrator') && isset($_GET['debug'])): ?>
+                            <div style="color: #999; font-size: 12px;">[Debug: <?php echo esc_html(print_r($student_involved, true)); ?>]</div>
+                        <?php endif; ?>
                         <?php if ($student_user): ?>
                         <div class="attendee-email"><?php echo esc_html($student_user->user_email); ?></div>
                         <?php endif; ?>
