@@ -559,17 +559,35 @@ add_shortcode('wcb_class_session_form', 'wcb_class_session_form_shortcode');
 
 // Handle class session form submission
 function wcb_handle_class_session_submission() {
-    // Simple duplicate prevention - just prevent rapid submissions
+    // Enhanced duplicate prevention
     $user_identifier = get_current_user_id() ?: $_SERVER['REMOTE_ADDR'];
     $submission_key = 'wcb_session_cooldown_' . md5($user_identifier);
+    
+    // Create content hash to prevent identical submissions
+    $content_data = [
+        'session_date' => $_POST['session_date'] ?? '',
+        'class_type' => $_POST['class_type'] ?? '',
+        'selected_group' => $_POST['selected_group'] ?? '',
+        'selected_school' => $_POST['selected_school'] ?? '',
+        'attendance_list' => $_POST['attendance_list'] ?? [],
+        'instructor' => $_POST['instructor'] ?? ''
+    ];
+    $content_hash = md5(serialize($content_data));
+    $content_key = 'wcb_session_content_' . $content_hash;
 
     // Check if user submitted recently (within 5 seconds)
     if (get_transient($submission_key)) {
         return ['success' => false, 'message' => 'Please wait a moment before submitting another session.'];
     }
+    
+    // Check if identical content was submitted recently (within 2 minutes)
+    if (get_transient($content_key)) {
+        return ['success' => false, 'message' => 'This session appears to have been submitted already. Please check your sessions list.'];
+    }
 
-    // Set submission cooldown for 5 seconds
+    // Set submission cooldowns
     set_transient($submission_key, true, 5);
+    set_transient($content_key, true, 120); // 2 minutes for content
 
     // Validate required fields
     $session_date = $_POST['session_date'] ?? '';

@@ -102,8 +102,40 @@ function wcb_competition_form_shortcode() {
 add_shortcode('wcb_competition_form', 'wcb_competition_form_shortcode');
 
 function wcb_handle_competition_submission() {
-    if (empty($_POST['event_name']) || empty($_POST['event_date']) || empty($_POST['where_was_it_hosted']) || empty($_POST['student_involved']) || !isset($_POST['results_wins']) || !isset($_POST['results_lost'])) {
-        return ['success' => false, 'message' => 'Please fill in all required fields'];
+    // Duplicate prevention
+    $user_identifier = get_current_user_id() ?: $_SERVER['REMOTE_ADDR'];
+    $submission_key = 'wcb_competition_cooldown_' . md5($user_identifier);
+    
+    // Check if user submitted recently (within 5 seconds)
+    if (get_transient($submission_key)) {
+        return ['success' => false, 'message' => 'Please wait a moment before submitting another competition.'];
+    }
+    
+    // Create content hash to prevent identical submissions
+    $content_data = [
+        'event_name' => $_POST['event_name'] ?? '',
+        'event_date' => $_POST['event_date'] ?? '',
+        'where_was_it_hosted' => $_POST['where_was_it_hosted'] ?? '',
+        'student_involved' => $_POST['student_involved'] ?? '',
+        'results_wins' => $_POST['results_wins'] ?? '',
+        'results_lost' => $_POST['results_lost'] ?? ''
+    ];
+    $content_hash = md5(serialize($content_data));
+    $content_key = 'wcb_competition_content_' . $content_hash;
+    
+    // Check if identical content was submitted recently (within 2 minutes)
+    if (get_transient($content_key)) {
+        return ['success' => false, 'message' => 'This competition appears to have been submitted already. Please check your competitions list.'];
+    }
+    
+    // Set cooldowns
+    set_transient($submission_key, true, 5);
+    set_transient($content_key, true, 120);
+    
+    // Validate required fields more carefully
+    $student_involved_value = trim($_POST['student_involved'] ?? '');
+    if (empty($_POST['event_name']) || empty($_POST['event_date']) || empty($_POST['where_was_it_hosted']) || empty($student_involved_value) || !isset($_POST['results_wins']) || !isset($_POST['results_lost'])) {
+        return ['success' => false, 'message' => 'Please fill in all required fields, including selecting a student'];
     }
 
     $post_data = [
