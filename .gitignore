@@ -49,3 +49,6 @@ maintenance.php
 
 # Language files (usually managed by WordPress core)
 languages/
+
+# Claude Code settings (local only)
+.claude/
