@@ -179,6 +179,17 @@ function wcb_get_student_stats_cards() {
         </div>
     </div>
 
+    <div class="stat-card paid-stripe-card" data-status="paid_stripe">
+        <div class="stat-icon">
+            <span class="dashicons dashicons-money-alt"></span>
+        </div>
+        <div class="stat-content">
+            <h3><?php echo number_format($stats['paid_stripe']); ?></h3>
+            <p>Paid (Stripe) Members</p>
+            <span class="stat-description">Members with online payments</span>
+        </div>
+    </div>
+
     <div class="stat-card total-card" data-status="all">
         <div class="stat-icon">
             <span class="dashicons dashicons-admin-users"></span>
@@ -300,16 +311,53 @@ function wcb_get_membership_status_counts() {
         AND u.user_login != 'bwgdev'
     ");
 
+    // Get count of Stripe/paid members
+    $paid_stripe_count = wcb_get_paid_stripe_members_count();
+
     return [
         'active' => (int) $total_active_count,
         'waitlist' => (int) $waitlist_count,
         'inactive' => 0, // Can be implemented later if needed
+        'paid_stripe' => (int) $paid_stripe_count,
         'total' => (int) ($total_active_count + $waitlist_count)
     ];
 }
 
 // Note: wcb_get_group_member_count() and wcb_get_group_members() functions
 // are defined in student-table.php to avoid conflicts
+
+/**
+ * Get count of Stripe/paid members using the same logic as student-table.php
+ */
+function wcb_get_paid_stripe_members_count() {
+    global $wpdb;
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+    
+    // Check if MemberPress transactions table exists
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$txn_table'") == $txn_table;
+    if (!$table_exists) {
+        return 0;
+    }
+    
+    $wcb_mentoring_id = 1738;
+    
+    // Get members with Stripe payments (using same logic as wcb_get_student_payment_status)
+    $stripe_members = $wpdb->get_results($wpdb->prepare("
+        SELECT DISTINCT u.ID
+        FROM {$wpdb->users} u
+        JOIN {$txn_table} t ON u.ID = t.user_id
+        WHERE t.status IN ('confirmed', 'complete')
+        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+        AND t.product_id != %d
+        AND u.user_login != 'bwgdev'
+        AND t.gateway IS NOT NULL
+        AND t.gateway != ''
+        AND t.gateway != 'manual'
+        AND (t.gateway LIKE '%%stripe%%' OR t.gateway REGEXP '^sz[a-z0-9\\-]+$')
+    ", $wcb_mentoring_id));
+    
+    return count($stripe_members);
+}
 
 /**
  * Get table title based on current filter
@@ -322,6 +370,8 @@ function wcb_get_table_title($filter) {
             return 'Waitlist Members';
         case 'inactive':
             return 'Inactive Members';
+        case 'paid_stripe':
+            return 'Paid (Stripe) Members';
         default:
             return 'All Students';
     }
@@ -389,6 +439,11 @@ function wcb_students_dashboard_styles() {
         position: relative;
         overflow: hidden;
     }
+    
+    .stat-card.selected {
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        transform: translateY(-2px);
+    }
 
     .stat-card:hover {
         transform: translateY(-2px);
@@ -398,6 +453,7 @@ function wcb_students_dashboard_styles() {
     .stat-card.active-card { border-color: #4CAF50; }
     .stat-card.waitlist-card { border-color: #FF9800; }
     .stat-card.inactive-card { border-color: #f44336; }
+    .stat-card.paid-stripe-card { border-color: #9C27B0; }
     .stat-card.total-card { border-color: #2196F3; }
 
     .stat-card .stat-icon {
@@ -722,7 +778,19 @@ function wcb_students_dashboard_scripts() {
 
             // No filter buttons - always show active members
 
-            // No stat card filtering - always show active members
+            // Stat card filtering - allow clicking on cards to filter
+            $('.stat-card').on('click', function() {
+                const status = $(this).data('status');
+                if (status && status !== currentFilter) {
+                    currentFilter = status;
+                    currentPage = 1;
+                    $('.stat-card').removeClass('selected');
+                    $(this).addClass('selected');
+                    $('#table-title').text(getTableTitle(status));
+                    loadStudentsTable();
+                    updateURL();
+                }
+            });
 
             // Per page select
             $('#per-page-select').on('change', function() {
@@ -858,6 +926,7 @@ function wcb_students_dashboard_scripts() {
                 case 'active': return 'Active Members';
                 case 'waitlist': return 'Waitlist Members';
                 case 'inactive': return 'Inactive Members';
+                case 'paid_stripe': return 'Paid (Stripe) Members';
                 default: return 'All Students';
             }
         }
@@ -1056,8 +1125,33 @@ function wcb_ajax_load_dashboard_students_table() {
         });
     }
 
-    // Only handle active members (from program groups)
-    $target_members = $filtered_members;
+    // Filter by membership status
+    if ($membership_status === 'paid_stripe') {
+        // Filter for Stripe/paid members only
+        $target_members = [];
+        foreach ($filtered_members as $member) {
+            // Check if this member has Stripe payment
+            $has_stripe = $wpdb->get_var($wpdb->prepare("
+                SELECT COUNT(*)
+                FROM {$txn_table} t
+                WHERE t.user_id = %d
+                AND t.status IN ('confirmed', 'complete')
+                AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+                AND t.product_id != %d
+                AND t.gateway IS NOT NULL
+                AND t.gateway != ''
+                AND t.gateway != 'manual'
+                AND (t.gateway LIKE '%%stripe%%' OR t.gateway REGEXP '^sz[a-z0-9\\\\-]+$')
+            ", $member->ID, $wcb_mentoring_id));
+            
+            if ($has_stripe > 0) {
+                $target_members[] = $member;
+            }
+        }
+    } else {
+        // Default: active members (from program groups)
+        $target_members = $filtered_members;
+    }
 
     if (empty($target_members)) {
         wp_send_json_success([
@@ -1124,7 +1218,11 @@ function wcb_generate_students_table_html($users, $membership_status) {
                 <th><span class="dashicons dashicons-admin-users"></span> Name</th>
                 <th><span class="dashicons dashicons-email"></span> Email</th>
                 <th><span class="dashicons dashicons-groups"></span> Membership</th>
+                <?php if ($membership_status === 'paid_stripe'): ?>
+                <th><span class="dashicons dashicons-money-alt"></span> Payment Status</th>
+                <?php else: ?>
                 <th><span class="dashicons dashicons-yes-alt"></span> Status</th>
+                <?php endif; ?>
                 <th><span class="dashicons dashicons-calendar-alt"></span> Joined</th>
                 <th><span class="dashicons dashicons-admin-tools"></span> Actions</th>
             </tr>
@@ -1133,7 +1231,16 @@ function wcb_generate_students_table_html($users, $membership_status) {
             <?php foreach ($users as $user): ?>
                 <?php
                 $membership_info = wcb_get_user_membership_info($user->ID);
-                $status_info = wcb_get_user_status_info($user->ID, $membership_status);
+                if ($membership_status === 'paid_stripe') {
+                    // Include the payment status function from student-table.php
+                    if (function_exists('wcb_get_student_payment_status')) {
+                        $status_info = wcb_get_student_payment_status($user->ID);
+                    } else {
+                        $status_info = '<span class="status-badge status-active">Stripe Member</span>';
+                    }
+                } else {
+                    $status_info = wcb_get_user_status_info($user->ID, $membership_status);
+                }
                 $join_date = date('M j, Y', strtotime($user->user_registered));
                 ?>
                 <tr data-user-id="<?php echo $user->ID; ?>">
@@ -1535,8 +1642,13 @@ add_action('wp_ajax_wcb_dashboard_search_students', 'wcb_ajax_dashboard_search_s
 add_action('wp_ajax_nopriv_wcb_dashboard_search_students', 'wcb_ajax_dashboard_search_students');
 
 /**
- * AJAX handler for getting updated student stats
+ * Dashboard Students Component - Enhanced Student Management Interface
  */
+
+// Ensure we have access to the payment status function from student-table.php
+if (!function_exists('wcb_get_student_payment_status')) {
+    require_once WCB_INCLUDES_PATH . '/shortcodes/student-table.php';
+}
 function wcb_ajax_get_student_stats() {
     if (!wp_verify_nonce($_POST['nonce'], 'wcb_nonce')) {
         wp_die('Security check failed');
@@ -1621,6 +1733,24 @@ function wcb_ajax_export_students() {
                 ORDER BY u.display_name
             ";
             break;
+            
+        case 'paid_stripe':
+            $query = "
+                SELECT DISTINCT u.ID, u.display_name, u.user_email, u.user_registered
+                FROM {$wpdb->users} u
+                JOIN {$txn_table} t ON u.ID = t.user_id
+                {$base_where}
+                AND t.status IN ('confirmed', 'complete')
+                AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+                AND t.product_id != {$wcb_mentoring_id}
+                AND t.gateway IS NOT NULL
+                AND t.gateway != ''
+                AND t.gateway != 'manual'
+                AND (t.gateway LIKE '%stripe%' OR t.gateway REGEXP '^sz[a-z0-9\\\\-]+$')
+                {$search_where}
+                ORDER BY u.display_name
+            ";
+            break;
 
         default: // 'all'
             $query = "
@@ -1646,13 +1776,26 @@ function wcb_ajax_export_students() {
 
     $output = fopen('php://output', 'w');
 
-    // CSV headers
-    fputcsv($output, ['Name', 'Email', 'Membership', 'Status', 'Joined Date']);
+    // CSV headers - adjust for Stripe export
+    $headers = ['Name', 'Email', 'Membership'];
+    if ($status === 'paid_stripe') {
+        $headers[] = 'Payment Status';
+    } else {
+        $headers[] = 'Status';
+    }
+    $headers[] = 'Joined Date';
+    fputcsv($output, $headers);
 
     // CSV data
     foreach ($users as $user) {
         $membership_info = wcb_get_user_membership_info($user->ID);
-        $status_info = strip_tags(wcb_get_user_status_info($user->ID, $status));
+        
+        if ($status === 'paid_stripe' && function_exists('wcb_get_student_payment_status')) {
+            $status_info = strip_tags(wcb_get_student_payment_status($user->ID));
+        } else {
+            $status_info = strip_tags(wcb_get_user_status_info($user->ID, $status));
+        }
+        
         $join_date = date('M j, Y', strtotime($user->user_registered));
 
         fputcsv($output, [

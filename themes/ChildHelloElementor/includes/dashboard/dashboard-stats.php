@@ -49,12 +49,24 @@ function dashboard_stats_shortcode() {
     // Get waitlist members using same logic as student table
     $waitlist_members = get_waitlist_member_count_consistent();
 
-    // Get ethnicity and age data using the active members from defined groups
-    $active_member_ids = get_active_member_ids_from_defined_groups($date_from, $date_to);
+    // Get ethnicity and age data using the EXACT SAME active members logic as the total count
+    // This ensures all counts match perfectly
+    $active_member_ids = get_active_member_ids_consistent_with_total($date_from, $date_to);
+    
+    // DEBUG: Log the active member IDs count to verify consistency
+    wcb_debug_log("Dashboard Stats DEBUG: Total active member IDs count: " . count($active_member_ids));
+    
     $ethnicity_data = get_member_ethnicity_breakdown($active_member_ids);
     $ethnicity_breakdown = $ethnicity_data['grouped'];
     $ethnicity_detailed = $ethnicity_data['detailed'];
+    
+    // DEBUG: Log ethnicity breakdown total
+    wcb_debug_log("Dashboard Stats DEBUG: Ethnicity breakdown total: " . array_sum($ethnicity_breakdown));
+    
     $age_breakdown = get_member_age_breakdown($active_member_ids);
+    
+    // DEBUG: Log age breakdown total  
+    wcb_debug_log("Dashboard Stats DEBUG: Age breakdown total: " . array_sum($age_breakdown));
     
     // Get community class and competition data
     $community_class_members = get_community_class_member_count();
@@ -127,13 +139,13 @@ function dashboard_stats_shortcode() {
         
         <!-- Row 2: Demographics -->
         <div class="stat-card ethnicity clickable-stat" data-popup="ethnicity">
-            <h3><?php echo count($ethnicity_breakdown); ?></h3>
-            <p><span class="dashicons dashicons-chart-pie"></span> Ethnicity</p>
+            <h3><?php echo array_sum($ethnicity_breakdown); ?></h3>
+            <p><span class="dashicons dashicons-chart-pie"></span> Ethnicity Data</p>
             <small>Click to view breakdown</small>
         </div>
         <div class="stat-card age-ranges clickable-stat" data-popup="age-ranges">
-            <h3><?php echo count(array_filter($age_breakdown, function($count) { return $count > 0; })); ?></h3>
-            <p><span class="dashicons dashicons-chart-bar"></span> Active Age Groups</p>
+            <h3><?php echo array_sum($age_breakdown); ?></h3>
+            <p><span class="dashicons dashicons-chart-bar"></span> Age Data</p>
             <small>Click to view breakdown</small>
         </div>
         
@@ -1445,6 +1457,30 @@ function get_active_members_from_defined_groups($date_from = null, $date_to = nu
         $group_breakdown[$group_name] = $group_member_count;
     }
 
+    // STEP 2: Also include Competitive Team members (ID: 1932) to match dashboard-students.php logic
+    $competitive_team_id = 1932;
+    $competitive_members = $wpdb->get_results($wpdb->prepare("
+        SELECT DISTINCT u.ID
+        FROM {$wpdb->users} u
+        JOIN {$txn_table} t ON u.ID = t.user_id
+        WHERE t.product_id = %d
+        AND t.status IN ('confirmed', 'complete')
+        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+        AND u.user_login != 'bwgdev'
+    ", $competitive_team_id));
+
+    $competitive_count = count($competitive_members);
+    
+    // Add Competitive Team members to total count (avoiding duplicates)
+    foreach ($competitive_members as $competitive_member) {
+        $total_active_members[$competitive_member->ID] = true;
+    }
+
+    // Add Competitive Team to breakdown if there are members
+    if ($competitive_count > 0) {
+        $group_breakdown['Competitive Team'] = $competitive_count;
+    }
+
     return [
         'total_count' => count($total_active_members),
         'group_breakdown' => $group_breakdown
@@ -1457,7 +1493,98 @@ function get_active_groups_breakdown($date_from = null, $date_to = null) {
     return $active_members_data['group_breakdown'];
 }
 
-// NEW: Helper function to get just the member IDs from defined groups
+// NEW: Helper function to get active member IDs that matches EXACTLY with the total count
+function get_active_member_ids_consistent_with_total($date_from = null, $date_to = null) {
+    global $wpdb;
+
+    // Check if MemberPress transactions table exists
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$txn_table'") == $txn_table;
+
+    if (!$table_exists) {
+        return [];
+    }
+
+    // Get all groups using the same query as active-members-test.php
+    $groups = $wpdb->get_results("SELECT ID, post_title FROM {$wpdb->posts} WHERE post_type = 'memberpressgroup' AND post_status IN ('publish', 'private') ORDER BY post_title");
+
+    // Define the 7 program groups (same as active-members-test.php)
+    $defined_groups = [
+        'Mini Cadet Boys (9-11 Years) Group 1',
+        'Cadet Boys Group 1',
+        'Cadet Boys Group 2',
+        'Youth Boys Group 1',
+        'Youth Boys Group 2',
+        'Mini Cadets Girls Group 1',
+        'Youth Girls Group 1'
+    ];
+
+    $total_active_members = [];
+
+    // STEP 1: Get members from the 7 defined groups (EXACT same logic as get_active_members_from_defined_groups)
+    foreach ($defined_groups as $group_name) {
+        // Find the group - exact matching
+        $group = null;
+        foreach ($groups as $g) {
+            if (strcasecmp($g->post_title, $group_name) === 0) {
+                $group = $g;
+                break;
+            }
+        }
+
+        if (!$group) {
+            continue;
+        }
+
+        // Use the EXACT same logic as get_active_members_from_defined_groups
+        $group_memberships = wcb_get_group_memberships($group->ID);
+
+        if (!empty($group_memberships)) {
+            $membership_ids = array_map(function($m) { return $m->ID; }, $group_memberships);
+            $placeholders = implode(',', array_fill(0, count($membership_ids), '%d'));
+
+            // Get members who have active transactions for memberships in this group
+            // Use EXACT same query as get_active_members_from_defined_groups
+            $group_members = $wpdb->get_results($wpdb->prepare("
+                SELECT DISTINCT u.ID
+                FROM {$wpdb->users} u
+                JOIN {$txn_table} t ON u.ID = t.user_id
+                WHERE t.product_id IN ({$placeholders})
+                AND t.status IN ('confirmed', 'complete')
+                AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+                AND u.user_login != 'bwgdev'
+                ORDER BY u.ID
+            ", ...$membership_ids));
+
+            $group_member_ids = array_column($group_members, 'ID');
+
+            // Add to total (avoiding duplicates across groups)
+            foreach ($group_member_ids as $member_id) {
+                $total_active_members[$member_id] = true;
+            }
+        }
+    }
+
+    // STEP 2: Also include Competitive Team members (ID: 1932) to match dashboard-students.php logic
+    $competitive_team_id = 1932;
+    $competitive_members = $wpdb->get_results($wpdb->prepare("
+        SELECT DISTINCT u.ID
+        FROM {$wpdb->users} u
+        JOIN {$txn_table} t ON u.ID = t.user_id
+        WHERE t.product_id = %d
+        AND t.status IN ('confirmed', 'complete')
+        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+        AND u.user_login != 'bwgdev'
+    ", $competitive_team_id));
+
+    foreach ($competitive_members as $competitive_member) {
+        $total_active_members[$competitive_member->ID] = true;
+    }
+
+    return array_keys($total_active_members);
+}
+
+// DEPRECATED: Helper function to get just the member IDs from defined groups
 function get_active_member_ids_from_defined_groups($date_from = null, $date_to = null) {
     global $wpdb;
 
@@ -1596,6 +1723,10 @@ function get_non_renewed_members_from_defined_groups($date_from, $date_to) {
             }
         }
     }
+    
+    // Also include Competitive Team (ID: 1932) in non-renewed checking
+    $competitive_team_id = 1932;
+    $all_group_membership_ids[] = $competitive_team_id;
 
     if (empty($all_group_membership_ids)) {
         return [];
@@ -1624,7 +1755,11 @@ function get_non_renewed_members_from_defined_groups($date_from, $date_to) {
     foreach ($expired_transactions as $expired_txn) {
         $user_id = $expired_txn->user_id;
 
-        // Check if this user renewed THIS SPECIFIC membership or got a new one after expiry
+        // IMPROVED: Check if this user currently has ANY active membership
+        // This handles weekly subscriptions and Stripe renewals properly
+        $has_active_membership = wcb_user_has_active_membership($user_id);
+        
+        // ADDITIONAL: Check for renewal transactions after expiry (for edge cases)
         $renewed_membership = $wpdb->get_var($wpdb->prepare("
             SELECT COUNT(*)
             FROM {$txn_table} t
@@ -1634,8 +1769,16 @@ function get_non_renewed_members_from_defined_groups($date_from, $date_to) {
             AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
         ", $user_id, $expired_txn->expires_at));
 
-        // If no new membership after expiry, this user didn't renew
-        if ($renewed_membership == 0) {
+        // DEBUG: Log the checks for troubleshooting
+        wcb_debug_log("Non-Renewed Check - User ID: {$user_id}, Name: {$expired_txn->display_name}, Program: {$expired_txn->program_name}");
+        wcb_debug_log("  - Has Active Membership: " . ($has_active_membership ? 'YES' : 'NO'));
+        wcb_debug_log("  - Renewal Transactions After Expiry: {$renewed_membership}");
+        wcb_debug_log("  - Expired Date: {$expired_txn->expires_at}");
+
+        // Only consider non-renewed if BOTH conditions are true:
+        // 1. No currently active membership AND 
+        // 2. No renewal transactions after expiry
+        if (!$has_active_membership && $renewed_membership == 0) {
             $expired_date = date('d/m/Y', strtotime($expired_txn->expires_at));
             $days_since_expiry = floor((time() - strtotime($expired_txn->expires_at)) / (60 * 60 * 24));
 
@@ -1681,6 +1824,110 @@ function get_non_renewed_members_from_defined_groups($date_from, $date_to) {
     }
 
     return array_values($non_renewed_members);
+}
+
+// NEW: Function to check if a user has any active membership (handles weekly subscriptions & Stripe)
+function wcb_user_has_active_membership($user_id) {
+    global $wpdb;
+    
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+    $subscriptions_table = $wpdb->prefix . 'mepr_subscriptions';
+    
+    // Method 1: Check for active transactions (immediate check)
+    $active_transactions = $wpdb->get_var($wpdb->prepare("
+        SELECT COUNT(*)
+        FROM {$txn_table} t
+        WHERE t.user_id = %d
+        AND t.status IN ('confirmed', 'complete')
+        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+    ", $user_id));
+    
+    if ($active_transactions > 0) {
+        wcb_debug_log("  - ACTIVE via Method 1: Active Transactions ({$active_transactions} found)");
+        return true;
+    }
+    
+    // Method 2: Check for active subscriptions (especially important for weekly/Stripe)
+    $active_subscriptions = $wpdb->get_var($wpdb->prepare("
+        SELECT COUNT(*)
+        FROM {$subscriptions_table} s
+        WHERE s.user_id = %d
+        AND s.status IN ('active', 'trialing')
+        AND (s.expires_at IS NULL OR s.expires_at > NOW() OR s.expires_at = '0000-00-00 00:00:00')
+    ", $user_id));
+    
+    if ($active_subscriptions > 0) {
+        wcb_debug_log("  - ACTIVE via Method 2: Active Subscriptions ({$active_subscriptions} found)");
+        return true;
+    }
+    
+    // Method 3: Enhanced check for weekly subscriptions
+    // Weekly subscriptions might have gaps between transactions or overlapping periods
+    $weekly_check = $wpdb->get_results($wpdb->prepare("
+        SELECT t.*, p.post_title as product_name
+        FROM {$txn_table} t
+        JOIN {$wpdb->posts} p ON t.product_id = p.ID
+        WHERE t.user_id = %d
+        AND t.status IN ('confirmed', 'complete')
+        AND p.post_title LIKE '%weekly%'
+        ORDER BY t.created_at DESC
+        LIMIT 5
+    ", $user_id));
+    
+    if (!empty($weekly_check)) {
+        foreach ($weekly_check as $weekly_txn) {
+            // For weekly subscriptions, check if:
+            // 1. Transaction was created within last 14 days (covers 2 weeks)
+            // 2. OR transaction expires in the future
+            // 3. OR transaction was created recently but might be processing
+            $created_days_ago = floor((time() - strtotime($weekly_txn->created_at)) / (60 * 60 * 24));
+            $expires_in_future = ($weekly_txn->expires_at === null || 
+                                 $weekly_txn->expires_at === '0000-00-00 00:00:00' || 
+                                 strtotime($weekly_txn->expires_at) > time());
+            
+            if ($created_days_ago <= 14 || $expires_in_future) {
+                wcb_debug_log("  - ACTIVE via Method 3: Weekly Subscription (created {$created_days_ago} days ago, expires in future: " . ($expires_in_future ? 'YES' : 'NO') . ")");
+                return true;
+            }
+        }
+    }
+    
+    // Method 4: Check for Stripe subscription transactions specifically
+    // Stripe transactions might have different patterns
+    $stripe_transactions = $wpdb->get_var($wpdb->prepare("
+        SELECT COUNT(*)
+        FROM {$txn_table} t
+        WHERE t.user_id = %d
+        AND t.status IN ('confirmed', 'complete')
+        AND t.gateway LIKE '%stripe%'
+        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+    ", $user_id));
+    
+    if ($stripe_transactions > 0) {
+        wcb_debug_log("  - ACTIVE via Method 4: Stripe Transactions ({$stripe_transactions} found)");
+        return true;
+    }
+    
+    // Method 5: Check if user has MemberPress capabilities (using WP roles/capabilities)
+    $user = get_user_by('ID', $user_id);
+    if ($user && function_exists('mepr_user_has_access')) {
+        // Get all membership products and check access
+        $membership_products = get_posts([
+            'post_type' => 'memberpressproduct',
+            'post_status' => 'publish',
+            'numberposts' => -1
+        ]);
+        
+        foreach ($membership_products as $product) {
+            if (mepr_user_has_access($user_id, $product->ID)) {
+                wcb_debug_log("  - ACTIVE via Method 5: MemberPress Access (Product ID: {$product->ID})");
+                return true;
+            }
+        }
+    }
+    
+    wcb_debug_log("  - NOT ACTIVE: No active membership found via any method");
+    return false;
 }
 
 // Helper function to get all active members across all programs (current)
@@ -1868,15 +2115,12 @@ function get_member_ethnicity_breakdown($active_members = null) {
     
     $member_ids = implode(',', $active_members);
     
-    // Get ethnicity data for active members only
+    // Get ALL ethnicity data for active members (including empty/missing)
     $all_ethnicities = $wpdb->get_results("
-        SELECT meta_value 
-        FROM {$wpdb->usermeta} 
-        WHERE user_id IN ($member_ids)
-        AND meta_key = 'mepr_ethnicity' 
-        AND meta_value != '' 
-        AND meta_value != 'Not specified'
-        AND meta_value IS NOT NULL
+        SELECT COALESCE(um.meta_value, '') as meta_value, u.ID as user_id
+        FROM {$wpdb->users} u
+        LEFT JOIN {$wpdb->usermeta} um ON u.ID = um.user_id AND um.meta_key = 'mepr_ethnicity'
+        WHERE u.ID IN ($member_ids)
     ");
     
     // Define Polynesian ethnicity patterns
@@ -1891,7 +2135,8 @@ function get_member_ethnicity_breakdown($active_members = null) {
         'Pacific Island' => 0,
         'NZ European' => 0,
         'Asian' => 0,
-        'Other' => 0
+        'Other' => 0,
+        'Not Specified' => 0
     ];
     
     // Detailed breakdowns for clickable groups
@@ -1904,7 +2149,9 @@ function get_member_ethnicity_breakdown($active_members = null) {
     foreach ($all_ethnicities as $ethnicity_data) {
         $ethnicity_value = trim(strtolower($ethnicity_data->meta_value));
         
-        if (empty($ethnicity_value)) {
+        // Handle empty/missing ethnicity data
+        if (empty($ethnicity_value) || $ethnicity_value == 'not specified') {
+            $grouped_breakdown['Not Specified']++;
             continue;
         }
         
@@ -2048,7 +2295,7 @@ function get_member_ethnicity_breakdown($active_members = null) {
         }
     }
     
-    // Remove empty categories
+    // Remove empty categories (but keep "Not Specified" if it has members)
     $grouped_breakdown = array_filter($grouped_breakdown, function($count) {
         return $count > 0;
     });
@@ -2095,15 +2342,13 @@ function get_member_age_breakdown($active_members = null) {
     
     $member_ids = implode(',', $active_members);
     
-    // Get age data for active members only, prioritizing mepr_age field
+    // Get ALL age data for active members (including empty/missing)
     $age_data = $wpdb->get_results("
-        SELECT DISTINCT um.user_id, um.meta_value, um.meta_key
-        FROM {$wpdb->usermeta} um
-        WHERE um.user_id IN ($member_ids)
-        AND um.meta_key = 'mepr_age'
-        AND um.meta_value != ''
-        AND um.meta_value IS NOT NULL
-        ORDER BY um.user_id
+        SELECT COALESCE(um.meta_value, '') as meta_value, u.ID as user_id
+        FROM {$wpdb->users} u
+        LEFT JOIN {$wpdb->usermeta} um ON u.ID = um.user_id AND um.meta_key = 'mepr_age'
+        WHERE u.ID IN ($member_ids)
+        ORDER BY u.ID
     ");
     
     $age_groups = [
@@ -2111,7 +2356,8 @@ function get_member_age_breakdown($active_members = null) {
         '12-14' => 0,
         '15-18' => 0,
         '18-24' => 0,
-        '24+' => 0
+        '24+' => 0,
+        'Not Specified' => 0
     ];
     
     $processed_users = [];
@@ -2124,10 +2370,10 @@ function get_member_age_breakdown($active_members = null) {
         
         $age = calculate_age_from_data($data->meta_value);
         
-        // Only process if we got a valid age
+        // Process ALL members (including those without valid age data)
+        $processed_users[] = $data->user_id;
+        
         if ($age !== null) {
-            $processed_users[] = $data->user_id;
-            
             if ($age >= 9 && $age <= 11) {
                 $age_groups['9-11']++;
             } elseif ($age >= 12 && $age <= 14) {
@@ -2139,6 +2385,9 @@ function get_member_age_breakdown($active_members = null) {
             } elseif ($age >= 25) {
                 $age_groups['24+']++;
             }
+        } else {
+            // No valid age data - count as Not Specified
+            $age_groups['Not Specified']++;
         }
     }
     

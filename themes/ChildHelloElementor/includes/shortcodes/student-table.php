@@ -19,6 +19,7 @@ function student_table_shortcode($atts) {
                     <select id="membership-status-filter">
                         <option value="all">All Members</option>
                         <option value="active" selected>Active Members</option>
+                        <option value="paid_stripe">Paid (Stripe) Members</option>
                         <option value="inactive">Inactive Members</option>
                         <option value="waitlist">Waitlist Members</option>
                     </select>
@@ -2055,6 +2056,23 @@ function wcb_ajax_load_students_table() {
                 AND u.user_login != 'bwgdev'
             ";
 
+        } elseif ($membership_status === 'paid_stripe') {
+            // Paid (Stripe) members: members with Stripe/online payments
+            $wcb_mentoring_id = 1738;
+            $query = "
+                SELECT DISTINCT u.ID, u.display_name, u.user_email, u.user_registered
+                FROM {$wpdb->users} u
+                JOIN {$txn_table} t ON u.ID = t.user_id
+                WHERE t.status IN ('confirmed', 'complete')
+                AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+                AND t.product_id != {$wcb_mentoring_id}
+                AND u.user_login != 'bwgdev'
+                AND t.gateway IS NOT NULL
+                AND t.gateway != ''
+                AND t.gateway != 'manual'
+                AND (t.gateway LIKE '%stripe%' OR t.gateway REGEXP '^sz[a-z0-9\\\\-]+$')
+            ";
+            
         } elseif ($membership_status === 'inactive') {
             // Inactive members: users with expired or cancelled transactions
             $wcb_mentoring_id = 1738;
@@ -2178,6 +2196,9 @@ function wcb_ajax_load_students_table() {
         switch ($membership_status) {
             case 'active':
                 $status_text = 'active ';
+                break;
+            case 'paid_stripe':
+                $status_text = 'paid (stripe) ';
                 break;
             case 'inactive':
                 $status_text = 'inactive ';

@@ -845,7 +845,7 @@ function wcb_ajax_load_programs_table() {
     $search = sanitize_text_field($_POST['search']);
     $show_inactive = $_POST['show_inactive'] === 'true';
 
-    // Use the proven logic from active-members-test.php - only show the 7 defined groups
+    // Use the proven logic from active-members-test.php - only show the 7 defined groups plus additional memberships
     $defined_groups = [
         'Mini Cadet Boys (9-11 Years) Group 1',
         'Cadet Boys Group 1',
@@ -856,9 +856,15 @@ function wcb_ajax_load_programs_table() {
         'Youth Girls Group 1'
     ];
 
+    // Additional individual memberships to include
+    $additional_memberships = [
+        1738 => 'WCB Mentoring',
+        1932 => 'Competitive Team'
+    ];
+
     // Get all groups using the same query as active-members-test.php
     global $wpdb;
-    $all_groups = $wpdb->get_results("SELECT ID, post_title FROM {$wpdb->posts} WHERE post_type = 'memberpressgroup' AND post_status IN ('publish', 'private') ORDER BY post_title");
+    $all_groups = $wpdb->get_results("SELECT ID, post_title, 'group' as type FROM {$wpdb->posts} WHERE post_type = 'memberpressgroup' AND post_status IN ('publish', 'private') ORDER BY post_title");
 
     // Filter to only include the 7 defined groups
     $programs = [];
@@ -874,6 +880,18 @@ function wcb_ajax_load_programs_table() {
         }
     }
 
+    // Add individual memberships
+    foreach ($additional_memberships as $membership_id => $membership_name) {
+        // Apply search filter if provided
+        if (empty($search) || stripos($membership_name, $search) !== false) {
+            $membership_obj = new stdClass();
+            $membership_obj->ID = $membership_id;
+            $membership_obj->post_title = $membership_name;
+            $membership_obj->type = 'membership';
+            $programs[] = $membership_obj;
+        }
+    }
+
     $using_groups = true;
 
     // Generate table rows
@@ -881,8 +899,9 @@ function wcb_ajax_load_programs_table() {
     if (!empty($programs)) {
         foreach ($programs as $program) {
             $program_id = $program->ID;
+            $program_type = isset($program->type) ? $program->type : 'group';
 
-            if ($using_groups) {
+            if ($program_type === 'group') {
                 // Get member count for this group (across all its memberships)
                 $member_count = wcb_get_group_member_count($program_id);
 
@@ -892,7 +911,7 @@ function wcb_ajax_load_programs_table() {
                 // Get most recent session for this group
                 $recent_session = wcb_get_group_recent_session($program_id);
             } else {
-                // Fallback: treat individual memberships as programs
+                // Individual membership/program
                 $member_count = wcb_get_program_member_count($program_id);
                 $session_count = wcb_get_program_session_count($program_id);
                 $recent_session = wcb_get_program_recent_session($program_id);
@@ -915,7 +934,7 @@ function wcb_ajax_load_programs_table() {
             $rows_html .= '<td><span class="session-count">' . esc_html($session_count) . '</span></td>';
             $rows_html .= '<td>' . ($recent_session ? esc_html(date('M j, Y', strtotime($recent_session))) : 'No sessions') . '</td>';
             $rows_html .= '<td><span class="status-badge ' . esc_attr($status_class) . '">' . esc_html($status) . '</span></td>';
-            $rows_html .= '<td><button class="program-view-btn" data-program-id="' . esc_attr($program_id) . '" data-using-groups="' . ($using_groups ? '1' : '0') . '">View Details</button></td>';
+            $rows_html .= '<td><button class="program-view-btn" data-program-id="' . esc_attr($program_id) . '" data-program-type="' . esc_attr($program_type) . '">View Details</button></td>';
             $rows_html .= '</tr>';
         }
     }
@@ -941,22 +960,41 @@ function wcb_ajax_load_program_details() {
     }
     
     $program_id = $_POST['program_id'];
+    $program_type = isset($_POST['program_type']) ? $_POST['program_type'] : 'group';
     
     if (!$program_id) {
         wp_send_json_error('Invalid program ID');
         return;
     }
     
-    // Get the program (could be group or individual membership)
-    $program = get_post($program_id);
-    if (!$program) {
-        wp_send_json_error('Program not found');
-        return;
-    }
+    // Handle individual memberships vs groups differently
+    if ($program_type === 'membership') {
+        // For individual memberships, we need to get the title from our mapping
+        $additional_memberships = [
+            1738 => 'WCB Mentoring',
+            1932 => 'Competitive Team'
+        ];
+        
+        if (!isset($additional_memberships[$program_id])) {
+            wp_send_json_error('Membership not found');
+            return;
+        }
+        
+        $program_title = $additional_memberships[$program_id];
+        $program_content = ''; // Individual memberships don't have content in this context
+        $using_groups = false;
+    } else {
+        // Get the program (group)
+        $program = get_post($program_id);
+        if (!$program) {
+            wp_send_json_error('Program not found');
+            return;
+        }
 
-    $program_title = $program->post_title;
-    $program_content = $program->post_content;
-    $using_groups = ($program->post_type === 'memberpressgroup');
+        $program_title = $program->post_title;
+        $program_content = $program->post_content;
+        $using_groups = true;
+    }
 
     if ($using_groups) {
         // Get group statistics
