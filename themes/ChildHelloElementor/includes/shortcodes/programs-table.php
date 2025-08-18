@@ -95,9 +95,10 @@ function programs_table_shortcode($atts) {
         $(document).on('click', '.program-view-btn', function(e) {
             e.preventDefault();
             var programId = $(this).data('program-id');
+            var programType = $(this).data('program-type') || 'group';
             var programName = $(this).closest('tr').find('.program-name').text();
             
-            loadProgramDetails(programId, programName);
+            loadProgramDetails(programId, programName, programType);
         });
         
         // Back to programs list
@@ -144,10 +145,12 @@ function programs_table_shortcode($atts) {
             });
         }
         
-        function loadProgramDetails(programId, programName) {
+        function loadProgramDetails(programId, programName, programType) {
             if (!programId) {
                 return;
             }
+            
+            programType = programType || 'group';
             
             // Update header title
             $('.programs-table-header h3').html('<span class="dashicons dashicons-awards"></span> ' + programName);
@@ -167,6 +170,7 @@ function programs_table_shortcode($atts) {
                 data: {
                     action: 'wcb_load_program_details',
                     program_id: programId,
+                    program_type: programType,
                     nonce: wcb_ajax.nonce
                 },
                 success: function(response) {
@@ -959,8 +963,11 @@ function wcb_ajax_load_program_details() {
         return;
     }
     
-    $program_id = $_POST['program_id'];
-    $program_type = isset($_POST['program_type']) ? $_POST['program_type'] : 'group';
+    $program_id = intval($_POST['program_id']);
+    $program_type = isset($_POST['program_type']) ? sanitize_text_field($_POST['program_type']) : 'group';
+    
+    // DEBUG: Log what we received
+    wcb_debug_log("wcb_ajax_load_program_details: Program ID: {$program_id}, Type: {$program_type}");
     
     if (!$program_id) {
         wp_send_json_error('Invalid program ID');
@@ -982,7 +989,6 @@ function wcb_ajax_load_program_details() {
         
         $program_title = $additional_memberships[$program_id];
         $program_content = ''; // Individual memberships don't have content in this context
-        $using_groups = false;
     } else {
         // Get the program (group)
         $program = get_post($program_id);
@@ -993,10 +999,9 @@ function wcb_ajax_load_program_details() {
 
         $program_title = $program->post_title;
         $program_content = $program->post_content;
-        $using_groups = true;
     }
 
-    if ($using_groups) {
+    if ($program_type === 'group') {
         // Get group statistics
         $member_count = wcb_get_group_member_count($program_id);
         $session_count = wcb_get_group_session_count($program_id);
@@ -1006,8 +1011,9 @@ function wcb_ajax_load_program_details() {
         $members = wcb_get_group_members($program_id);
         $sessions = wcb_get_group_sessions($program_id, 10);
         $total_session_count = wcb_get_group_session_count($program_id);
+        $using_groups = true;
     } else {
-        // Fallback: individual membership statistics
+        // Individual membership statistics
         $member_count = wcb_get_program_member_count($program_id);
         $session_count = wcb_get_program_session_count($program_id);
         $recent_session = wcb_get_program_recent_session($program_id);
@@ -1016,6 +1022,10 @@ function wcb_ajax_load_program_details() {
         $members = wcb_get_program_members($program_id);
         $sessions = wcb_get_program_sessions($program_id, 10);
         $total_session_count = wcb_get_program_session_count($program_id);
+        
+        // DEBUG: Log member count for individual memberships
+        wcb_debug_log("Individual membership {$program_id}: Found " . count($members) . " members, {$session_count} sessions");
+        $using_groups = false;
     }
     
     ob_start();
@@ -1600,6 +1610,18 @@ function wcb_get_program_recent_session($program_id) {
 function wcb_get_program_members($program_id) {
     global $wpdb;
     
+    // Check if MemberPress transactions table exists
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$txn_table'") == $txn_table;
+
+    if (!$table_exists) {
+        wcb_debug_log("wcb_get_program_members: MemberPress transactions table not found");
+        return [];
+    }
+    
+    // DEBUG: Log what we're looking for
+    wcb_debug_log("wcb_get_program_members: Looking for members of program ID: {$program_id}");
+    
     // Use EXACT same query logic as active-members-test.php
     $results = $wpdb->get_results($wpdb->prepare("
         SELECT DISTINCT u.ID, u.display_name, u.user_email, t.created_at,
@@ -1609,13 +1631,16 @@ function wcb_get_program_members($program_id) {
                    ELSE 'Expired'
                END as status
         FROM {$wpdb->users} u
-        JOIN {$wpdb->prefix}mepr_transactions t ON u.ID = t.user_id
+        JOIN {$txn_table} t ON u.ID = t.user_id
         WHERE t.product_id = %d
         AND t.status IN ('confirmed', 'complete')
         AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
         AND u.user_login != 'bwgdev'
         ORDER BY u.display_name
     ", $program_id));
+    
+    // DEBUG: Log results
+    wcb_debug_log("wcb_get_program_members: Found " . count($results) . " members for program ID: {$program_id}");
     
     $members = [];
     foreach ($results as $result) {
