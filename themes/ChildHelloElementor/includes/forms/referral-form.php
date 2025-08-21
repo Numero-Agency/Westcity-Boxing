@@ -52,27 +52,27 @@ if (!function_exists('wcb_referral_form_shortcode')) {
                     <h3>Young Person Details</h3>
                     
                     <div class="form-row">
-                        <label for="first_name">First Name *</label>
+                        <label for="first_name">First Name <span class="required">*</span></label>
                         <input type="text" id="first_name" name="first_name" required>
                     </div>
                     
                     <div class="form-row">
-                        <label for="last_name">Last Name *</label>
+                        <label for="last_name">Last Name <span class="required">*</span></label>
                         <input type="text" id="last_name" name="last_name" required>
                     </div>
                     
                     <div class="form-row">
-                        <label for="date_of_birth">Date of Birth *</label>
+                        <label for="date_of_birth">Date of Birth <span class="required">*</span></label>
                         <input type="date" id="date_of_birth" name="date_of_birth" required>
                     </div>
                     
                     <div class="form-row">
-                        <label for="ethnicity">Ethnicity *</label>
+                        <label for="ethnicity">Ethnicity <span class="required">*</span></label>
                         <input type="text" id="ethnicity" name="ethnicity" required placeholder="e.g. Māori, Pacific Islander, European/Pākehā, Asian, etc.">
                     </div>
                     
                     <div class="form-row">
-                        <label for="gender">Gender *</label>
+                        <label for="gender">Gender <span class="required">*</span></label>
                         <select id="gender" name="gender" required>
                             <option value="">Select an option</option>
                             <?php foreach ($gender_options as $value => $label): ?>
@@ -82,12 +82,12 @@ if (!function_exists('wcb_referral_form_shortcode')) {
                     </div>
                     
                     <div class="form-row">
-                        <label for="contact_phone">Contact Phone Number *</label>
+                        <label for="contact_phone">Contact Phone Number <span class="required">*</span></label>
                         <input type="tel" id="contact_phone" name="contact_phone" required>
                     </div>
                     
                     <div class="form-row">
-                        <label for="contact_email">Contact Email Address *</label>
+                        <label for="contact_email">Contact Email Address <span class="required">*</span></label>
                         <input type="email" id="contact_email" name="contact_email" required>
                     </div>
                 </div>
@@ -97,12 +97,12 @@ if (!function_exists('wcb_referral_form_shortcode')) {
                     <h3>Parent/Guardian Details</h3>
                     
                     <div class="form-row">
-                        <label for="parent_name">Parent/Guardian's Name *</label>
+                        <label for="parent_name">Parent/Guardian's Name <span class="required">*</span></label>
                         <input type="text" id="parent_name" name="parent_name" required>
                     </div>
                     
                     <div class="form-row">
-                        <label for="parent_phone">Parent/Guardian's Phone Number *</label>
+                        <label for="parent_phone">Parent/Guardian's Phone Number <span class="required">*</span></label>
                         <input type="tel" id="parent_phone" name="parent_phone" required>
                     </div>
                     
@@ -117,12 +117,12 @@ if (!function_exists('wcb_referral_form_shortcode')) {
                     <h3>Address Information</h3>
                     
                     <div class="form-row">
-                        <label for="address">Address *</label>
+                        <label for="address">Address <span class="required">*</span></label>
                         <textarea id="address" name="address" rows="3" required></textarea>
                     </div>
                     
                     <div class="form-row">
-                        <label for="suburb">Suburb *</label>
+                        <label for="suburb">Suburb <span class="required">*</span></label>
                         <input type="text" id="suburb" name="suburb" required>
                     </div>
                 </div>
@@ -160,7 +160,7 @@ if (!function_exists('wcb_referral_form_shortcode')) {
                     </div>
                     
                     <div class="form-row">
-                        <label for="referral_date">Referral Date *</label>
+                        <label for="referral_date">Referral Date <span class="required">*</span></label>
                         <input type="date" id="referral_date" name="referral_date" required>
                     </div>
                 </div>
@@ -221,12 +221,24 @@ if (!function_exists('wcb_referral_form_shortcode')) {
             margin-bottom: 20px;
         }
         
-        .form-row label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 8px;
-            color: #2c3e50;
-        }
+         .form-row label {
+             display: block;
+             font-weight: bold;
+             margin-bottom: 8px;
+             color: #2c3e50;
+         }
+         
+         /* Style the required asterisk */
+         .form-row label .required {
+             color: #e74c3c;
+             font-weight: bold;
+             margin-left: 2px;
+         }
+         
+         /* Hide any duplicate asterisks that might be automatically added by themes */
+         .form-row label::after {
+             display: none !important;
+         }
         
          .form-row input[type="text"],
          .form-row input[type="email"],
@@ -517,26 +529,21 @@ if (!function_exists('wcb_send_referral_notifications')) {
         $first_name = sanitize_text_field($form_data['first_name']);
         $last_name = sanitize_text_field($form_data['last_name']);
         
-        // Get admin emails
-        $admin_emails = [get_option('admin_email')];
-        
-        // Get all administrator users
-        $admin_users = get_users(['role' => 'administrator']);
-        foreach ($admin_users as $admin) {
-            if (!in_array($admin->user_email, $admin_emails)) {
-                $admin_emails[] = $admin->user_email;
-            }
-        }
-        
-        // Add custom notification emails from settings
+        // Get custom notification emails from settings
         $wcb_notification_emails = get_option('wcb_referral_notification_emails', '');
+        $admin_emails = [];
+        
         if (!empty($wcb_notification_emails)) {
+            // Use only the manually added emails
             $additional_emails = array_map('trim', explode(',', $wcb_notification_emails));
             foreach ($additional_emails as $email) {
-                if (is_email($email) && !in_array($email, $admin_emails)) {
+                if (is_email($email)) {
                     $admin_emails[] = $email;
                 }
             }
+        } else {
+            // Fallback: if no custom emails are set, use WordPress admin email only
+            $admin_emails = [get_option('admin_email')];
         }
         
         $admin_emails = array_filter(array_unique($admin_emails), 'is_email');
@@ -627,7 +634,7 @@ if (!function_exists('wcb_referral_notifications_page')) {
                             <p class="description">
                                 Enter email addresses that should receive referral notifications, separated by commas.<br>
                                 Example: manager@westcityboxing.nz, coordinator@westcityboxing.nz<br>
-                                Leave empty to only send to WordPress administrators.
+                                <strong>Only these emails will receive notifications.</strong> Leave empty to fallback to WordPress admin email only.
                             </p>
                         </td>
                     </tr>
@@ -638,21 +645,23 @@ if (!function_exists('wcb_referral_notifications_page')) {
             <h3>Current Notification Recipients</h3>
             <p>Referral notifications will be sent to:</p>
             <ul>
-                <li><strong>WordPress Admin Email:</strong> <?php echo get_option('admin_email'); ?></li>
-                <?php 
-                $admin_users = get_users(['role' => 'administrator']);
-                foreach ($admin_users as $admin): ?>
-                    <li><strong>Administrator:</strong> <?php echo esc_html($admin->display_name . ' (' . $admin->user_email . ')'); ?></li>
-                <?php endforeach; ?>
                 <?php if (!empty($current_emails)): 
                     $additional_emails = array_map('trim', explode(',', $current_emails));
                     foreach ($additional_emails as $email): 
                         if (is_email($email)): ?>
-                            <li><strong>Additional:</strong> <?php echo esc_html($email); ?></li>
+                            <li><strong>Email:</strong> <?php echo esc_html($email); ?></li>
                         <?php endif;
                     endforeach;
-                endif; ?>
+                else: ?>
+                    <li><strong>Fallback:</strong> <?php echo get_option('admin_email'); ?> (WordPress Admin Email - only used if no custom emails are set)</li>
+                <?php endif; ?>
             </ul>
+            
+            <?php if (!empty($current_emails)): ?>
+            <div class="notice notice-info">
+                <p><strong>Note:</strong> Only the email addresses listed above will receive referral notifications. WordPress administrator emails are not automatically included.</p>
+            </div>
+            <?php endif; ?>
         </div>
         <?php
     }
