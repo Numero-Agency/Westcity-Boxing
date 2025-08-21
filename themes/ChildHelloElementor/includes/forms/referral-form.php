@@ -1,7 +1,16 @@
 <?php
 // Referral Form
 
-function wcb_referral_form_shortcode() {
+// Safe meta update wrapper: uses ACF update_field when available, falls back to update_post_meta
+if (!function_exists('wcb_update_meta_field')) {
+    function wcb_update_meta_field($post_id, $field, $value) {
+        if (function_exists('update_field')) {
+            return update_field($field, $value, $post_id);
+        }
+        return update_post_meta($post_id, $field, $value);
+    }
+}
+if (!function_exists('wcb_referral_form_shortcode')) { function wcb_referral_form_shortcode() {
     // Handle form submission
     if (isset($_POST['submit_referral']) && wp_verify_nonce($_POST['referral_nonce'], 'submit_referral')) {
         $result = wcb_handle_referral_submission();
@@ -439,10 +448,13 @@ function wcb_referral_form_shortcode() {
     <?php
     return ob_get_clean();
 }
-add_shortcode('wcb_referral_form', 'wcb_referral_form_shortcode');
+}
+add_action('init', function() {
+    add_shortcode('wcb_referral_form', 'wcb_referral_form_shortcode');
+});
 
 // Handle referral form submission
-function wcb_handle_referral_submission() {
+if (!function_exists('wcb_handle_referral_submission')) { function wcb_handle_referral_submission() {
     // Validate required fields
     $required_fields = ['first_name', 'last_name', 'date_of_birth', 'ethnicity', 'gender', 'contact_phone', 'contact_email', 'parent_name', 'parent_phone', 'address', 'suburb', 'referral_date'];
     
@@ -493,12 +505,12 @@ function wcb_handle_referral_submission() {
     foreach ($fields_to_save as $field) {
         if (isset($_POST[$field])) {
             $value = is_array($_POST[$field]) ? $_POST[$field] : sanitize_textarea_field($_POST[$field]);
-            update_field($field, $value, $post_id);
+            wcb_update_meta_field($post_id, $field, $value);
         }
     }
     
     // Set referral status
-    update_field('referral_status', 'pending', $post_id);
+    wcb_update_meta_field($post_id, 'referral_status', 'pending');
     
     // Send notification emails
     $notification_result = wcb_send_referral_notifications($post_id, $_POST);
@@ -516,9 +528,10 @@ function wcb_handle_referral_submission() {
         'notifications' => $notification_result
     ];
 }
+}
 
 // Send email notifications for referral submissions
-function wcb_send_referral_notifications($post_id, $form_data) {
+if (!function_exists('wcb_send_referral_notifications')) { function wcb_send_referral_notifications($post_id, $form_data) {
     $first_name = sanitize_text_field($form_data['first_name']);
     $last_name = sanitize_text_field($form_data['last_name']);
     $referrer_name = sanitize_text_field($form_data['referrer_name']);
@@ -598,9 +611,10 @@ function wcb_send_referral_notifications($post_id, $form_data) {
     
     return $result;
 }
+}
 
 // Generate admin notification email content
-function wcb_get_admin_notification_email_content($form_data, $post_id) {
+if (!function_exists('wcb_get_admin_notification_email_content')) { function wcb_get_admin_notification_email_content($form_data, $post_id) {
     $first_name = esc_html($form_data['first_name']);
     $last_name = esc_html($form_data['last_name']);
     $referrer_name = esc_html($form_data['referrer_name']);
@@ -686,9 +700,10 @@ function wcb_get_admin_notification_email_content($form_data, $post_id) {
     
     return $message;
 }
+}
 
 // Generate referrer confirmation email content
-function wcb_get_referrer_confirmation_email_content($form_data) {
+if (!function_exists('wcb_get_referrer_confirmation_email_content')) { function wcb_get_referrer_confirmation_email_content($form_data) {
     $first_name = esc_html($form_data['first_name']);
     $last_name = esc_html($form_data['last_name']);
     $referrer_name = esc_html($form_data['referrer_name']);
@@ -732,13 +747,15 @@ function wcb_get_referrer_confirmation_email_content($form_data) {
     
     return $message;
 }
+}
 
 // Extract email address from contact information text
-function wcb_extract_email_from_contact($contact_text) {
+if (!function_exists('wcb_extract_email_from_contact')) { function wcb_extract_email_from_contact($contact_text) {
     // Use regex to find email patterns in the contact text
     $pattern = '/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/';
     if (preg_match($pattern, $contact_text, $matches)) {
         return $matches[0];
+    }
     }
     return false;
 }
@@ -746,7 +763,7 @@ function wcb_extract_email_from_contact($contact_text) {
 // Add admin menu option to configure referral notification emails
 add_action('admin_menu', 'wcb_add_referral_settings_page');
 
-function wcb_add_referral_settings_page() {
+if (!function_exists('wcb_add_referral_settings_page')) { function wcb_add_referral_settings_page() {
     add_options_page(
         'Referral Notifications',
         'Referral Notifications', 
@@ -755,8 +772,9 @@ function wcb_add_referral_settings_page() {
         'wcb_referral_notifications_page'
     );
 }
+}
 
-function wcb_referral_notifications_page() {
+if (!function_exists('wcb_referral_notifications_page')) { function wcb_referral_notifications_page() {
     if (isset($_POST['submit'])) {
         update_option('wcb_referral_notification_emails', sanitize_textarea_field($_POST['notification_emails']));
         echo '<div class="notice notice-success"><p>Settings saved!</p></div>';
@@ -803,4 +821,5 @@ function wcb_referral_notifications_page() {
         </ul>
     </div>
     <?php
+}
 }
