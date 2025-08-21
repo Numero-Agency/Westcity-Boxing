@@ -5,11 +5,12 @@
  */
 
 function single_referral_shortcode($atts) {
-    $atts = shortcode_atts([
-        'referral_id' => '',
-        'class' => 'wcb-single-referral',
-        'show_edit_link' => 'true'
-    ], $atts);
+    try {
+        $atts = shortcode_atts([
+            'referral_id' => '',
+            'class' => 'wcb-single-referral',
+            'show_edit_link' => 'true'
+        ], $atts);
     
     // Get referral ID from URL parameter, post ID, or shortcode attribute
     $referral_id = $atts['referral_id'];
@@ -30,54 +31,111 @@ function single_referral_shortcode($atts) {
         return '<div class="error">Referral not found or invalid post type</div>';
     }
     
-    // Get referral data from ACF fields
-    $first_name = get_field('first_name', $referral_id);
-    $last_name = get_field('last_name', $referral_id);
-    $date_of_birth = get_field('date_of_birth', $referral_id);
-    $ethnicity = get_field('ethnicity', $referral_id);
-    $gender = get_field('gender', $referral_id);
-    $contact_phone = get_field('contact_phone', $referral_id);
-    $contact_email = get_field('contact_email', $referral_id);
-    
-    // Parent/Guardian details
-    $parent_name = get_field('parent_name', $referral_id);
-    $parent_phone = get_field('parent_phone', $referral_id);
-    $parent_email = get_field('parent_email', $referral_id);
-    
-    // Medical & Address
-    $medical_information = get_field('medical_information', $referral_id);
-    $address = get_field('address', $referral_id);
-    $suburb = get_field('suburb', $referral_id);
-    
-    // Family & Safety
-    $whanau_history = get_field('whanau_history', $referral_id);
-    $protective_factors = get_field('protective_factors', $referral_id);
-    $staff_safety_check = get_field('staff_safety_check', $referral_id);
-    $people_in_home = get_field('people_in_home', $referral_id);
-    $risk_factors = get_field('risk_factors', $referral_id);
-    
-    // Referrer Information
-    $referrer_name = get_field('referrer_name', $referral_id);
-    $agency = get_field('agency', $referral_id);
-    $referrer_contact = get_field('referrer_contact', $referral_id);
-    $other_agencies = get_field('other_agencies', $referral_id);
-    
-    // Additional Information
-    $notes = get_field('notes', $referral_id);
-    $referral_date = get_field('referral_date', $referral_id);
-    $referral_status = get_field('referral_status', $referral_id) ?: 'pending';
-    
-    // Calculate age if DOB is available
-    $age = '';
-    if ($date_of_birth) {
-        $dob = new DateTime($date_of_birth);
-        $now = new DateTime();
-        $age = $now->diff($dob)->y;
+    // Get referral data from ACF fields with fallbacks
+    if (function_exists('get_field')) {
+        $first_name = get_field('first_name', $referral_id);
+        $last_name = get_field('last_name', $referral_id);
+        $date_of_birth = get_field('date_of_birth', $referral_id);
+        $ethnicity = get_field('ethnicity', $referral_id);
+        $gender = get_field('gender', $referral_id);
+        $contact_phone = get_field('contact_phone', $referral_id);
+        $contact_email = get_field('contact_email', $referral_id);
+    } else {
+        $first_name = get_post_meta($referral_id, 'first_name', true);
+        $last_name = get_post_meta($referral_id, 'last_name', true);
+        $date_of_birth = get_post_meta($referral_id, 'date_of_birth', true);
+        $ethnicity = get_post_meta($referral_id, 'ethnicity', true);
+        $gender = get_post_meta($referral_id, 'gender', true);
+        $contact_phone = get_post_meta($referral_id, 'contact_phone', true);
+        $contact_email = get_post_meta($referral_id, 'contact_email', true);
     }
     
-    // Format dates
-    $formatted_referral_date = $referral_date ? date('l, F j, Y', strtotime($referral_date)) : 'Unknown Date';
-    $formatted_dob = $date_of_birth ? date('F j, Y', strtotime($date_of_birth)) : 'Unknown';
+    // Get all other fields with the same safe approach
+    if (function_exists('get_field')) {
+        // Parent/Guardian details
+        $parent_name = get_field('parent_name', $referral_id);
+        $parent_phone = get_field('parent_phone', $referral_id);
+        $parent_email = get_field('parent_email', $referral_id);
+        
+        // Medical & Address
+        $medical_information = get_field('medical_information', $referral_id);
+        $address = get_field('address', $referral_id);
+        $suburb = get_field('suburb', $referral_id);
+        
+        // Family & Safety
+        $whanau_history = get_field('whanau_history', $referral_id);
+        $protective_factors = get_field('protective_factors', $referral_id);
+        $staff_safety_check = get_field('staff_safety_check', $referral_id);
+        $people_in_home = get_field('people_in_home', $referral_id);
+        $risk_factors = get_field('risk_factors', $referral_id);
+        
+        // Referrer Information
+        $referrer_name = get_field('referrer_name', $referral_id);
+        $agency = get_field('agency', $referral_id);
+        $referrer_contact = get_field('referrer_contact', $referral_id);
+        $other_agencies = get_field('other_agencies', $referral_id);
+        
+        // Additional Information
+        $notes = get_field('notes', $referral_id);
+        $referral_date = get_field('referral_date', $referral_id);
+        $referral_status = get_field('referral_status', $referral_id) ?: 'pending';
+    } else {
+        // Fallback to post meta
+        $parent_name = get_post_meta($referral_id, 'parent_name', true);
+        $parent_phone = get_post_meta($referral_id, 'parent_phone', true);
+        $parent_email = get_post_meta($referral_id, 'parent_email', true);
+        $medical_information = get_post_meta($referral_id, 'medical_information', true);
+        $address = get_post_meta($referral_id, 'address', true);
+        $suburb = get_post_meta($referral_id, 'suburb', true);
+        $whanau_history = get_post_meta($referral_id, 'whanau_history', true);
+        $protective_factors = get_post_meta($referral_id, 'protective_factors', true);
+        $staff_safety_check = get_post_meta($referral_id, 'staff_safety_check', true);
+        $people_in_home = get_post_meta($referral_id, 'people_in_home', true);
+        $risk_factors = get_post_meta($referral_id, 'risk_factors', true);
+        $referrer_name = get_post_meta($referral_id, 'referrer_name', true);
+        $agency = get_post_meta($referral_id, 'agency', true);
+        $referrer_contact = get_post_meta($referral_id, 'referrer_contact', true);
+        $other_agencies = get_post_meta($referral_id, 'other_agencies', true);
+        $notes = get_post_meta($referral_id, 'notes', true);
+        $referral_date = get_post_meta($referral_id, 'referral_date', true);
+        $referral_status = get_post_meta($referral_id, 'referral_status', true) ?: 'pending';
+    }
+    
+    // Calculate age if DOB is available - with error handling
+    $age = '';
+    if ($date_of_birth && !empty(trim($date_of_birth))) {
+        try {
+            // Validate date format first
+            $date_string = trim($date_of_birth);
+            if (strtotime($date_string) !== false) {
+                $dob = new DateTime($date_string);
+                $now = new DateTime();
+                $age_diff = $now->diff($dob);
+                $age = $age_diff->y;
+            }
+        } catch (Exception $e) {
+            // Log error for debugging but don't break the page
+            error_log('Invalid date format in referral ' . $referral_id . ': ' . $date_of_birth);
+            $age = '';
+        }
+    }
+    
+    // Format dates safely
+    $formatted_referral_date = 'Unknown Date';
+    if ($referral_date && !empty(trim($referral_date))) {
+        $timestamp = strtotime($referral_date);
+        if ($timestamp !== false) {
+            $formatted_referral_date = date('l, F j, Y', $timestamp);
+        }
+    }
+    
+    $formatted_dob = 'Unknown';
+    if ($date_of_birth && !empty(trim($date_of_birth))) {
+        $timestamp = strtotime($date_of_birth);
+        if ($timestamp !== false) {
+            $formatted_dob = date('F j, Y', $timestamp);
+        }
+    }
     
     // Get creator info
     $creator = get_user_by('ID', $referral_post->post_author);
@@ -708,5 +766,16 @@ function single_referral_shortcode($atts) {
     
     <?php
     return ob_get_clean();
+    
+    } catch (Exception $e) {
+        error_log('Single Referral Shortcode Error: ' . $e->getMessage());
+        return '<div class="wcb-error-message">
+            <div style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 6px; margin: 20px; border: 1px solid #f5c6cb;">
+                <h3>Error Loading Referral</h3>
+                <p>There was an error displaying this referral. Please check the error logs or contact support.</p>
+                <p><strong>Error:</strong> ' . esc_html($e->getMessage()) . '</p>
+            </div>
+        </div>';
+    }
 }
 add_shortcode('single_referral', 'single_referral_shortcode'); 

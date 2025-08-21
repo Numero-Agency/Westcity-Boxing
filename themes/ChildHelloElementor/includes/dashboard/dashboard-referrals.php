@@ -5,11 +5,13 @@
  */
 
 function wcb_referrals_dashboard_shortcode($atts) {
-    $atts = shortcode_atts([
-        'limit' => 20,
-        'show_stats' => 'true',
-        'class' => 'wcb-referrals-dashboard'
-    ], $atts);
+    // Add error handling to prevent 500 errors
+    try {
+        $atts = shortcode_atts([
+            'limit' => 20,
+            'show_stats' => 'true',
+            'class' => 'wcb-referrals-dashboard'
+        ], $atts);
     
     // Get pagination
     $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
@@ -100,25 +102,58 @@ function wcb_referrals_dashboard_shortcode($atts) {
                     <?php foreach ($referrals as $referral): ?>
                     <?php
                     $referral_id = $referral->ID;
-                    $first_name = get_field('first_name', $referral_id);
-                    $last_name = get_field('last_name', $referral_id);
-                    $referral_date = get_field('referral_date', $referral_id);
-                    $referrer_name = get_field('referrer_name', $referral_id);
-                    $agency = get_field('agency', $referral_id);
-                    $contact_phone = get_field('contact_phone', $referral_id);
-                    $contact_email = get_field('contact_email', $referral_id);
-                    $status = get_field('referral_status', $referral_id) ?: 'pending';
-                    $date_of_birth = get_field('date_of_birth', $referral_id);
                     
-                    // Calculate age if DOB is available
-                    $age = '';
-                    if ($date_of_birth) {
-                        $dob = new DateTime($date_of_birth);
-                        $now = new DateTime();
-                        $age = $now->diff($dob)->y;
+                    // Use safe field retrieval with fallbacks
+                    if (function_exists('get_field')) {
+                        $first_name = get_field('first_name', $referral_id);
+                        $last_name = get_field('last_name', $referral_id);
+                        $referral_date = get_field('referral_date', $referral_id);
+                        $referrer_name = get_field('referrer_name', $referral_id);
+                        $agency = get_field('agency', $referral_id);
+                        $contact_phone = get_field('contact_phone', $referral_id);
+                        $contact_email = get_field('contact_email', $referral_id);
+                        $status = get_field('referral_status', $referral_id) ?: 'pending';
+                        $date_of_birth = get_field('date_of_birth', $referral_id);
+                    } else {
+                        // Fallback to post meta if ACF is not available
+                        $first_name = get_post_meta($referral_id, 'first_name', true);
+                        $last_name = get_post_meta($referral_id, 'last_name', true);
+                        $referral_date = get_post_meta($referral_id, 'referral_date', true);
+                        $referrer_name = get_post_meta($referral_id, 'referrer_name', true);
+                        $agency = get_post_meta($referral_id, 'agency', true);
+                        $contact_phone = get_post_meta($referral_id, 'contact_phone', true);
+                        $contact_email = get_post_meta($referral_id, 'contact_email', true);
+                        $status = get_post_meta($referral_id, 'referral_status', true) ?: 'pending';
+                        $date_of_birth = get_post_meta($referral_id, 'date_of_birth', true);
                     }
                     
-                    $formatted_date = $referral_date ? date('M j, Y', strtotime($referral_date)) : 'Unknown';
+                    // Calculate age if DOB is available - with robust error handling
+                    $age = '';
+                    if ($date_of_birth && !empty(trim($date_of_birth))) {
+                        try {
+                            // Validate date format first
+                            $date_string = trim($date_of_birth);
+                            if (strtotime($date_string) !== false) {
+                                $dob = new DateTime($date_string);
+                                $now = new DateTime();
+                                $age_diff = $now->diff($dob);
+                                $age = $age_diff->y;
+                            }
+                        } catch (Exception $e) {
+                            // Log error for debugging but don't break the page
+                            error_log('Invalid date format in referral ' . $referral_id . ': ' . $date_of_birth);
+                            $age = '';
+                        }
+                    }
+                    
+                    // Format referral date safely
+                    $formatted_date = 'Unknown';
+                    if ($referral_date && !empty(trim($referral_date))) {
+                        $timestamp = strtotime($referral_date);
+                        if ($timestamp !== false) {
+                            $formatted_date = date('M j, Y', $timestamp);
+                        }
+                    }
                     $full_name = trim($first_name . ' ' . $last_name);
                     $referrer_info = trim($referrer_name . ($agency ? ' (' . $agency . ')' : ''));
                     ?>
@@ -545,17 +580,27 @@ function wcb_referrals_dashboard_shortcode($atts) {
     <?php
     wp_reset_postdata();
     return ob_get_clean();
+        
+    } catch (Exception $e) {
+        // Return error message instead of crashing the page
+        error_log('WCB Referrals Dashboard Error: ' . $e->getMessage());
+        return '<div class="wcb-error-message">
+            <p><strong>Error loading referrals dashboard:</strong> ' . esc_html($e->getMessage()) . '</p>
+            <p>Please check the error logs or contact support if this persists.</p>
+        </div>';
+    }
 }
 add_shortcode('wcb_referrals_dashboard', 'wcb_referrals_dashboard_shortcode');
 
 // Helper function to get referral statistics
 function wcb_get_referral_stats() {
-    $stats = [
-        'total' => 0,
-        'pending' => 0,
-        'processed' => 0,
-        'this_month' => 0
-    ];
+    try {
+        $stats = [
+            'total' => 0,
+            'pending' => 0,
+            'processed' => 0,
+            'this_month' => 0
+        ];
     
     // Get total referrals
     $total_query = new WP_Query([
@@ -619,6 +664,16 @@ function wcb_get_referral_stats() {
     ]);
     $stats['this_month'] = $this_month_query->found_posts;
     
-    wp_reset_postdata();
-    return $stats;
+        wp_reset_postdata();
+        return $stats;
+        
+    } catch (Exception $e) {
+        error_log('WCB Referral Stats Error: ' . $e->getMessage());
+        return [
+            'total' => 0,
+            'pending' => 0,
+            'processed' => 0,
+            'this_month' => 0
+        ];
+    }
 } 
