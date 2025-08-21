@@ -127,6 +127,8 @@ function wcb_referrals_dashboard_shortcode($atts) {
                         $date_of_birth = get_post_meta($referral_id, 'date_of_birth', true);
                     }
                     
+
+                    
                     // Calculate age if DOB is available - with robust error handling
                     $age = '';
                     if ($date_of_birth && !empty(trim($date_of_birth))) {
@@ -146,14 +148,54 @@ function wcb_referrals_dashboard_shortcode($atts) {
                         }
                     }
                     
-                    // Format referral date safely
+                    // Format referral date safely with multiple fallbacks
                     $formatted_date = 'Unknown';
+                    $date_source = '';
+                    
+                    // Try referral_date field first
                     if ($referral_date && !empty(trim($referral_date))) {
                         $timestamp = strtotime($referral_date);
                         if ($timestamp !== false) {
                             $formatted_date = date('M j, Y', $timestamp);
+                            $date_source = 'referral_date';
+                        } else {
+                            // Log the problematic date for debugging
+                            error_log('Invalid referral_date format for referral ' . $referral_id . ': ' . $referral_date);
                         }
                     }
+                    
+                    // If still unknown, try alternative field names
+                    if ($formatted_date === 'Unknown') {
+                        $alternative_fields = ['date', 'submission_date', 'created_date', 'referral_submission_date'];
+                        foreach ($alternative_fields as $field_name) {
+                            $alt_date = function_exists('get_field') ? get_field($field_name, $referral_id) : get_post_meta($referral_id, $field_name, true);
+                            if ($alt_date && !empty(trim($alt_date))) {
+                                $timestamp = strtotime($alt_date);
+                                if ($timestamp !== false) {
+                                    $formatted_date = date('M j, Y', $timestamp);
+                                    $date_source = $field_name;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // If still unknown, use the post creation date as final fallback
+                    if ($formatted_date === 'Unknown') {
+                        $post_date = $referral->post_date;
+                        if ($post_date && $post_date !== '0000-00-00 00:00:00') {
+                            $formatted_date = date('M j, Y', strtotime($post_date));
+                            $date_source = 'post_date (created)';
+                        }
+                    }
+                    
+                    // If STILL unknown (should never happen), show a helpful message
+                    if ($formatted_date === 'Unknown') {
+                        $formatted_date = 'Date not set';
+                        $date_source = 'missing';
+                    }
+                    
+
                     $full_name = trim($first_name . ' ' . $last_name);
                     $referrer_info = trim($referrer_name . ($agency ? ' (' . $agency . ')' : ''));
                     ?>

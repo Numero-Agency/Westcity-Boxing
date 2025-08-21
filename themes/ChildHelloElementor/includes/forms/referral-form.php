@@ -228,20 +228,25 @@ if (!function_exists('wcb_referral_form_shortcode')) {
             color: #2c3e50;
         }
         
-        .form-row input[type="text"],
-        .form-row input[type="email"],
-        .form-row input[type="tel"],
-        .form-row input[type="date"],
-        .form-row select,
-        .form-row textarea {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            font-size: 16px;
-            box-sizing: border-box;
-            font-family: inherit;
-        }
+         .form-row input[type="text"],
+         .form-row input[type="email"],
+         .form-row input[type="tel"],
+         .form-row input[type="date"],
+         .form-row select,
+         .form-row textarea {
+             width: 100%;
+             padding: 12px 16px;
+             border: 2px solid #ddd;
+             border-radius: 6px;
+             font-size: 16px;
+             box-sizing: border-box;
+             font-family: inherit;
+             background-color: #ffffff !important;
+             color: #333333 !important;
+             cursor: text !important;
+             pointer-events: auto !important;
+             opacity: 1 !important;
+         }
         
         .form-row input:focus,
         .form-row select:focus,
@@ -303,18 +308,136 @@ if (!function_exists('wcb_referral_form_shortcode')) {
             border: 1px solid #c3e6cb;
         }
         
-        .form-error {
-            background-color: #f8d7da;
-            color: #721c24;
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            border: 1px solid #f5c6cb;
-        }
-        </style>
-        
-        <?php
-        return ob_get_clean();
+         .form-error {
+             background-color: #f8d7da;
+             color: #721c24;
+             padding: 15px;
+             border-radius: 6px;
+             margin-bottom: 20px;
+             border: 1px solid #f5c6cb;
+         }
+         
+         /* Ensure fields are editable - override any conflicting styles */
+         .wcb-form-container input,
+         .wcb-form-container textarea,
+         .wcb-form-container select {
+             -webkit-user-select: text !important;
+             -moz-user-select: text !important;
+             -ms-user-select: text !important;
+             user-select: text !important;
+             pointer-events: auto !important;
+             cursor: text !important;
+             background-color: white !important;
+             color: #333 !important;
+         }
+         
+          .wcb-form-container select {
+              cursor: pointer !important;
+          }
+          
+          /* Override browser default validation styling completely */
+          .wcb-form-container input,
+          .wcb-form-container select,
+          .wcb-form-container textarea {
+              -webkit-appearance: none !important;
+              -moz-appearance: none !important;
+              appearance: none !important;
+          }
+          
+          /* Remove browser's red outline on invalid fields */
+          .wcb-form-container input:invalid,
+          .wcb-form-container select:invalid,
+          .wcb-form-container textarea:invalid {
+              box-shadow: none !important;
+              outline: none !important;
+          }
+         
+          /* Remove any readonly styling */
+          .wcb-form-container input:not([readonly]),
+          .wcb-form-container textarea:not([readonly]),
+          .wcb-form-container select:not([disabled]) {
+              background-color: white !important;
+              color: #333 !important;
+              opacity: 1 !important;
+          }
+          
+          /* Prevent red borders on required fields until user interacts */
+          .wcb-form-container input:required:invalid,
+          .wcb-form-container select:required:invalid,
+          .wcb-form-container textarea:required:invalid {
+              border-color: #ddd !important;
+              box-shadow: none !important;
+          }
+          
+          /* Only show validation styling after user has interacted with field */
+          .wcb-form-container input:required:invalid.user-interacted,
+          .wcb-form-container select:required:invalid.user-interacted,
+          .wcb-form-container textarea:required:invalid.user-interacted {
+              border-color: #e74c3c !important;
+              box-shadow: 0 0 5px rgba(231, 76, 60, 0.3) !important;
+          }
+          
+          /* Valid fields get green styling only after interaction */
+          .wcb-form-container input:required:valid.user-interacted,
+          .wcb-form-container select:required:valid.user-interacted,
+          .wcb-form-container textarea:required:valid.user-interacted {
+              border-color: #27ae60 !important;
+              box-shadow: 0 0 5px rgba(39, 174, 96, 0.3) !important;
+          }
+         </style>
+         
+         <script>
+         // Ensure form fields are editable on page load
+         document.addEventListener('DOMContentLoaded', function() {
+             console.log('Referral form loaded - checking field editability...');
+             
+             const formFields = document.querySelectorAll('.wcb-referral-form input, .wcb-referral-form select, .wcb-referral-form textarea');
+             
+          formFields.forEach(function(field, index) {
+              // Remove any readonly or disabled attributes that might be set
+              field.removeAttribute('readonly');
+              field.removeAttribute('disabled');
+              
+              // Ensure proper styling
+              field.style.backgroundColor = 'white';
+              field.style.color = '#333';
+              field.style.opacity = '1';
+              field.style.pointerEvents = 'auto';
+              field.style.cursor = field.tagName.toLowerCase() === 'select' ? 'pointer' : 'text';
+              
+              // Add user interaction tracking for validation styling
+              field.addEventListener('focus', function() {
+                  console.log('Field focused:', field.name || field.id, 'Type:', field.type);
+                  this.classList.add('user-interacted');
+              });
+              
+              field.addEventListener('input', function() {
+                  console.log('Field input detected:', field.name || field.id);
+                  this.classList.add('user-interacted');
+              });
+              
+              field.addEventListener('blur', function() {
+                  this.classList.add('user-interacted');
+              });
+              
+              field.addEventListener('change', function() {
+                  this.classList.add('user-interacted');
+              });
+          });
+             
+             console.log('Found', formFields.length, 'form fields. All should now be editable.');
+             
+             // Additional check for any potential blocking elements
+             const formContainer = document.querySelector('.wcb-form-container');
+             if (formContainer) {
+                 formContainer.style.pointerEvents = 'auto';
+                 console.log('Form container pointer events set to auto');
+             }
+         });
+         </script>
+         
+         <?php
+         return ob_get_clean();
     }
 }
 
