@@ -18,15 +18,17 @@ function wcb_referrals_dashboard_shortcode($atts) {
     $limit = intval($atts['limit']);
     $offset = ($page - 1) * $limit;
     
-    // Build query args
-    $query_args = [
-        'post_type' => 'referral',
-        'posts_per_page' => $limit,
-        'offset' => $offset,
-        'post_status' => 'publish',
-        'orderby' => 'date',
-        'order' => 'DESC'
-    ];
+     // Build query args
+     $query_args = [
+         'post_type' => 'referral',
+         'posts_per_page' => $limit,
+         'offset' => $offset,
+         'post_status' => 'publish',
+         'orderby' => 'date',
+         'order' => 'DESC',
+         'suppress_filters' => false,
+         'no_found_rows' => false
+     ];
     
     // Get referrals
     $referrals_query = new WP_Query($query_args);
@@ -103,29 +105,25 @@ function wcb_referrals_dashboard_shortcode($atts) {
                     <?php
                     $referral_id = $referral->ID;
                     
-                    // Use safe field retrieval with fallbacks
-                    if (function_exists('get_field')) {
-                        $first_name = get_field('first_name', $referral_id);
-                        $last_name = get_field('last_name', $referral_id);
-                        $referral_date = get_field('referral_date', $referral_id);
-                        $referrer_name = get_field('referrer_name', $referral_id);
-                        $agency = get_field('agency', $referral_id);
-                        $contact_phone = get_field('contact_phone', $referral_id);
-                        $contact_email = get_field('contact_email', $referral_id);
-                        $status = get_field('referral_status', $referral_id) ?: 'pending';
-                        $date_of_birth = get_field('date_of_birth', $referral_id);
-                    } else {
-                        // Fallback to post meta if ACF is not available
-                        $first_name = get_post_meta($referral_id, 'first_name', true);
-                        $last_name = get_post_meta($referral_id, 'last_name', true);
-                        $referral_date = get_post_meta($referral_id, 'referral_date', true);
-                        $referrer_name = get_post_meta($referral_id, 'referrer_name', true);
-                        $agency = get_post_meta($referral_id, 'agency', true);
-                        $contact_phone = get_post_meta($referral_id, 'contact_phone', true);
-                        $contact_email = get_post_meta($referral_id, 'contact_email', true);
-                        $status = get_post_meta($referral_id, 'referral_status', true) ?: 'pending';
-                        $date_of_birth = get_post_meta($referral_id, 'date_of_birth', true);
-                    }
+                     // Use safe field retrieval with fallbacks
+                     if (function_exists('get_field')) {
+                         $first_name = get_field('first_name', $referral_id);
+                         $last_name = get_field('last_name', $referral_id);
+                         $referral_date = get_field('referral_date', $referral_id);
+                         $referrer_name = get_field('referrer_name', $referral_id);
+                         $agency = get_field('agency', $referral_id);
+                         $status = get_field('referral_status', $referral_id) ?: 'pending';
+                         $date_of_birth = get_field('date_of_birth', $referral_id);
+                     } else {
+                         // Fallback to post meta if ACF is not available
+                         $first_name = get_post_meta($referral_id, 'first_name', true);
+                         $last_name = get_post_meta($referral_id, 'last_name', true);
+                         $referral_date = get_post_meta($referral_id, 'referral_date', true);
+                         $referrer_name = get_post_meta($referral_id, 'referrer_name', true);
+                         $agency = get_post_meta($referral_id, 'agency', true);
+                         $status = get_post_meta($referral_id, 'referral_status', true) ?: 'pending';
+                         $date_of_birth = get_post_meta($referral_id, 'date_of_birth', true);
+                     }
                     
 
                     
@@ -497,41 +495,37 @@ function wcb_referrals_dashboard_shortcode($atts) {
         gap: 10px;
     }
     
-    .btn-view,
-    .btn-edit {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 35px;
-        height: 35px;
-        border-radius: 6px;
-        text-decoration: none;
-        transition: background-color 0.3s ease;
-        border: none;
-        cursor: pointer;
-    }
-    
-    .btn-view {
-        background: #3498db;
-        color: white;
-    }
-    
-    .btn-view:hover {
-        background: #2980b9;
-        color: white;
-        text-decoration: none;
-    }
-    
-    .btn-edit {
-        background: #f39c12;
-        color: white;
-    }
-    
-    .btn-edit:hover {
-        background: #e67e22;
-        color: white;
-        text-decoration: none;
-    }
+     .btn-view,
+     .btn-edit {
+         display: inline-flex;
+         align-items: center;
+         justify-content: center;
+         width: 35px;
+         height: 35px;
+         background: #3498db;
+         color: white !important;
+         text-decoration: none;
+         border-radius: 6px;
+         transition: background-color 0.3s ease;
+         border: none;
+         cursor: pointer;
+     }
+     
+     .btn-view:hover {
+         background: #2980b9;
+         color: white;
+         text-decoration: none;
+     }
+     
+     .btn-edit {
+         background: #f39c12;
+     }
+     
+     .btn-edit:hover {
+         background: #e67e22;
+         color: white;
+         text-decoration: none;
+     }
     
     .no-results {
         text-align: center;

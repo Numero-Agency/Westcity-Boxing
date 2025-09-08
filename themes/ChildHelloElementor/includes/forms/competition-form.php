@@ -49,29 +49,48 @@ function wcb_competition_form_shortcode() {
                 <input type="text" name="where_was_it_hosted" id="where_was_it_hosted" required>
             </div>
             <div class="form-group">
-                <label for="student_involved">Student involved * <small>(Competitive Team members only)</small></label>
-                <select name="student_involved" id="student_involved" required>
-                    <?php if (empty($users)): ?>
-                        <option value="">No competitive team members found</option>
-                    <?php else: ?>
-                        <option value="">Select competitive team student</option>
-                        <?php foreach ($users as $user): ?>
-                            <option value="<?php echo esc_attr($user->ID); ?>"><?php echo esc_html($user->display_name); ?></option>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </select>
+                <label>Students involved * <small>(Competitive Team members only)</small></label>
+                <?php if (empty($users)): ?>
+                    <div class="students-selection-empty">
+                        <p>No competitive team members found</p>
+                    </div>
+                <?php else: ?>
+                    <div class="students-selection-container">
+                        <div class="students-checkboxes">
+                            <?php foreach ($users as $user): ?>
+                            <label class="student-checkbox">
+                                <span class="student-name"><?php echo esc_html($user->display_name); ?></span>
+                                <input type="checkbox" 
+                                       name="students_involved[]" 
+                                       value="<?php echo esc_attr($user->ID); ?>" 
+                                       data-name="<?php echo esc_attr($user->display_name); ?>"
+                                       class="student-checkbox-input">
+                            </label>
+                            <?php endforeach; ?>
+                        </div>
+                        <div class="selected-students-info">
+                            <small>Selected: <span id="selected-count">0</span> student(s)</small>
+                        </div>
+                    </div>
+                <?php endif; ?>
             </div>
             <div class="form-group">
                 <label for="who_else_attended">Who else attended?</label>
                 <input type="text" name="who_else_attended" id="who_else_attended">
             </div>
-            <div class="form-group">
-                <label for="results_wins">Results Wins *</label>
-                <input type="number" name="results_wins" id="results_wins" min="0" required>
-            </div>
-            <div class="form-group">
-                <label for="results_lost">Results Lost *</label>
-                <input type="number" name="results_lost" id="results_lost" min="0" required>
+            
+            <!-- Dynamic Results Section -->
+            <div id="students-results-section" class="form-group" style="display: none;">
+                <label class="results-section-title">
+                    <span class="dashicons dashicons-chart-bar"></span>
+                    Individual Student Results *
+                </label>
+                <div class="results-info">
+                    <small>Enter the wins and losses for each selected student</small>
+                </div>
+                <div id="student-results-container">
+                    <!-- Dynamic student result inputs will be added here -->
+                </div>
             </div>
             <div class="form-group">
                 <label for="highlights">Highlights</label>
@@ -80,6 +99,97 @@ function wcb_competition_form_shortcode() {
             <button type="submit" name="submit_competition" class="btn-primary">Log Competition</button>
         </form>
     </div>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const studentCheckboxes = document.querySelectorAll('.student-checkbox-input');
+        const selectedCountElement = document.getElementById('selected-count');
+        const resultsSection = document.getElementById('students-results-section');
+        const resultsContainer = document.getElementById('student-results-container');
+        const submitButton = document.querySelector('button[name="submit_competition"]');
+        
+        // Update form when checkboxes change
+        studentCheckboxes.forEach(function(checkbox) {
+            checkbox.addEventListener('change', function() {
+                updateStudentResults();
+                updateSelectedCount();
+                updateSubmitButton();
+            });
+        });
+        
+        function updateSelectedCount() {
+            const selectedCount = document.querySelectorAll('.student-checkbox-input:checked').length;
+            selectedCountElement.textContent = selectedCount;
+        }
+        
+        function updateStudentResults() {
+            const selectedStudents = document.querySelectorAll('.student-checkbox-input:checked');
+            resultsContainer.innerHTML = '';
+            
+            if (selectedStudents.length > 0) {
+                resultsSection.style.display = 'block';
+                
+                selectedStudents.forEach(function(checkbox) {
+                    const studentId = checkbox.value;
+                    const studentName = checkbox.getAttribute('data-name');
+                    
+                    const studentResultDiv = document.createElement('div');
+                    studentResultDiv.className = 'student-result-item';
+                    studentResultDiv.innerHTML = `
+                        <div class="student-result-header">
+                            <span class="student-name-label">${studentName}</span>
+                        </div>
+                        <div class="student-result-inputs">
+                            <div class="result-input-group">
+                                <label for="wins_${studentId}">Wins</label>
+                                <input type="number" 
+                                       name="student_results[${studentId}][wins]" 
+                                       id="wins_${studentId}" 
+                                       min="0" 
+                                       value="0" 
+                                       required 
+                                       class="result-input">
+                            </div>
+                            <div class="result-input-group">
+                                <label for="losses_${studentId}">Losses</label>
+                                <input type="number" 
+                                       name="student_results[${studentId}][losses]" 
+                                       id="losses_${studentId}" 
+                                       min="0" 
+                                       value="0" 
+                                       required 
+                                       class="result-input">
+                            </div>
+                        </div>
+                    `;
+                    resultsContainer.appendChild(studentResultDiv);
+                });
+            } else {
+                resultsSection.style.display = 'none';
+            }
+        }
+        
+        function updateSubmitButton() {
+            const selectedCount = document.querySelectorAll('.student-checkbox-input:checked').length;
+            if (selectedCount === 0) {
+                submitButton.disabled = true;
+                submitButton.textContent = 'Select at least one student';
+                submitButton.style.opacity = '0.6';
+                submitButton.style.cursor = 'not-allowed';
+            } else {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Log Competition';
+                submitButton.style.opacity = '1';
+                submitButton.style.cursor = 'pointer';
+            }
+        }
+        
+        // Initialize
+        updateSelectedCount();
+        updateSubmitButton();
+    });
+    </script>
+    
     <style>
     .wcb-form-container { max-width: 700px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.07); }
     .form-header { text-align: center; margin-bottom: 30px; }
@@ -95,6 +205,44 @@ function wcb_competition_form_shortcode() {
     .form-success { background: #d4edda; color: #155724; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
     .form-error { background: #f8d7da; color: #721c24; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
     .form-info { background: #d1ecf1; color: #0c5460; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #bee5eb; }
+    
+    /* Multi-student selection styles */
+    .students-selection-container { background: #f8f9fa; border: 1px solid #ddd; border-radius: 6px; padding: 15px; }
+    .students-checkboxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 10px; }
+    .student-checkbox { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: white; border: 1px solid #e3e3e3; border-radius: 4px; cursor: pointer; transition: all 0.2s ease; }
+    .student-checkbox:hover { background: #f0f8ff; border-color: #007cba; }
+    .student-checkbox input[type="checkbox"] { margin: 0; flex-shrink: 0; width: max-content; }
+    .student-name { font-size: 14px; font-weight: 400; max-width: calc(100% - 25px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .student-checkbox input[type="checkbox"]:checked ~ .student-name,
+    .student-checkbox:has(input[type="checkbox"]:checked) .student-name { color: #007cba; font-weight: 600; }
+    .selected-students-info { text-align: center; color: #666; }
+    .students-selection-empty { background: #fff3cd; color: #856404; padding: 15px; border-radius: 4px; text-align: center; }
+    
+    /* Results section styles */
+    .results-section-title { display: flex; align-items: center; gap: 8px; font-weight: bold; margin-bottom: 8px; }
+    .results-info { margin-bottom: 15px; }
+    .results-info small { color: #666; font-style: italic; }
+    #student-results-container { margin-bottom: 25px; }
+    .student-result-item { background: white; border: 1px solid #ddd; border-radius: 6px; padding: 15px; margin-bottom: 20px; }
+    .student-result-header { margin-bottom: 12px; }
+    .student-name-label { font-weight: bold; color: #2c3e50; font-size: 1rem; }
+    .student-result-inputs { display: grid; grid-template-columns: 120px 120px; gap: 20px; justify-content: center; }
+    .result-input-group { display: flex; flex-direction: column; align-items: center; }
+    .result-input-group label { font-size: 13px; color: #555; margin-bottom: 6px; font-weight: 600; text-align: center; }
+    .result-input { width: 80px; padding: 8px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; text-align: center; font-weight: 600; }
+    .result-input:focus { border-color: #007cba; outline: none; box-shadow: 0 0 0 2px rgba(0, 124, 186, 0.1); }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .students-checkboxes { grid-template-columns: 1fr; }
+        .student-result-inputs { grid-template-columns: 120px 120px; gap: 15px; justify-content: center; }
+        .result-input { width: 70px; }
+    }
+    @media (max-width: 480px) {
+        .student-result-inputs { grid-template-columns: 1fr; gap: 15px; justify-content: center; }
+        .result-input-group { align-items: stretch; }
+        .result-input { width: 100%; max-width: 120px; margin: 0 auto; }
+    }
     </style>
     <?php
     return ob_get_clean();
@@ -116,9 +264,8 @@ function wcb_handle_competition_submission() {
         'event_name' => $_POST['event_name'] ?? '',
         'event_date' => $_POST['event_date'] ?? '',
         'where_was_it_hosted' => $_POST['where_was_it_hosted'] ?? '',
-        'student_involved' => $_POST['student_involved'] ?? '',
-        'results_wins' => $_POST['results_wins'] ?? '',
-        'results_lost' => $_POST['results_lost'] ?? ''
+        'students_involved' => $_POST['students_involved'] ?? [],
+        'student_results' => $_POST['student_results'] ?? []
     ];
     $content_hash = md5(serialize($content_data));
     $content_key = 'wcb_competition_content_' . $content_hash;
@@ -133,9 +280,20 @@ function wcb_handle_competition_submission() {
     set_transient($content_key, true, 120);
     
     // Validate required fields more carefully
-    $student_involved_value = trim($_POST['student_involved'] ?? '');
-    if (empty($_POST['event_name']) || empty($_POST['event_date']) || empty($_POST['where_was_it_hosted']) || empty($student_involved_value) || !isset($_POST['results_wins']) || !isset($_POST['results_lost'])) {
-        return ['success' => false, 'message' => 'Please fill in all required fields, including selecting a student'];
+    $students_involved = $_POST['students_involved'] ?? [];
+    $student_results = $_POST['student_results'] ?? [];
+    
+    if (empty($_POST['event_name']) || empty($_POST['event_date']) || empty($_POST['where_was_it_hosted']) || empty($students_involved)) {
+        return ['success' => false, 'message' => 'Please fill in all required fields, including selecting at least one student'];
+    }
+    
+    // Validate that results are provided for all selected students
+    foreach ($students_involved as $student_id) {
+        if (!isset($student_results[$student_id]) || 
+            !isset($student_results[$student_id]['wins']) || 
+            !isset($student_results[$student_id]['losses'])) {
+            return ['success' => false, 'message' => 'Please provide wins and losses for all selected students'];
+        }
     }
 
     $post_data = [
@@ -153,26 +311,57 @@ function wcb_handle_competition_submission() {
     if (current_user_can('administrator')) {
         error_log('Competition Form Submission Debug:');
         error_log('POST Data: ' . print_r($_POST, true));
-        error_log('Student Involved Raw: ' . $_POST['student_involved']);
-        error_log('Student Involved Intval: ' . intval($_POST['student_involved']));
+        error_log('Students Involved: ' . print_r($_POST['students_involved'], true));
+        error_log('Student Results: ' . print_r($_POST['student_results'], true));
     }
     
-    // Save ACF fields
+    // Save basic ACF fields
     update_field('event_name', sanitize_text_field($_POST['event_name']), $post_id);
     update_field('event_date', sanitize_text_field($_POST['event_date']), $post_id);
     update_field('where_was_it_hosted', sanitize_text_field($_POST['where_was_it_hosted']), $post_id);
-    // Save student_involved as user ID (ACF User field expects an ID)
-    $student_id = intval($_POST['student_involved']);
-    update_field('student_involved', $student_id, $post_id);
     update_field('who_else_attended', sanitize_text_field($_POST['who_else_attended']), $post_id);
-    update_field('results_wins', intval($_POST['results_wins']), $post_id);
-    update_field('results_lost', intval($_POST['results_lost']), $post_id);
     update_field('highlights', sanitize_textarea_field($_POST['highlights']), $post_id);
+    
+    // Save multiple students and their results
+    $students_involved = array_map('intval', $_POST['students_involved']);
+    $student_results = $_POST['student_results'];
+    
+    // Save students involved as array of user IDs
+    update_field('students_involved', $students_involved, $post_id);
+    
+    // Calculate and save total wins/losses across all students
+    $total_wins = 0;
+    $total_losses = 0;
+    $detailed_results = [];
+    
+    foreach ($students_involved as $student_id) {
+        $wins = intval($student_results[$student_id]['wins']);
+        $losses = intval($student_results[$student_id]['losses']);
+        
+        $total_wins += $wins;
+        $total_losses += $losses;
+        
+        // Store detailed results for each student
+        $detailed_results[] = [
+            'student_id' => $student_id,
+            'wins' => $wins,
+            'losses' => $losses
+        ];
+    }
+    
+    // Save totals (for backward compatibility and summary)
+    update_field('results_wins', $total_wins, $post_id);
+    update_field('results_lost', $total_losses, $post_id);
+    
+    // Save detailed student results
+    update_field('student_detailed_results', $detailed_results, $post_id);
     
     // Debug what was actually saved
     if (current_user_can('administrator')) {
-        error_log('Saved Student Involved: ' . get_field('student_involved', $post_id));
-        error_log('Saved Student Involved Raw Meta: ' . get_post_meta($post_id, 'student_involved', true));
+        error_log('Saved Students Involved: ' . print_r(get_field('students_involved', $post_id), true));
+        error_log('Saved Student Detailed Results: ' . print_r(get_field('student_detailed_results', $post_id), true));
+        error_log('Saved Total Wins: ' . get_field('results_wins', $post_id));
+        error_log('Saved Total Losses: ' . get_field('results_lost', $post_id));
     }
 
     return ['success' => true, 'post_id' => $post_id];

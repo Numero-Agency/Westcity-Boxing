@@ -13,20 +13,64 @@ if (!function_exists('wcb_update_meta_field')) {
 
 // Referral form shortcode
 if (!function_exists('wcb_referral_form_shortcode')) {
-    function wcb_referral_form_shortcode() {
-        // Handle form submission
-        if (isset($_POST['submit_referral']) && wp_verify_nonce($_POST['referral_nonce'], 'submit_referral')) {
-            $result = wcb_handle_referral_submission();
-            if ($result['success']) {
-                $notification_msg = '';
-                if (isset($result['notifications']['admin_sent']) && $result['notifications']['admin_sent']) {
-                    $notification_msg = '<br><small>📧 Staff have been notified via email.</small>';
-                }
-                echo '<div class="form-success">✅ Referral submitted successfully!' . $notification_msg . '</div>';
-            } else {
-                echo '<div class="form-error">❌ Error: ' . $result['message'] . '</div>';
-            }
-        }
+     function wcb_referral_form_shortcode() {
+
+         
+         // Show success message if redirected after submission
+         if (isset($_GET['submitted']) && $_GET['submitted'] === 'success') {
+             echo '<div class="form-success">
+                 ✅ Referral submitted successfully!
+                 <br><small>You can submit another referral using the form below.</small>
+             </div>';
+         }
+         
+         // Handle form submission
+         if (isset($_POST['submit_referral']) && wp_verify_nonce($_POST['referral_nonce'], 'submit_referral')) {
+             // Start session if not already started
+             if (!session_id()) {
+                 session_start();
+             }
+             
+             // Check if this form has already been processed in this session
+             $form_key = 'referral_' . md5(serialize($_POST));
+             if (isset($_SESSION[$form_key])) {
+                 echo '<div class="form-error">❌ This form has already been processed. Please refresh the page to submit a new referral.</div>';
+                 return ob_get_clean();
+             }
+             
+             // Mark this form as processed
+             $_SESSION[$form_key] = time();
+             $result = wcb_handle_referral_submission();
+             if ($result['success']) {
+                 $notification_msg = '';
+                 if (isset($result['notifications']['admin_sent']) && $result['notifications']['admin_sent']) {
+                     $notification_msg = '<br><small>📧 Staff have been notified via email.</small>';
+                 }
+                 echo '<div class="form-success">
+                     ✅ Referral submitted successfully!' . $notification_msg . '
+                     <br><small>Page will refresh in 2 seconds...</small>
+                 </div>';
+                 
+                 // Redirect to same page without POST data to get fresh form
+                 echo '<script>
+                     console.log("Success script running...");
+                     // Hide the form to prevent resubmission
+                     const form = document.querySelector(".wcb-referral-form");
+                     if (form) {
+                         form.style.display = "none";
+                         console.log("Form hidden");
+                     }
+                     // Redirect to same URL without POST data
+                     setTimeout(function() {
+                         console.log("Redirecting to fresh page...");
+                         window.location.href = window.location.pathname;
+                     }, 1500);
+                 </script>';
+                 return; // Stop processing to prevent duplicate submissions
+             } else {
+                 echo '<div class="form-error">❌ Error: ' . $result['message'] . '</div>';
+             }
+         }
         
         // Gender options
         $gender_options = [
@@ -311,14 +355,15 @@ if (!function_exists('wcb_referral_form_shortcode')) {
             text-decoration: none;
         }
         
-        .form-success {
-            background-color: #d4edda;
-            color: #155724;
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            border: 1px solid #c3e6cb;
-        }
+         .form-success {
+             background-color: #d4edda;
+             color: #155724;
+             padding: 15px;
+             border-radius: 6px;
+             margin-bottom: 20px;
+             border: 1px solid #c3e6cb;
+             text-align: center;
+         }
         
          .form-error {
              background-color: #f8d7da;
@@ -445,6 +490,32 @@ if (!function_exists('wcb_referral_form_shortcode')) {
                  formContainer.style.pointerEvents = 'auto';
                  console.log('Form container pointer events set to auto');
              }
+             
+             // Prevent multiple form submissions with better approach
+             const form = document.querySelector('.wcb-referral-form');
+             const submitButton = document.querySelector('.btn-submit');
+             let submitted = false;
+             
+             if (form && submitButton) {
+                 // Disable form after first submission attempt
+                 submitButton.addEventListener('click', function(e) {
+                     if (submitted) {
+                         e.preventDefault();
+                         console.log('Form already submitted');
+                         return false;
+                     }
+                     
+                     console.log('First submit attempt - allowing');
+                     submitted = true;
+                     
+                     // Small delay then disable to allow form to submit
+                     setTimeout(function() {
+                         submitButton.disabled = true;
+                         submitButton.textContent = 'Submitting...';
+                         submitButton.style.opacity = '0.6';
+                     }, 100);
+                 });
+             }
          });
          </script>
          
@@ -455,9 +526,13 @@ if (!function_exists('wcb_referral_form_shortcode')) {
 
 // Handle referral form submission
 if (!function_exists('wcb_handle_referral_submission')) {
-    function wcb_handle_referral_submission() {
-        // Validate required fields
-        $required_fields = ['first_name', 'last_name', 'date_of_birth', 'ethnicity', 'gender', 'contact_phone', 'contact_email', 'parent_name', 'parent_phone', 'address', 'suburb', 'referral_date'];
+     function wcb_handle_referral_submission() {
+         // Log each time this function is called
+         error_log('WCB: wcb_handle_referral_submission called at ' . date('H:i:s.u'));
+
+         
+         // Validate required fields
+         $required_fields = ['first_name', 'last_name', 'date_of_birth', 'ethnicity', 'gender', 'contact_phone', 'contact_email', 'parent_name', 'parent_phone', 'address', 'suburb', 'referral_date'];
         
         foreach ($required_fields as $field) {
             if (empty($_POST[$field])) {
@@ -474,11 +549,11 @@ if (!function_exists('wcb_handle_referral_submission')) {
             return ['success' => false, 'message' => 'Please enter a valid parent/guardian email address'];
         }
         
-        // Create referral title
-        $first_name = sanitize_text_field($_POST['first_name']);
-        $last_name = sanitize_text_field($_POST['last_name']);
-        $referral_date = sanitize_text_field($_POST['referral_date']);
-        $referral_title = "Referral: {$first_name} {$last_name} - " . date('M j, Y', strtotime($referral_date));
+         // Create referral title
+         $first_name = sanitize_text_field($_POST['first_name']);
+         $last_name = sanitize_text_field($_POST['last_name']);
+         $referral_date = sanitize_text_field($_POST['referral_date']);
+         $referral_title = "Referral: {$first_name} {$last_name} - " . date('M j, Y', strtotime($referral_date));
         
         // Create new referral post
         $post_data = [
@@ -488,29 +563,30 @@ if (!function_exists('wcb_handle_referral_submission')) {
             'post_content' => ''
         ];
         
-        $post_id = wp_insert_post($post_data);
+         $post_id = wp_insert_post($post_data);
+         error_log('WCB: wp_insert_post returned ID: ' . $post_id . ' at ' . date('H:i:s.u'));
+         
+         if (is_wp_error($post_id)) {
+             return ['success' => false, 'message' => 'Failed to create referral: ' . $post_id->get_error_message()];
+         }
         
-        if (is_wp_error($post_id)) {
-            return ['success' => false, 'message' => 'Failed to create referral'];
-        }
-        
-        // Save form fields
-        $fields_to_save = [
-            'first_name', 'last_name', 'date_of_birth', 'ethnicity', 'gender',
-            'contact_phone', 'contact_email', 'parent_name', 'parent_phone', 'parent_email',
-            'medical_information', 'address', 'suburb', 'referrer_name', 'agency',
-            'referrer_contact', 'notes', 'referral_date'
-        ];
-        
-        foreach ($fields_to_save as $field) {
-            if (isset($_POST[$field])) {
-                $value = sanitize_textarea_field($_POST[$field]);
-                wcb_update_meta_field($post_id, $field, $value);
-            }
-        }
-        
-        // Set referral status
-        wcb_update_meta_field($post_id, 'referral_status', 'pending');
+         // Save form fields
+         $fields_to_save = [
+             'first_name', 'last_name', 'date_of_birth', 'ethnicity', 'gender',
+             'contact_phone', 'contact_email', 'parent_name', 'parent_phone', 'parent_email',
+             'medical_information', 'address', 'suburb', 'referrer_name', 'agency',
+             'referrer_contact', 'notes', 'referral_date'
+         ];
+         
+         foreach ($fields_to_save as $field) {
+             if (isset($_POST[$field])) {
+                 $value = sanitize_textarea_field($_POST[$field]);
+                 wcb_update_meta_field($post_id, $field, $value);
+             }
+         }
+         
+         // Set referral status
+         wcb_update_meta_field($post_id, 'referral_status', 'pending');
         
         // Send notification
         $notification_result = wcb_send_referral_notifications($post_id, $_POST);

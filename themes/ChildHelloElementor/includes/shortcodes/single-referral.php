@@ -477,45 +477,74 @@ function single_referral_shortcode($atts) {
         flex-wrap: wrap;
     }
     
-    .btn-dashboard-modern,
-    .btn-edit-modern {
-        padding: 10px 20px;
-        border: none;
-        border-radius: 6px;
-        text-decoration: none;
-        font-weight: 600;
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        transition: background-color 0.3s ease;
-        font-size: 14px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    .btn-dashboard-modern {
-        background: white;
-        color: #000000;
-        border: 1px solid #e5e5e5;
-    }
-    
-    .btn-dashboard-modern:hover {
-        background: #f8f9fa;
-        color: #000000;
-        text-decoration: none;
-    }
-    
-    .btn-edit-modern {
-        background: white;
-        color: #000000;
-        border: 1px solid #e5e5e5;
-    }
-    
-    .btn-edit-modern:hover {
-        background: #f8f9fa;
-        color: #000000;
-        text-decoration: none;
-    }
+     .btn-edit-modern {
+         display: inline-flex;
+         align-items: center;
+         justify-content: center;
+         padding: 12px 24px;
+         background: rgba(255, 255, 255, 0.15);
+         color: white !important;
+         text-decoration: none;
+         font-size: 14px;
+         font-weight: 600;
+         text-transform: uppercase;
+         letter-spacing: 0.8px;
+         border: 2px solid rgba(255, 255, 255, 0.3);
+         backdrop-filter: blur(10px);
+         transition: all 0.3s ease;
+         border-radius: 8px;
+         cursor: pointer;
+         min-width: 140px;
+     }
+     
+     .btn-edit-modern:hover {
+         background: rgba(255, 255, 255, 0.25);
+         border-color: rgba(255, 255, 255, 0.6);
+         color: white !important;
+         text-decoration: none;
+         transform: translateY(-2px);
+         box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+     }
+     
+     .btn-edit-modern:active {
+         transform: translateY(0);
+         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+     }
+     
+     .btn-dashboard-modern {
+         display: inline-flex;
+         align-items: center;
+         justify-content: center;
+         padding: 12px 24px;
+         background: rgba(33, 150, 243, 0.15);
+         color: #2196f3 !important;
+         text-decoration: none;
+         font-size: 14px;
+         font-weight: 600;
+         text-transform: uppercase;
+         letter-spacing: 0.8px;
+         border: 2px solid rgba(33, 150, 243, 0.3);
+         backdrop-filter: blur(10px);
+         transition: all 0.3s ease;
+         border-radius: 8px;
+         cursor: pointer;
+         min-width: 140px;
+         margin-right: 12px;
+     }
+     
+     .btn-dashboard-modern:hover {
+         background: rgba(33, 150, 243, 0.25);
+         border-color: rgba(33, 150, 243, 0.6);
+         color: #2196f3 !important;
+         text-decoration: none;
+         transform: translateY(-2px);
+         box-shadow: 0 8px 25px rgba(33, 150, 243, 0.2);
+     }
+     
+     .btn-dashboard-modern:active {
+         transform: translateY(0);
+         box-shadow: 0 4px 12px rgba(33, 150, 243, 0.15);
+     }
     
     .referral-content {
         display: flex;

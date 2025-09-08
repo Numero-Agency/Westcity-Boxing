@@ -3,15 +3,35 @@
 
 function dashboard_stats_shortcode() {
     // Get date range from URL parameters or use defaults
-    $date_from = isset($_GET['date_from']) ? sanitize_text_field($_GET['date_from']) : date('Y-m-d', strtotime('-30 days'));
-    $date_to = isset($_GET['date_to']) ? sanitize_text_field($_GET['date_to']) : date('Y-m-d');
+    // Use WordPress timezone for accurate local dates
+    $timezone = wp_timezone();
+    $now = new DateTime('now', $timezone);
+    $thirty_days_ago = new DateTime('-30 days', $timezone);
+    
+    $date_from = isset($_GET['date_from']) ? sanitize_text_field($_GET['date_from']) : $thirty_days_ago->format('Y-m-d');
+    $date_to = isset($_GET['date_to']) ? sanitize_text_field($_GET['date_to']) : $now->format('Y-m-d');
 
     // Use the proven logic from active-members-test.php for active members counting
     // Only count members from the 7 defined program groups
     $active_members_data = get_active_members_from_defined_groups($date_from, $date_to);
     $total_students = $active_members_data['total_count'];
 
-    $total_sessions = wp_count_posts('session_log')->publish;
+    // Get sessions count filtered by date range
+    $sessions_query = new WP_Query([
+        'post_type' => 'session_log',
+        'post_status' => 'publish',
+        'posts_per_page' => -1,
+        'fields' => 'ids',
+        'date_query' => [
+            [
+                'after' => $date_from,
+                'before' => $date_to,
+                'inclusive' => true,
+            ]
+        ]
+    ]);
+    $total_sessions = $sessions_query->found_posts;
+    wp_reset_postdata();
 
     // Get MemberPress groups breakdown using the proven logic
     $memberships_breakdown = get_active_groups_breakdown($date_from, $date_to);
@@ -48,6 +68,7 @@ function dashboard_stats_shortcode() {
     
     // Get waitlist members using same logic as student table
     $waitlist_members = get_waitlist_member_count_consistent();
+    $waitlist_members_detailed = get_waitlist_members_detailed();
 
     // Get ethnicity and age data using the EXACT SAME active members logic as the total count
     // This ensures all counts match perfectly
@@ -139,21 +160,21 @@ function dashboard_stats_shortcode() {
         
         <!-- Row 2: Demographics -->
         <div class="stat-card ethnicity clickable-stat" data-popup="ethnicity">
-            <h3><?php echo array_sum($ethnicity_breakdown); ?></h3>
-            <p><span class="dashicons dashicons-chart-pie"></span> Ethnicity Data</p>
+            <h3><?php echo count($ethnicity_breakdown); ?></h3>
+            <p><span class="dashicons dashicons-chart-pie"></span> Ethnicity Groups</p>
             <small>Click to view breakdown</small>
         </div>
         <div class="stat-card age-ranges clickable-stat" data-popup="age-ranges">
-            <h3><?php echo array_sum($age_breakdown); ?></h3>
-            <p><span class="dashicons dashicons-chart-bar"></span> Age Data</p>
+            <h3><?php echo count($age_breakdown); ?></h3>
+            <p><span class="dashicons dashicons-chart-bar"></span> Age Ranges</p>
             <small>Click to view breakdown</small>
         </div>
         
         <!-- Row 3: Community and Competition Stats -->
-        <div class="stat-card waitlist">
+        <div class="stat-card waitlist clickable-stat" data-popup="waitlist">
             <h3><?php echo $waitlist_members; ?></h3>
             <p><span class="dashicons dashicons-clock"></span> Members on Waitlist</p>
-            <small>Pending membership</small>
+            <small>Click to view members</small>
         </div>
         <div class="stat-card community-class">
             <h3><?php echo $community_class_members; ?></h3>
@@ -185,7 +206,9 @@ function dashboard_stats_shortcode() {
                 <div class="breakdown-grid">
                     <?php foreach ($ethnicity_breakdown as $ethnicity => $count): ?>
                         <?php 
-                        $is_clickable = in_array($ethnicity, ['Pacific Island', 'Asian', 'Other']) && !empty($ethnicity_detailed[$ethnicity]);
+                        $is_clickable = in_array($ethnicity, ['Pacific Island', 'Asian', 'Other', 'Not Specified']) && 
+                                       (($ethnicity != 'Not Specified' && !empty($ethnicity_detailed[$ethnicity])) || 
+                                        $ethnicity == 'Not Specified');
                         $item_class = $is_clickable ? 'breakdown-item clickable-breakdown-item' : 'breakdown-item';
                         $data_attr = $is_clickable ? 'data-detail-popup="' . strtolower(str_replace(' ', '-', $ethnicity)) . '"' : '';
                         ?>
@@ -220,12 +243,20 @@ function dashboard_stats_shortcode() {
             <div class="popup-body">
                 <div class="breakdown-grid">
                     <?php foreach ($age_breakdown as $age_range => $count): ?>
-                        <div class="breakdown-item age-group-<?php echo str_replace('-', '_', $age_range); ?>">
+                        <?php 
+                        $is_age_clickable = ($age_range == 'Not Specified');
+                        $age_item_class = $is_age_clickable ? 'breakdown-item age-group-' . str_replace('-', '_', $age_range) . ' clickable-breakdown-item' : 'breakdown-item age-group-' . str_replace('-', '_', $age_range);
+                        $age_data_attr = $is_age_clickable ? 'data-detail-popup="age-not-specified"' : '';
+                        ?>
+                        <div class="<?php echo $age_item_class; ?>" <?php echo $age_data_attr; ?>>
                             <div class="breakdown-number"><?php echo $count; ?></div>
                             <div class="breakdown-label">Ages <?php echo $age_range; ?></div>
                             <div class="breakdown-percentage">
                                 <?php echo round(($count / array_sum($age_breakdown)) * 100, 1); ?>%
                             </div>
+                            <?php if ($is_age_clickable): ?>
+                            <div class="breakdown-click-hint">👆 Click for details</div>
+                            <?php endif; ?>
                         </div>
                     <?php endforeach; ?>
                 </div>
@@ -494,6 +525,266 @@ function dashboard_stats_shortcode() {
                 <?php else: ?>
                 <div class="no-data">
                     <p>No other ethnicity data available.</p>
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Not Specified Details Popup -->
+    <div id="not-specified-details-popup" class="stats-popup" style="display: none;">
+        <div class="popup-overlay"></div>
+        <div class="popup-content">
+            <div class="popup-header">
+                <h3><span class="dashicons dashicons-admin-users"></span> Members Without Ethnicity Information</h3>
+                <button class="popup-close">&times;</button>
+            </div>
+            <div class="popup-body">
+                <?php 
+                $members_without_ethnicity = get_members_without_ethnicity_data($active_member_ids);
+                if (!empty($members_without_ethnicity)): 
+                ?>
+                <div class="not-specified-header">
+                    <p><strong>Members who have not provided ethnicity information:</strong></p>
+                    <p><small>These members need to update their profile with ethnicity information.</small></p>
+                </div>
+                <div class="not-specified-members-container">
+                    <?php foreach ($members_without_ethnicity as $member): ?>
+                    <div class="not-specified-member-card">
+                        <div class="member-card-header">
+                            <div class="member-info">
+                                <h4 class="member-name"><?php echo esc_html($member['name']); ?></h4>
+                                <div class="member-email"><?php echo esc_html($member['email']); ?></div>
+                            </div>
+                            <div class="status-badge missing-info">
+                                Missing Data
+                            </div>
+                        </div>
+                        <div class="member-card-body">
+                            <div class="member-details-grid">
+                                <div class="detail-item">
+                                    <div class="detail-icon">
+                                        <span class="dashicons dashicons-groups"></span>
+                                    </div>
+                                    <div class="detail-content">
+                                        <div class="detail-label">Program</div>
+                                        <div class="detail-value"><?php echo esc_html($member['program']); ?></div>
+                                        <?php if (isset($member['membership_type']) && !empty($member['membership_type'])): ?>
+                                        <div class="detail-sub"><?php echo esc_html($member['membership_type']); ?> Membership</div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-icon">
+                                        <span class="dashicons dashicons-calendar-alt"></span>
+                                    </div>
+                                    <div class="detail-content">
+                                        <div class="detail-label">Member Since</div>
+                                        <div class="detail-value"><?php echo esc_html($member['member_since']); ?></div>
+                                        <div class="detail-sub"><?php echo esc_html($member['days_active']); ?> ago</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="member-card-footer">
+                            <div class="member-actions">
+                                <a href="<?php echo admin_url('user-edit.php?user_id=' . $member['user_id']); ?>"
+                                   class="action-btn edit-profile" target="_blank" title="Edit Profile">
+                                    <span class="dashicons dashicons-edit"></span>
+                                    <span class="btn-text">Edit Profile</span>
+                                </a>
+                                <a href="mailto:<?php echo esc_attr($member['email']); ?>"
+                                   class="action-btn send-email" title="Send Email">
+                                    <span class="dashicons dashicons-email-alt"></span>
+                                    <span class="btn-text">Email</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <div class="breakdown-summary">
+                    <p><strong>Members Missing Ethnicity:</strong> <?php echo count($members_without_ethnicity); ?></p>
+                    <p><strong>Completion Rate:</strong> <?php echo round(((count($active_member_ids) - count($members_without_ethnicity)) / count($active_member_ids)) * 100, 1); ?>%</p>
+                </div>
+                <?php else: ?>
+                <div class="no-data">
+                    <p>All members have provided ethnicity information.</p>
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Age Not Specified Details Popup -->
+    <div id="age-not-specified-details-popup" class="stats-popup" style="display: none;">
+        <div class="popup-overlay"></div>
+        <div class="popup-content">
+            <div class="popup-header">
+                <h3><span class="dashicons dashicons-admin-users"></span> Members Without Age Information</h3>
+                <button class="popup-close">&times;</button>
+            </div>
+            <div class="popup-body">
+                <?php 
+                $members_without_age = get_members_without_age_data($active_member_ids);
+                if (!empty($members_without_age)): 
+                ?>
+                <div class="not-specified-header">
+                    <p><strong>Members who have not provided age information:</strong></p>
+                    <p><small>These members need to update their profile with age information.</small></p>
+                </div>
+                <div class="age-not-specified-members-container">
+                    <?php foreach ($members_without_age as $member): ?>
+                    <div class="age-not-specified-member-card">
+                        <div class="member-card-header">
+                            <div class="member-info">
+                                <h4 class="member-name"><?php echo esc_html($member['name']); ?></h4>
+                                <div class="member-email"><?php echo esc_html($member['email']); ?></div>
+                            </div>
+                            <div class="status-badge missing-info">
+                                Missing Age
+                            </div>
+                        </div>
+                        <div class="member-card-body">
+                            <div class="member-details-grid">
+                                <div class="detail-item">
+                                    <div class="detail-icon">
+                                        <span class="dashicons dashicons-groups"></span>
+                                    </div>
+                                    <div class="detail-content">
+                                        <div class="detail-label">Program</div>
+                                        <div class="detail-value"><?php echo esc_html($member['program']); ?></div>
+                                        <?php if (isset($member['membership_type']) && !empty($member['membership_type'])): ?>
+                                        <div class="detail-sub"><?php echo esc_html($member['membership_type']); ?> Membership</div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-icon">
+                                        <span class="dashicons dashicons-calendar-alt"></span>
+                                    </div>
+                                    <div class="detail-content">
+                                        <div class="detail-label">Member Since</div>
+                                        <div class="detail-value"><?php echo esc_html($member['member_since']); ?></div>
+                                        <div class="detail-sub"><?php echo esc_html($member['days_active']); ?> ago</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="member-card-footer">
+                            <div class="member-actions">
+                                <a href="<?php echo admin_url('user-edit.php?user_id=' . $member['user_id']); ?>"
+                                   class="action-btn edit-profile" target="_blank" title="Edit Profile">
+                                    <span class="dashicons dashicons-edit"></span>
+                                    <span class="btn-text">Edit Profile</span>
+                                </a>
+                                <a href="mailto:<?php echo esc_attr($member['email']); ?>"
+                                   class="action-btn send-email" title="Send Email">
+                                    <span class="dashicons dashicons-email-alt"></span>
+                                    <span class="btn-text">Email</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <div class="breakdown-summary">
+                    <p><strong>Members Missing Age:</strong> <?php echo count($members_without_age); ?></p>
+                    <p><strong>Completion Rate:</strong> <?php echo round(((count($active_member_ids) - count($members_without_age)) / count($active_member_ids)) * 100, 1); ?>%</p>
+                </div>
+                <?php else: ?>
+                <div class="no-data">
+                    <p>All members have provided age information.</p>
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Waitlist Members Popup -->
+    <div id="waitlist-popup" class="stats-popup" style="display: none;">
+        <div class="popup-overlay"></div>
+        <div class="popup-content">
+            <div class="popup-header">
+                <h3><span class="dashicons dashicons-clock"></span> Members on Waitlist</h3>
+                <button class="popup-close">&times;</button>
+            </div>
+            <div class="popup-body">
+                <?php if (!empty($waitlist_members_detailed)): ?>
+                <div class="waitlist-header">
+                    <p><strong>Current members awaiting full program enrollment:</strong></p>
+                    <p><small>These members have active waitlist memberships and are pending placement in regular programs.</small></p>
+                </div>
+                <div class="waitlist-members-container">
+                    <?php foreach ($waitlist_members_detailed as $member): ?>
+                    <div class="waitlist-member-card">
+                        <div class="member-card-header">
+                            <div class="member-info">
+                                <h4 class="member-name"><?php echo esc_html($member['name']); ?></h4>
+                                <div class="member-email"><?php echo esc_html($member['email']); ?></div>
+                            </div>
+                            <div class="status-badge waitlist-status">
+                                On Waitlist
+                            </div>
+                        </div>
+                        <div class="member-card-body">
+                            <div class="member-details-grid">
+                                <div class="detail-item">
+                                    <div class="detail-icon">
+                                        <span class="dashicons dashicons-groups"></span>
+                                    </div>
+                                    <div class="detail-content">
+                                        <div class="detail-label">Waitlist Program</div>
+                                        <div class="detail-value"><?php echo esc_html($member['program']); ?></div>
+                                        <?php if (isset($member['membership_type']) && !empty($member['membership_type'])): ?>
+                                        <div class="detail-sub"><?php echo esc_html($member['membership_type']); ?> Membership</div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-icon">
+                                        <span class="dashicons dashicons-calendar-alt"></span>
+                                    </div>
+                                    <div class="detail-content">
+                                        <div class="detail-label">Joined Waitlist</div>
+                                        <div class="detail-value"><?php echo esc_html($member['joined_date']); ?></div>
+                                        <div class="detail-sub"><?php echo esc_html($member['days_waiting']); ?> ago</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="member-card-footer">
+                            <div class="member-actions">
+                                <a href="<?php echo admin_url('user-edit.php?user_id=' . $member['user_id']); ?>"
+                                   class="action-btn view-profile" target="_blank" title="View Profile">
+                                    <span class="dashicons dashicons-admin-users"></span>
+                                    <span class="btn-text">View Profile</span>
+                                </a>
+                                <?php if (isset($member['subscription_id'])): ?>
+                                <a href="<?php echo admin_url('admin.php?page=memberpress-subscriptions&action=edit&id=' . $member['subscription_id']); ?>"
+                                   class="action-btn view-subscription" target="_blank" title="View Subscription">
+                                    <span class="dashicons dashicons-admin-settings"></span>
+                                    <span class="btn-text">Subscription</span>
+                                </a>
+                                <?php endif; ?>
+                                <a href="mailto:<?php echo esc_attr($member['email']); ?>"
+                                   class="action-btn send-email" title="Send Email">
+                                    <span class="dashicons dashicons-email-alt"></span>
+                                    <span class="btn-text">Email</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <div class="breakdown-summary">
+                    <p><strong>Total on Waitlist:</strong> <?php echo count($waitlist_members_detailed); ?></p>
+                    <p><strong>Average Wait Time:</strong> <?php echo calculate_average_wait_time($waitlist_members_detailed); ?> days</p>
+                    <p><strong>Longest Wait:</strong> <?php echo get_longest_wait_time($waitlist_members_detailed); ?> days</p>
+                </div>
+                <?php else: ?>
+                <div class="no-data">
+                    <p>No members currently on waitlist.</p>
                 </div>
                 <?php endif; ?>
             </div>
@@ -1123,6 +1414,123 @@ function dashboard_stats_shortcode() {
         border: 1px solid #bee5eb;
     }
 
+    .status-badge.missing-info {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+
+    .status-badge.waitlist-status {
+        background: #f0f8ff;
+        color: #1976d2;
+        border: 1px solid #bbdefb;
+    }
+
+    /* Not Specified Members Popup Styles */
+    .not-specified-header {
+        background: #f8f9fa;
+        border: 1px solid #e5e5e5;
+        border-left: 4px solid #ffc107;
+        padding: 16px;
+        margin-bottom: 20px;
+    }
+    
+    .not-specified-header p {
+        margin: 0 0 8px 0;
+        font-size: 14px;
+        color: #000000;
+    }
+    
+    .not-specified-header p:last-child {
+        margin-bottom: 0;
+    }
+    
+    .not-specified-members-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .not-specified-member-card {
+        background: white;
+        border: 1px solid #e5e5e5;
+        border-radius: 8px;
+        overflow: hidden;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .not-specified-member-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border-color: #ffc107;
+    }
+    
+    /* Age Not Specified Members Popup Styles */
+    .age-not-specified-members-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .age-not-specified-member-card {
+        background: white;
+        border: 1px solid #e5e5e5;
+        border-radius: 8px;
+        overflow: hidden;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .age-not-specified-member-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border-color: #17a2b8;
+    }
+    
+    /* Waitlist Members Popup Styles */
+    .waitlist-header {
+        background: #f8f9fa;
+        border: 1px solid #e5e5e5;
+        border-left: 4px solid #1976d2;
+        padding: 16px;
+        margin-bottom: 20px;
+    }
+    
+    .waitlist-header p {
+        margin: 0 0 8px 0;
+        font-size: 14px;
+        color: #000000;
+    }
+    
+    .waitlist-header p:last-child {
+        margin-bottom: 0;
+    }
+    
+    .waitlist-members-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .waitlist-member-card {
+        background: white;
+        border: 1px solid #e5e5e5;
+        border-radius: 8px;
+        overflow: hidden;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .waitlist-member-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border-color: #1976d2;
+    }
+
     /* Action buttons for card layout */
     .member-actions {
         display: flex;
@@ -1163,6 +1571,18 @@ function dashboard_stats_shortcode() {
         background: #bbdefb;
         color: #1565c0;
         border-color: #90caf9;
+    }
+
+    .action-btn.edit-profile {
+        background: #fff3e0;
+        color: #f57c00;
+        border-color: #ffcc02;
+    }
+
+    .action-btn.edit-profile:hover {
+        background: #ffcc02;
+        color: #e65100;
+        border-color: #ffb300;
     }
 
     .action-btn.view-subscription {
@@ -1291,7 +1711,10 @@ function dashboard_stats_shortcode() {
         }
         
         /* Responsive cards for tablet */
-        .non-renewed-cards-container {
+        .non-renewed-cards-container,
+        .not-specified-members-container,
+        .age-not-specified-members-container,
+        .waitlist-members-container {
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
             gap: 16px;
         }
@@ -1336,7 +1759,10 @@ function dashboard_stats_shortcode() {
         }
         
         /* Mobile responsive cards */
-        .non-renewed-cards-container {
+        .non-renewed-cards-container,
+        .not-specified-members-container,
+        .age-not-specified-members-container,
+        .waitlist-members-container {
             grid-template-columns: 1fr;
             gap: 12px;
         }
@@ -1480,6 +1906,28 @@ function get_active_members_from_defined_groups($date_from = null, $date_to = nu
     if ($competitive_count > 0) {
         $group_breakdown['Competitive Team'] = $competitive_count;
     }
+
+    // STEP 3: Also include WCB Mentoring members (ID: 1738) for the programs breakdown
+    $wcb_mentoring_id = 1738;
+    $mentoring_members = $wpdb->get_results($wpdb->prepare("
+        SELECT DISTINCT u.ID
+        FROM {$wpdb->users} u
+        JOIN {$txn_table} t ON u.ID = t.user_id
+        WHERE t.product_id = %d
+        AND t.status IN ('confirmed', 'complete')
+        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+        AND u.user_login != 'bwgdev'
+    ", $wcb_mentoring_id));
+
+    $mentoring_count = count($mentoring_members);
+    
+    // Add WCB Mentoring to breakdown if there are members
+    if ($mentoring_count > 0) {
+        $group_breakdown['WCB Mentoring'] = $mentoring_count;
+    }
+
+    // Note: We don't add mentoring members to the total_count because 
+    // the main "Active Students" count excludes mentoring by design
 
     return [
         'total_count' => count($total_active_members),
@@ -2700,22 +3148,28 @@ function get_total_competitions_count() {
 function get_referrals_count_in_date_range($date_from, $date_to) {
     global $wpdb;
     
-    // Method 1: Check for referrals stored as custom post type
-    $referrals_posts = get_posts([
+    // Method 1: Check for referrals stored as custom post type using referral_date field
+    // This is the correct method for your referral form submissions
+    $referrals_query = new WP_Query([
         'post_type' => 'referral',
         'post_status' => 'publish',
-        'numberposts' => -1,
-        'date_query' => [
+        'posts_per_page' => -1,
+        'meta_query' => [
             [
-                'after' => $date_from,
-                'before' => $date_to,
-                'inclusive' => true,
+                'key' => 'referral_date',
+                'value' => [$date_from, $date_to],
+                'compare' => 'BETWEEN',
+                'type' => 'DATE'
             ]
-        ]
+        ],
+        'fields' => 'ids' // Only get IDs for performance
     ]);
     
-    if (!empty($referrals_posts)) {
-        return count($referrals_posts);
+    $referrals_count = $referrals_query->found_posts;
+    wp_reset_postdata();
+    
+    if ($referrals_count > 0) {
+        return $referrals_count;
     }
     
     // Method 2: Check for referrals stored in user meta during date range
@@ -2819,6 +3273,230 @@ function debug_memberpress_data() {
     return ob_get_clean();
 }
 add_shortcode('debug_memberpress', 'debug_memberpress_data');
+
+// NEW: Function to get members without ethnicity data
+function get_members_without_ethnicity_data($active_member_ids) {
+    global $wpdb;
+    
+    if (empty($active_member_ids)) {
+        return [];
+    }
+    
+    $member_ids = implode(',', $active_member_ids);
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+    
+    // Get members who have missing or empty ethnicity data
+    $members_without_ethnicity = $wpdb->get_results("
+        SELECT u.ID as user_id, u.display_name as name, u.user_email as email,
+               COALESCE(um.meta_value, '') as ethnicity_value
+        FROM {$wpdb->users} u
+        LEFT JOIN {$wpdb->usermeta} um ON u.ID = um.user_id AND um.meta_key = 'mepr_ethnicity'
+        WHERE u.ID IN ($member_ids)
+        AND (um.meta_value IS NULL OR um.meta_value = '' OR um.meta_value = 'not specified' OR um.meta_value = 'Not specified')
+        ORDER BY u.display_name ASC
+    ");
+    
+    $members_data = [];
+    
+    foreach ($members_without_ethnicity as $member) {
+        // Get member's program information
+        $member_program_info = $wpdb->get_row($wpdb->prepare("
+            SELECT p.post_title as program_name, t.created_at as member_since
+            FROM {$txn_table} t
+            JOIN {$wpdb->posts} p ON t.product_id = p.ID
+            WHERE t.user_id = %d
+            AND t.status IN ('confirmed', 'complete')
+            AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+            ORDER BY t.created_at DESC
+            LIMIT 1
+        ", $member->user_id));
+        
+        if ($member_program_info) {
+            $member_since = date('d/m/Y', strtotime($member_program_info->member_since));
+            $days_active = floor((time() - strtotime($member_program_info->member_since)) / (60 * 60 * 24));
+            
+            // Get membership type from program name
+            $membership_type = '';
+            if (stripos($member_program_info->program_name, 'monthly') !== false) {
+                $membership_type = 'Monthly';
+            } elseif (stripos($member_program_info->program_name, 'weekly') !== false) {
+                $membership_type = 'Weekly';
+            } elseif (stripos($member_program_info->program_name, 'term') !== false) {
+                $membership_type = 'Full Term';
+            }
+            
+            $members_data[] = [
+                'user_id' => $member->user_id,
+                'name' => $member->name ?: 'No Name',
+                'email' => $member->email,
+                'program' => $member_program_info->program_name,
+                'membership_type' => $membership_type,
+                'member_since' => $member_since,
+                'days_active' => $days_active . ' days'
+            ];
+        }
+    }
+    
+    return $members_data;
+}
+
+// NEW: Function to get members without age data
+function get_members_without_age_data($active_member_ids) {
+    global $wpdb;
+    
+    if (empty($active_member_ids)) {
+        return [];
+    }
+    
+    $member_ids = implode(',', $active_member_ids);
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+    
+    // Get members who have missing or empty age data
+    $members_without_age = $wpdb->get_results("
+        SELECT u.ID as user_id, u.display_name as name, u.user_email as email,
+               COALESCE(um.meta_value, '') as age_value
+        FROM {$wpdb->users} u
+        LEFT JOIN {$wpdb->usermeta} um ON u.ID = um.user_id AND um.meta_key = 'mepr_age'
+        WHERE u.ID IN ($member_ids)
+        AND (um.meta_value IS NULL OR um.meta_value = '' OR um.meta_value = 'not specified' OR um.meta_value = 'Not specified')
+        ORDER BY u.display_name ASC
+    ");
+    
+    $members_data = [];
+    
+    foreach ($members_without_age as $member) {
+        // Get member's program information
+        $member_program_info = $wpdb->get_row($wpdb->prepare("
+            SELECT p.post_title as program_name, t.created_at as member_since
+            FROM {$txn_table} t
+            JOIN {$wpdb->posts} p ON t.product_id = p.ID
+            WHERE t.user_id = %d
+            AND t.status IN ('confirmed', 'complete')
+            AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+            ORDER BY t.created_at DESC
+            LIMIT 1
+        ", $member->user_id));
+        
+        if ($member_program_info) {
+            $member_since = date('d/m/Y', strtotime($member_program_info->member_since));
+            $days_active = floor((time() - strtotime($member_program_info->member_since)) / (60 * 60 * 24));
+            
+            // Get membership type from program name
+            $membership_type = '';
+            if (stripos($member_program_info->program_name, 'monthly') !== false) {
+                $membership_type = 'Monthly';
+            } elseif (stripos($member_program_info->program_name, 'weekly') !== false) {
+                $membership_type = 'Weekly';
+            } elseif (stripos($member_program_info->program_name, 'term') !== false) {
+                $membership_type = 'Full Term';
+            }
+            
+            $members_data[] = [
+                'user_id' => $member->user_id,
+                'name' => $member->name ?: 'No Name',
+                'email' => $member->email,
+                'program' => $member_program_info->program_name,
+                'membership_type' => $membership_type,
+                'member_since' => $member_since,
+                'days_active' => $days_active . ' days'
+            ];
+        }
+    }
+    
+    return $members_data;
+}
+
+// NEW: Function to get detailed waitlist member data
+function get_waitlist_members_detailed() {
+    global $wpdb;
+    
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+    
+    // Get detailed waitlist member information using the same logic as the count function
+    $waitlist_members = $wpdb->get_results("
+        SELECT DISTINCT u.ID as user_id, u.display_name as name, u.user_email as email,
+               p.post_title as program_name, t.created_at as joined_date,
+               t.id as transaction_id, s.id as subscription_id
+        FROM {$wpdb->users} u
+        JOIN {$txn_table} t ON u.ID = t.user_id
+        JOIN {$wpdb->posts} p ON t.product_id = p.ID
+        LEFT JOIN {$wpdb->prefix}mepr_subscriptions s ON t.subscription_id = s.id
+        WHERE t.status IN ('confirmed', 'complete')
+        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+        AND p.post_type = 'memberpressproduct'
+        AND p.post_title LIKE '%waitlist%'
+        AND u.user_login != 'bwgdev'
+        ORDER BY t.created_at ASC
+    ");
+    
+    $members_data = [];
+    
+    foreach ($waitlist_members as $member) {
+        $joined_date = date('d/m/Y', strtotime($member->joined_date));
+        $days_waiting = floor((time() - strtotime($member->joined_date)) / (60 * 60 * 24));
+        
+        // Get membership type from program name
+        $membership_type = '';
+        if (stripos($member->program_name, 'monthly') !== false) {
+            $membership_type = 'Monthly';
+        } elseif (stripos($member->program_name, 'weekly') !== false) {
+            $membership_type = 'Weekly';
+        } elseif (stripos($member->program_name, 'term') !== false) {
+            $membership_type = 'Full Term';
+        }
+        
+        $members_data[] = [
+            'user_id' => $member->user_id,
+            'name' => $member->name ?: 'No Name',
+            'email' => $member->email,
+            'program' => $member->program_name,
+            'membership_type' => $membership_type,
+            'joined_date' => $joined_date,
+            'days_waiting' => $days_waiting . ' days',
+            'days_waiting_number' => $days_waiting, // For calculations
+            'subscription_id' => $member->subscription_id,
+            'transaction_id' => $member->transaction_id
+        ];
+    }
+    
+    return $members_data;
+}
+
+// NEW: Helper function to calculate average wait time
+function calculate_average_wait_time($waitlist_members) {
+    if (empty($waitlist_members)) {
+        return 0;
+    }
+    
+    $total_days = 0;
+    $count = 0;
+    
+    foreach ($waitlist_members as $member) {
+        if (isset($member['days_waiting_number'])) {
+            $total_days += $member['days_waiting_number'];
+            $count++;
+        }
+    }
+    
+    return $count > 0 ? round($total_days / $count, 1) : 0;
+}
+
+// NEW: Helper function to get longest wait time
+function get_longest_wait_time($waitlist_members) {
+    if (empty($waitlist_members)) {
+        return 0;
+    }
+    
+    $longest_wait = 0;
+    
+    foreach ($waitlist_members as $member) {
+        if (isset($member['days_waiting_number']) && $member['days_waiting_number'] > $longest_wait) {
+            $longest_wait = $member['days_waiting_number'];
+        }
+    }
+    
+    return $longest_wait;
+}
 
 // Register the shortcode
 add_shortcode('dashboard_stats', 'dashboard_stats_shortcode');

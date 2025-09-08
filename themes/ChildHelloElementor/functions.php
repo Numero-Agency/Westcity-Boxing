@@ -199,33 +199,47 @@ function wcb_enqueue_assets() {
         );
     }
     
-    // Forms CSS
-    if (file_exists(WCB_THEME_PATH . '/includes/styles/forms.css')) {
-        wp_enqueue_style(
-            'wcb-forms-css',
-            WCB_THEME_URL . '/includes/styles/forms.css',
-            [],
-            filemtime(WCB_THEME_PATH . '/includes/styles/forms.css')
-        );
-    }
+     // Forms CSS
+     if (file_exists(WCB_THEME_PATH . '/includes/styles/forms.css')) {
+         wp_enqueue_style(
+             'wcb-forms-css',
+             WCB_THEME_URL . '/includes/styles/forms.css',
+             [],
+             filemtime(WCB_THEME_PATH . '/includes/styles/forms.css')
+         );
+     }
+     
+     // Global Tooltips CSS (loaded after jQuery UI to override)
+     if (file_exists(WCB_THEME_PATH . '/assets/css/global-tooltips.css')) {
+         wp_enqueue_style(
+             'wcb-global-tooltips-css',
+             WCB_THEME_URL . '/assets/css/global-tooltips.css',
+             ['jquery-ui-css'],
+             filemtime(WCB_THEME_PATH . '/assets/css/global-tooltips.css')
+         );
+     }
     
-    // Dashboard JS
-    if (file_exists(WCB_THEME_PATH . '/assets/js/dashboard.js')) {
-        wp_enqueue_script(
-            'wcb-dashboard-js',
-            WCB_THEME_URL . '/assets/js/dashboard.js',
-            ['jquery', 'jquery-ui-core', 'jquery-ui-tooltip'],
-            filemtime(WCB_THEME_PATH . '/assets/js/dashboard.js'),
-            true
-        );
-        
-        // Localize script for AJAX - use consistent nonce name
-        wp_localize_script('wcb-dashboard-js', 'wcb_ajax', [
-            'ajax_url' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('wcb_nonce'),
-            'home_url' => home_url()
-        ]);
-    }
+     // Dashboard JS
+     if (file_exists(WCB_THEME_PATH . '/assets/js/dashboard.js')) {
+         wp_enqueue_script(
+             'wcb-dashboard-js',
+             WCB_THEME_URL . '/assets/js/dashboard.js',
+             ['jquery', 'jquery-ui-core', 'jquery-ui-tooltip'],
+             filemtime(WCB_THEME_PATH . '/assets/js/dashboard.js'),
+             true
+         );
+     }
+     
+     // Global Tooltips JS
+     if (file_exists(WCB_THEME_PATH . '/assets/js/global-tooltips.js')) {
+         wp_enqueue_script(
+             'wcb-global-tooltips-js',
+             WCB_THEME_URL . '/assets/js/global-tooltips.js',
+             ['jquery', 'jquery-ui-core', 'jquery-ui-tooltip'],
+             filemtime(WCB_THEME_PATH . '/assets/js/global-tooltips.js'),
+             true
+         );
+     }
 }
 add_action('wp_enqueue_scripts', 'wcb_enqueue_assets');
 

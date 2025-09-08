@@ -43,7 +43,6 @@ function single_competition_shortcode($atts) {
     $event_name = $competition_post->post_title;
     $event_date = get_field('event_date', $competition_id);
     $where_was_it_hosted = get_field('where_was_it_hosted', $competition_id);
-    $student_involved = get_field('student_involved', $competition_id);
     $who_else_attended = get_field('who_else_attended', $competition_id);
     $results_wins = get_field('results_wins', $competition_id) ?: 0;
     $results_lost = get_field('results_lost', $competition_id) ?: 0;
@@ -53,23 +52,54 @@ function single_competition_shortcode($atts) {
     $created_date = $competition_post->post_date;
     $modified_date = $competition_post->post_modified;
     $formatted_date = $event_date ? date('l, F j, Y', strtotime($event_date)) : 'Unknown Date';
+    
+    // Get new multi-student data
+    $students_involved = get_field('students_involved', $competition_id) ?: [];
+    $student_detailed_results = get_field('student_detailed_results', $competition_id) ?: [];
+    $legacy_student = get_field('student_involved', $competition_id); // For backward compatibility
+    
+    // Handle backward compatibility and data processing
+    $processed_students = [];
     $total_matches = $results_wins + $results_lost;
     $win_percentage = $total_matches > 0 ? round(($results_wins / $total_matches) * 100, 1) : 0;
     
-    // Handle ACF User field format
-    $student_user = null;
-    if (!empty($student_involved)) {
-        // Handle array format (ACF User field returns associative array)
-        if (is_array($student_involved) && isset($student_involved['display_name'])) {
-            $student_user = (object) $student_involved;
+    // Process student data - handle both new and legacy formats
+    if (!empty($students_involved) && !empty($student_detailed_results)) {
+        // New multi-student format
+        foreach ($student_detailed_results as $result) {
+            if (isset($result['student_id'])) {
+                $student_user = get_userdata($result['student_id']);
+                if ($student_user) {
+                    $processed_students[] = [
+                        'user' => $student_user,
+                        'wins' => intval($result['wins'] ?? 0),
+                        'losses' => intval($result['losses'] ?? 0),
+                        'total' => intval($result['wins'] ?? 0) + intval($result['losses'] ?? 0),
+                        'win_rate' => (intval($result['wins'] ?? 0) + intval($result['losses'] ?? 0)) > 0 ? 
+                                     round((intval($result['wins'] ?? 0) / (intval($result['wins'] ?? 0) + intval($result['losses'] ?? 0))) * 100, 1) : 0
+                    ];
+                }
+            }
         }
-        // Handle object format
-        elseif (is_object($student_involved) && isset($student_involved->display_name)) {
-            $student_user = $student_involved;
+    } elseif (!empty($legacy_student)) {
+        // Legacy single-student format
+        $student_user = null;
+        if (is_array($legacy_student) && isset($legacy_student['display_name'])) {
+            $student_user = (object) $legacy_student;
+        } elseif (is_object($legacy_student) && isset($legacy_student->display_name)) {
+            $student_user = $legacy_student;
+        } elseif (is_numeric($legacy_student) && $legacy_student > 0) {
+            $student_user = get_userdata($legacy_student);
         }
-        // Fallback: if it's just an ID (legacy or manual entry)
-        elseif (is_numeric($student_involved) && $student_involved > 0) {
-            $student_user = get_userdata($student_involved);
+        
+        if ($student_user) {
+            $processed_students[] = [
+                'user' => $student_user,
+                'wins' => $results_wins,
+                'losses' => $results_lost,
+                'total' => $total_matches,
+                'win_rate' => $win_percentage
+            ];
         }
     }
     ob_start();
@@ -92,47 +122,90 @@ function single_competition_shortcode($atts) {
             <?php endif; ?>
         </div>
         <div class="competition-content">
-        <!-- Student & Attendees Section -->
-        <div class="competition-section attendees-section">
-            <h3 class="section-title"><span class="dashicons dashicons-admin-users"></span> Student & Attendees</h3>
-            <div class="attendees-grid">
-                <div class="attendee-card student-card">
-                    <div class="attendee-avatar">
-                        <span class="dashicons dashicons-admin-users"></span>
-                    </div>
-                    <div class="attendee-info">
-                        <div class="attendee-label">Student Involved</div>
-                        <div class="attendee-name"><?php echo $student_user ? esc_html($student_user->display_name) : 'Not specified'; ?></div>
-                        <?php if (current_user_can('administrator') && isset($_GET['debug'])): ?>
-                            <div style="color: #999; font-size: 12px;">[Debug: <?php echo esc_html(print_r($student_involved, true)); ?>]</div>
-                        <?php endif; ?>
-                        <?php if ($student_user): ?>
-                        <div class="attendee-email"><?php echo esc_html($student_user->user_email); ?></div>
-                        <?php endif; ?>
-                    </div>
+        <!-- Students Involved Section -->
+        <div class="competition-section students-section">
+            <h3 class="section-title">
+                <span class="dashicons dashicons-admin-users"></span> 
+                Students Involved 
+                <?php if (count($processed_students) > 1): ?>
+                    <span class="student-count">(<?php echo count($processed_students); ?> students)</span>
+                <?php endif; ?>
+            </h3>
+            <?php if (!empty($processed_students)): ?>
+                <div class="students-grid">
+                    <?php foreach ($processed_students as $student_data): ?>
+                        <div class="student-card">
+                            <div class="student-header">
+                                <div class="student-avatar">
+                                    <span class="dashicons dashicons-admin-users"></span>
+                                </div>
+                                <div class="student-info">
+                                    <div class="student-name"><?php echo esc_html($student_data['user']->display_name); ?></div>
+                                    <div class="student-email"><?php echo esc_html($student_data['user']->user_email); ?></div>
+                                </div>
+                            </div>
+                            <div class="student-results">
+                                <div class="student-result-item wins">
+                                    <span class="result-number"><?php echo $student_data['wins']; ?></span>
+                                    <span class="result-label">Wins</span>
+                                </div>
+                                <div class="student-result-item losses">
+                                    <span class="result-number"><?php echo $student_data['losses']; ?></span>
+                                    <span class="result-label">Losses</span>
+                                </div>
+                                <div class="student-result-item total">
+                                    <span class="result-number"><?php echo $student_data['total']; ?></span>
+                                    <span class="result-label">Total</span>
+                                </div>
+                                <div class="student-result-item win-rate">
+                                    <span class="result-number"><?php echo $student_data['win_rate']; ?>%</span>
+                                    <span class="result-label">Win Rate</span>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
                 </div>
+            <?php else: ?>
+                <div class="no-students">
+                    <p>No students specified for this competition.</p>
+                </div>
+            <?php endif; ?>
+        </div>
+        
+        <!-- Additional Attendees Section -->
+        <?php if (!empty($who_else_attended)): ?>
+        <div class="competition-section attendees-section">
+            <h3 class="section-title"><span class="dashicons dashicons-groups"></span> Additional Attendees</h3>
+            <div class="attendees-content">
                 <div class="attendee-card others-card">
                     <div class="attendee-avatar">
                         <span class="dashicons dashicons-groups"></span>
                     </div>
                     <div class="attendee-info">
                         <div class="attendee-label">Who Else Attended</div>
-                        <div class="attendee-name"><?php echo $who_else_attended ? esc_html($who_else_attended) : 'Not specified'; ?></div>
+                        <div class="attendee-name"><?php echo esc_html($who_else_attended); ?></div>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- Results Section -->
+        <?php endif; ?>
+        <!-- Aggregate Results Section -->
         <div class="competition-section results-section">
-            <h3 class="section-title"><span class="dashicons dashicons-chart-bar"></span> Results</h3>
+            <h3 class="section-title">
+                <span class="dashicons dashicons-chart-bar"></span> 
+                Competition Summary
+                <?php if (count($processed_students) > 1): ?>
+                    <span class="results-note">(Combined Results)</span>
+                <?php endif; ?>
+            </h3>
             <div class="results-grid">
                 <div class="result-card win-card">
                     <div class="result-number"><?php echo esc_html($results_wins); ?></div>
-                    <div class="result-label">Wins</div>
+                    <div class="result-label">Total Wins</div>
                 </div>
                 <div class="result-card loss-card">
                     <div class="result-number"><?php echo esc_html($results_lost); ?></div>
-                    <div class="result-label">Losses</div>
+                    <div class="result-label">Total Losses</div>
                 </div>
                 <div class="result-card total-card">
                     <div class="result-number"><?php echo esc_html($total_matches); ?></div>
@@ -140,9 +213,14 @@ function single_competition_shortcode($atts) {
                 </div>
                 <div class="result-card percentage-card">
                     <div class="result-number"><?php echo esc_html($win_percentage); ?>%</div>
-                    <div class="result-label">Win Rate</div>
+                    <div class="result-label">Overall Win Rate</div>
                 </div>
             </div>
+            <?php if (count($processed_students) > 1): ?>
+                <div class="results-info">
+                    <p><strong>Note:</strong> Individual student results are shown above in the Students Involved section. These totals represent the combined performance of all <?php echo count($processed_students); ?> students in this competition.</p>
+                </div>
+            <?php endif; ?>
         </div>
         <!-- Highlights Section -->
         <?php if (!empty($highlights)): ?>
@@ -309,11 +387,160 @@ function single_competition_shortcode($atts) {
         font-size: 14px;
         color: #666666;
     }
-    .attendees-grid {
+    .attendees-grid,
+    .attendees-content {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
         gap: 16px;
         padding: 20px;
+    }
+    
+    /* Students Section Styles */
+    .student-count {
+        font-size: 12px;
+        font-weight: 500;
+        color: #666;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 2px 8px;
+        border-radius: 12px;
+        margin-left: 10px;
+    }
+    
+    .students-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 20px;
+        padding: 20px;
+    }
+    
+    .student-card {
+        background: #f8f9fa;
+        border: 1px solid #e5e5e5;
+        border-radius: 8px;
+        overflow: hidden;
+        transition: all 0.2s ease;
+    }
+    
+    .student-card:hover {
+        border-color: #007cba;
+        box-shadow: 0 2px 8px rgba(0, 124, 186, 0.1);
+    }
+    
+    .student-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px;
+        background: white;
+        border-bottom: 1px solid #e5e5e5;
+    }
+    
+    .student-avatar {
+        font-size: 24px;
+        color: #007cba;
+        background: #e3f2fd;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    
+    .student-info {
+        flex: 1;
+    }
+    
+    .student-name {
+        font-size: 16px;
+        font-weight: 600;
+        color: #000;
+        margin-bottom: 2px;
+    }
+    
+    .student-email {
+        font-size: 13px;
+        color: #666;
+    }
+    
+    .student-results {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1px;
+        background: #e5e5e5;
+    }
+    
+    .student-result-item {
+        background: white;
+        padding: 12px 8px;
+        text-align: center;
+        transition: background-color 0.2s ease;
+    }
+    
+    .student-result-item:hover {
+        background: #f0f8ff;
+    }
+    
+    .student-result-item.wins {
+        border-left: 3px solid #28a745;
+    }
+    
+    .student-result-item.losses {
+        border-left: 3px solid #dc3545;
+    }
+    
+    .student-result-item.total {
+        border-left: 3px solid #007cba;
+    }
+    
+    .student-result-item.win-rate {
+        border-left: 3px solid #ffc107;
+    }
+    
+    .student-result-item .result-number {
+        display: block;
+        font-size: 18px;
+        font-weight: 700;
+        color: #000;
+        margin-bottom: 2px;
+    }
+    
+    .student-result-item .result-label {
+        display: block;
+        font-size: 11px;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 500;
+    }
+    
+    .no-students {
+        padding: 20px;
+        text-align: center;
+        color: #666;
+        font-style: italic;
+    }
+    
+    .results-note {
+        font-size: 11px;
+        font-weight: 500;
+        color: #666;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 2px 8px;
+        border-radius: 12px;
+        margin-left: 10px;
+    }
+    
+    .results-info {
+        background: #e3f2fd;
+        border: 1px solid #bbdefb;
+        border-radius: 6px;
+        padding: 15px;
+        margin: 15px 20px 20px 20px;
+        font-size: 14px;
+        color: #1565c0;
+        line-height: 1.5;
     }
     .attendee-card {
         display: flex;
@@ -450,9 +677,21 @@ function single_competition_shortcode($atts) {
             font-size: 12px !important;
             padding: 12px 16px;
         }
-        .attendees-grid {
+        .attendees-grid,
+        .attendees-content,
+        .students-grid {
             grid-template-columns: 1fr;
             padding: 16px;
+        }
+        
+        .student-results {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .results-info {
+            margin: 15px 16px 16px 16px;
+            padding: 12px;
+            font-size: 13px;
         }
         .results-grid {
             grid-template-columns: 1fr 1fr;
@@ -477,10 +716,34 @@ function single_competition_shortcode($atts) {
             padding: 10px 10px;
         }
         .attendees-grid,
+        .attendees-content,
+        .students-grid,
         .results-grid,
         .meta-grid {
             gap: 8px;
             padding: 8px;
+        }
+        
+        .student-header {
+            padding: 12px;
+        }
+        
+        .student-result-item {
+            padding: 8px 6px;
+        }
+        
+        .student-result-item .result-number {
+            font-size: 16px;
+        }
+        
+        .student-result-item .result-label {
+            font-size: 10px;
+        }
+        
+        .results-info {
+            margin: 10px 8px;
+            padding: 10px;
+            font-size: 12px;
         }
     }
     </style>

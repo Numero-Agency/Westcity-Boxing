@@ -90,6 +90,14 @@ function student_table_shortcode($atts) {
         </div>
     </div>
     
+    <?php
+    // Localize script for AJAX
+    wp_localize_script('jquery', 'wcb_ajax', array(
+        'ajax_url' => admin_url('admin-ajax.php'),
+        'nonce' => wp_create_nonce('wcb_nonce')
+    ));
+    ?>
+    
     <script>
     jQuery(document).ready(function($) {
         var currentPage = 1;
@@ -779,7 +787,7 @@ function student_table_shortcode($atts) {
         gap: 6px;
         padding: 10px 16px;
         background: white;
-        color: #000000;
+        color: #000000 !important;
         text-decoration: none;
         border-radius: 6px;
         font-size: 14px;
@@ -1847,24 +1855,13 @@ function wcb_detect_student_payment_type($transaction) {
 
 // Helper function to get session count for a user
 function wcb_get_user_session_count($user_id) {
-    // Get all sessions
+    // Get ALL sessions (same approach as detail view for consistency)
     $all_sessions = get_posts([
         'post_type' => 'session_log',
         'numberposts' => -1,
         'post_status' => 'publish',
-        'meta_query' => [
-            'relation' => 'OR',
-            [
-                'key' => 'associated_student',
-                'value' => $user_id,
-                'compare' => 'LIKE'
-            ],
-            [
-                'key' => 'student_involved',
-                'value' => $user_id,
-                'compare' => 'LIKE'
-            ]
-        ]
+        'orderby' => 'date',
+        'order' => 'DESC'
     ]);
     
     $session_count = 0;
@@ -1876,11 +1873,13 @@ function wcb_get_user_session_count($user_id) {
         $session_type_data = wcb_get_session_type($session_id);
         $session_type_slug = $session_type_data['slug'];
         
+        $is_student_involved = false;
+        
         if ($session_type_slug === 'mentoring') {
             // For mentoring sessions, check if this user is the student involved
             $student_involved = get_field('student_involved', $session_id);
             if ($student_involved == $user_id) {
-                $session_count++;
+                $is_student_involved = true;
             }
         } else {
             // For regular sessions, check attendance or association
@@ -1888,7 +1887,7 @@ function wcb_get_user_session_count($user_id) {
             $attended_students = $attendance_data['attended'];
             $excused_students = $attendance_data['excused'];
             
-            // Check associated student
+            // Handle associated student (same logic as detail view)
             $associated_student_raw = get_field('associated_student', $session_id);
             $associated_student = null;
             if (is_object($associated_student_raw) && isset($associated_student_raw->ID)) {
@@ -1899,12 +1898,18 @@ function wcb_get_user_session_count($user_id) {
                 $associated_student = intval($associated_student_raw);
             }
             
-            // Count if student attended, was excused, or was associated
-            if (in_array($user_id, $attended_students) || 
-                in_array($user_id, $excused_students) || 
-                ($associated_student && $associated_student == $user_id)) {
-                $session_count++;
+            // Check if this student is associated with the session
+            $is_associated = ($associated_student && $associated_student == $user_id);
+            $is_attended = in_array($user_id, $attended_students);
+            $is_excused = in_array($user_id, $excused_students);
+            
+            if ($is_associated || $is_attended || $is_excused) {
+                $is_student_involved = true;
             }
+        }
+        
+        if ($is_student_involved) {
+            $session_count++;
         }
     }
     
@@ -2179,7 +2184,9 @@ function wcb_ajax_load_students_table() {
             // Get session count
             $session_count = wcb_get_user_session_count($user->ID);
 
-            $join_date = date('M j, Y', strtotime($user->user_registered));
+            // Use the same logic as "Member since" in detail view
+            $member_since_date = wcb_get_member_since_date($user->ID);
+            $join_date = $member_since_date ? date('M j, Y', strtotime($member_since_date)) : 'No data';
 
             $rows_html .= '<tr>';
             $rows_html .= '<td><div class="student-name">' . esc_html($user->display_name) . '</div></td>';
@@ -2678,11 +2685,25 @@ function wcb_ajax_load_student_profile_overlay() {
             <div class="overlay-profile-info">
                 <div class="overlay-profile-meta">
                     <span><span class="dashicons dashicons-email"></span> <?php echo esc_html($user->user_email); ?></span>
-                    <span><span class="dashicons dashicons-calendar-alt"></span> Member since <?php echo date('M j, Y', strtotime($user->user_registered)); ?></span>
+                    <span><span class="dashicons dashicons-calendar-alt"></span> Member since <?php 
+                        try {
+                            $member_since_date = wcb_get_member_since_date($student_id);
+                            if ($member_since_date) {
+                                echo date('M j, Y', strtotime($member_since_date));
+                            } else {
+                                echo 'No data';
+                            }
+                        } catch (Exception $e) {
+                            echo 'No data';
+                        }
+                    ?></span>
                     <span><span class="dashicons dashicons-id"></span> ID: <?php echo $student_id; ?></span>
                 </div>
             </div>
             <div class="overlay-profile-actions">
+                <a href="<?php echo admin_url('user-edit.php?user_id=' . $student_id); ?>" class="back-to-students-btn" style="margin-right: 12px;">
+                    <span class="dashicons dashicons-edit"></span> Edit Member
+                </a>
                 <button class="back-to-students-btn" onclick="showStudentsTable()">
                     <span class="dashicons dashicons-arrow-left-alt2"></span> All Students
                 </button>
@@ -2716,21 +2737,11 @@ function wcb_ajax_load_student_profile_overlay() {
                             <div class="info-row">
                                 <div class="info-label">Age</div>
                                 <div class="info-value<?php 
-                                    $age = get_user_meta($student_id, 'mepr_age', true);
-                                    $dob = get_user_meta($student_id, 'mepr_date_of_birth', true);
-                                    echo (!$age && !$dob) ? ' not-provided' : ''; 
+                                    $user_age_info = wcb_get_user_age_info($student_id);
+                                    echo !$user_age_info['has_data'] ? ' not-provided' : ''; 
                                 ?>"><?php 
-                                    $age = get_user_meta($student_id, 'mepr_age', true);
-                                    $dob = get_user_meta($student_id, 'mepr_date_of_birth', true);
-                                    
-                                    if ($age) {
-                                        echo esc_html($age . ' years old');
-                                    } elseif ($dob) {
-                                        $calculated_age = date_diff(date_create($dob), date_create('today'))->y;
-                                        echo esc_html($calculated_age . ' years old');
-                                    } else {
-                                        echo 'Not provided';
-                                    }
+                                    $user_age_info = wcb_get_user_age_info($student_id);
+                                    echo esc_html($user_age_info['display']);
                                 ?></div>
                             </div>
                             <div class="info-row">
@@ -2749,9 +2760,12 @@ function wcb_ajax_load_student_profile_overlay() {
                             </div>
                             <div class="info-row">
                                 <div class="info-label">Date of Birth</div>
-                                <div class="info-value<?php echo !get_user_meta($student_id, 'mepr_date_of_birth', true) ? ' not-provided' : ''; ?>"><?php 
-                                    $dob = get_user_meta($student_id, 'mepr_date_of_birth', true);
-                                    echo $dob ? date('M j, Y', strtotime($dob)) : 'Not provided';
+                                <div class="info-value<?php 
+                                    $user_dob_info = wcb_get_user_dob_info($student_id);
+                                    echo !$user_dob_info['has_data'] ? ' not-provided' : ''; 
+                                ?>"><?php 
+                                    $user_dob_info = wcb_get_user_dob_info($student_id);
+                                    echo esc_html($user_dob_info['display']);
                                 ?></div>
                             </div>
                             <div class="info-row">
@@ -2835,20 +2849,35 @@ function wcb_ajax_load_student_profile_overlay() {
                     <span class="dashicons dashicons-awards"></span> Memberships
                 </h3>
                 <?php
-                // Get subscription display using safe helper
+                // Get subscription display using safe helper - TEMPORARY REVERT TO WORKING CODE
                 $membership_display = WCB_MemberPress_Helper::get_membership_display($student_id);
 
                 if ($membership_display !== 'No active membership'):
-                    $bg_color = wcb_get_membership_color($membership_display);
-                    $text_color = wcb_get_text_color_for_background($bg_color);
-
+                    // Parse multiple memberships if comma-separated
+                    $memberships = explode(',', $membership_display);
+                    
                     // Get payment status and subscription details
                     $payment_status_info = wcb_get_student_detailed_payment_info($student_id);
+                    
+                    // Display each membership in its own colored box
+                    foreach ($memberships as $membership):
+                        $membership = trim($membership);
+                        $bg_color = wcb_get_membership_color($membership);
+                        $text_color = wcb_get_text_color_for_background($bg_color);
                 ?>
-                    <div class="overlay-membership-item" style="background-color: <?php echo esc_attr($bg_color); ?>;">
-                        <div class="overlay-membership-name" style="color: <?php echo esc_attr($text_color); ?>;"><?php echo esc_html($membership_display); ?></div>
-                        <div class="overlay-membership-status" style="color: <?php echo esc_attr($text_color); ?>; opacity: 0.8;">Active subscription</div>
+                        <div class="overlay-membership-item" style="background-color: <?php echo esc_attr($bg_color); ?>; margin-bottom: 12px;">
+                            <div class="overlay-membership-name" style="color: <?php echo esc_attr($text_color); ?>;"><?php echo esc_html($membership); ?></div>
+                            <div class="overlay-membership-status" style="color: <?php echo esc_attr($text_color); ?>; opacity: 0.8;">Active subscription</div>
+                        </div>
+                <?php 
+                    endforeach;
+                else:
+                    $payment_status_info = ['is_stripe' => false];
+                ?>
+                    <div class="overlay-info-item">
+                        <div class="overlay-info-value">No active memberships found</div>
                     </div>
+                <?php endif; ?>
 
                     <!-- Subscription Details & Recent Payments -->
                     <?php if ($payment_status_info['is_stripe']): ?>
@@ -2909,12 +2938,7 @@ function wcb_ajax_load_student_profile_overlay() {
                                 </div>
                             </div>
                         </div>
-                    <?php endif; ?>
-                <?php else: ?>
-                    <div class="overlay-info-item">
-                        <div class="overlay-info-value">No active memberships found</div>
-                    </div>
-                <?php endif; ?>
+                     <?php endif; ?>
             </div>
             
             <!-- Session History -->
@@ -3021,14 +3045,27 @@ function wcb_ajax_load_student_profile_overlay() {
                         } else {
                             // For regular sessions
                             $date = get_field('session_date', $session_id);
-                            $membership_id = get_field('selected_membership', $session_id);
                             
-                            // Get class name
-                            $class_name = 'Unknown Class';
-                            if ($membership_id) {
-                                $membership_post = get_post($membership_id);
-                                if ($membership_post) {
-                                    $class_name = $membership_post->post_title;
+                            // Get the program/group name from selected_group field
+                            $selected_group_id = get_field('selected_group', $session_id);
+                            $class_name = 'Class Session';
+                            
+                            if ($selected_group_id) {
+                                // Get the group/program post
+                                $group_post = get_post($selected_group_id);
+                                if ($group_post && $group_post->post_status === 'publish') {
+                                    $class_name = $group_post->post_title;
+                                }
+                            }
+                            
+                            // Fallback: try selected_membership if selected_group doesn't exist
+                            if ($class_name === 'Class Session') {
+                                $membership_id = get_field('selected_membership', $session_id);
+                                if ($membership_id) {
+                                    $membership_post = get_post($membership_id);
+                                    if ($membership_post && $membership_post->post_status === 'publish') {
+                                        $class_name = $membership_post->post_title;
+                                    }
                                 }
                             }
                             
@@ -3100,7 +3137,42 @@ function wcb_ajax_load_student_profile_overlay() {
                             $intervention_class = 'intervention-full';
                         }
                         
-                        $formatted_date = $date ? date('M j, Y', strtotime($date)) : 'Unknown Date';
+                        // Format date with better error handling
+                        $formatted_date = 'Unknown Date';
+                        if (!empty($date) && $date !== '0000-00-00' && $date !== '0000-00-00 00:00:00') {
+                            $timestamp = strtotime($date);
+                            if ($timestamp !== false && $timestamp > 0) {
+                                $formatted_date = date('M j, Y', $timestamp);
+                            } else {
+                                // Try different date parsing approaches
+                                if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $date, $matches)) {
+                                    // DD/MM/YYYY or MM/DD/YYYY format
+                                    $day = intval($matches[1]);
+                                    $month = intval($matches[2]);
+                                    $year = intval($matches[3]);
+                                    
+                                    // Assume DD/MM/YYYY if day > 12, otherwise try both
+                                    if ($day > 12) {
+                                        $timestamp = mktime(0, 0, 0, $month, $day, $year);
+                                    } else {
+                                        // Try MM/DD/YYYY first, then DD/MM/YYYY
+                                        $timestamp_us = mktime(0, 0, 0, $day, $month, $year);
+                                        $timestamp_eu = mktime(0, 0, 0, $month, $day, $year);
+                                        
+                                        // Use the one that results in a reasonable date
+                                        if ($timestamp_us > time()) {
+                                            $timestamp = $timestamp_eu; // Use EU format if US format is in future
+                                        } else {
+                                            $timestamp = $timestamp_us; // Default to US format
+                                        }
+                                    }
+                                    
+                                    if ($timestamp && $timestamp > 0) {
+                                        $formatted_date = date('M j, Y', $timestamp);
+                                    }
+                                }
+                            }
+                        }
                         ?>
                         <tr>
                             <td><?php echo esc_html($formatted_date); ?></td>
@@ -3243,5 +3315,185 @@ function wcb_get_student_detailed_payment_info($user_id) {
         $result['recent_payments'] = $recent_payments;
     }
 
+    return $result;
+}
+
+// Helper function to get user age information from MemberPress date of birth field
+function wcb_get_user_age_info($user_id) {
+    // Get the MemberPress date of birth field
+    $dob = get_user_meta($user_id, 'mepr_date_of_birth', true);
+    
+    // Also check the direct age field as fallback
+    $stored_age = get_user_meta($user_id, 'mepr_age', true);
+    
+    $result = [
+        'has_data' => false,
+        'age' => null,
+        'date_of_birth' => null,
+        'date_of_birth_formatted' => null,
+        'display' => 'Not provided',
+        'source' => null,
+        'field_used' => null
+    ];
+    
+    if (!empty($dob) && $dob !== '0000-00-00' && $dob !== '1970-01-01') {
+        $timestamp = null;
+        
+        // Parse DD/MM/YYYY format (e.g., "16/12/2006")
+        if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $dob, $matches)) {
+            $day = intval($matches[1]);
+            $month = intval($matches[2]);
+            $year = intval($matches[3]);
+            
+            // Create timestamp from DD/MM/YYYY
+            $timestamp = mktime(0, 0, 0, $month, $day, $year);
+        }
+        // Try other common formats as fallback
+        elseif (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $dob, $matches)) {
+            // YYYY-MM-DD format
+            $year = intval($matches[1]);
+            $month = intval($matches[2]);
+            $day = intval($matches[3]);
+            $timestamp = mktime(0, 0, 0, $month, $day, $year);
+        }
+        else {
+            // Try standard strtotime parsing as last resort
+            $timestamp = strtotime($dob);
+        }
+        
+        // Validate timestamp and calculate age
+        if ($timestamp !== false && $timestamp > 0) {
+            $calculated_age = floor((time() - $timestamp) / 31556926); // seconds in a year
+            
+            // Validate the calculated age (between 0 and 120 years)
+            if ($calculated_age >= 0 && $calculated_age <= 120) {
+                $result['has_data'] = true;
+                $result['age'] = $calculated_age;
+                $result['date_of_birth'] = $dob;
+                $result['date_of_birth_formatted'] = date('M j, Y', $timestamp);
+                $result['display'] = $calculated_age . ' years old';
+                $result['source'] = 'calculated_from_dob';
+                $result['field_used'] = 'mepr_date_of_birth';
+    return $result;
+}
+
+
+        }
+    }
+    
+    // Fallback to stored age if available and valid
+    if ($stored_age && is_numeric($stored_age) && $stored_age > 0 && $stored_age <= 120) {
+        $result['has_data'] = true;
+        $result['age'] = intval($stored_age);
+        $result['display'] = $stored_age . ' years old';
+        $result['source'] = 'stored_age';
+        $result['field_used'] = 'mepr_age';
+    }
+    
+    return $result;
+}
+
+// Helper function to get the most appropriate "member since" date
+function wcb_get_member_since_date($user_id) {
+    // Check multiple possible MemberPress registration date fields
+    $possible_date_fields = [
+        'mepr_registration_date',
+        'mepr_date_registered'
+    ];
+    
+    foreach ($possible_date_fields as $field_name) {
+        $registration_date = get_user_meta($user_id, $field_name, true);
+        
+        // Skip if empty or invalid placeholder values
+        if (empty($registration_date) || 
+            $registration_date === '0000-00-00' || 
+            $registration_date === '0000-00-00 00:00:00' || 
+            $registration_date === '1970-01-01' ||
+            $registration_date === '1970-01-01 00:00:00') {
+            continue;
+        }
+        
+        // Try to parse the date - handle different possible formats
+        $timestamp = null;
+        
+        // Handle DD/MM/YYYY format (like date of birth)
+        if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $registration_date, $matches)) {
+            $day = intval($matches[1]);
+            $month = intval($matches[2]);
+            $year = intval($matches[3]);
+            $timestamp = mktime(0, 0, 0, $month, $day, $year);
+        }
+        // Handle YYYY-MM-DD format
+        elseif (preg_match('/^(\d{4})-(\d{2})-(\d{2})/', $registration_date)) {
+            $timestamp = strtotime($registration_date);
+        }
+        // Handle MM/DD/YYYY format
+        elseif (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $registration_date)) {
+            // Try both interpretations and pick the reasonable one
+            $parts = explode('/', $registration_date);
+            if (count($parts) === 3) {
+                $first = intval($parts[0]);
+                $second = intval($parts[1]);
+                $year = intval($parts[2]);
+                
+                // If first part > 12, it must be day (DD/MM/YYYY)
+                if ($first > 12) {
+                    $timestamp = mktime(0, 0, 0, $second, $first, $year);
+                }
+                // If second part > 12, it must be DD/MM/YYYY  
+                elseif ($second > 12) {
+                    $timestamp = mktime(0, 0, 0, $second, $first, $year);
+                }
+                // Both <= 12, try MM/DD/YYYY first, then DD/MM/YYYY
+                else {
+                    $timestamp_mm_dd = mktime(0, 0, 0, $first, $second, $year);
+                    $timestamp_dd_mm = mktime(0, 0, 0, $second, $first, $year);
+                    
+                    // Use the one that's more reasonable (not in future, not too old)
+                    $now = time();
+                    if ($timestamp_mm_dd <= $now && $timestamp_mm_dd >= strtotime('2020-01-01')) {
+                        $timestamp = $timestamp_mm_dd;
+                    } elseif ($timestamp_dd_mm <= $now && $timestamp_dd_mm >= strtotime('2020-01-01')) {
+                        $timestamp = $timestamp_dd_mm;
+                    }
+                }
+            }
+        }
+        // Try standard strtotime as fallback
+        else {
+            $timestamp = strtotime($registration_date);
+        }
+        
+        // Validate the parsed timestamp
+        if ($timestamp !== false && 
+            $timestamp > 0 && 
+            $timestamp <= time() && 
+            $timestamp >= strtotime('2020-01-01')) {
+            
+            // Return in standard format for consistent display
+            return date('Y-m-d H:i:s', $timestamp);
+        }
+    }
+    
+    // If no valid registration date found, return null (will show "no data")
+    return null;
+}
+
+// Helper function to get user date of birth information
+function wcb_get_user_dob_info($user_id) {
+    $age_info = wcb_get_user_age_info($user_id);
+    
+    $result = [
+        'has_data' => false,
+        'display' => 'Not provided',
+        'raw_value' => null
+    ];
+    
+    if ($age_info['date_of_birth']) {
+        $result['has_data'] = true;
+        $result['display'] = $age_info['date_of_birth_formatted'];
+        $result['raw_value'] = $age_info['date_of_birth'];
+    }
+    
     return $result;
 }

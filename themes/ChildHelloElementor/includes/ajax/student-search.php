@@ -194,9 +194,6 @@ function student_search_shortcode($atts) {
         justify-content: space-between;
         align-items: center;
     }
-    .student-result-item:last-child {
-        border-bottom: none;
-    }
     .student-result-item:hover {
         background: #f9f9f9;
     }

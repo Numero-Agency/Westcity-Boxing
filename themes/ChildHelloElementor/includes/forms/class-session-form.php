@@ -112,6 +112,15 @@ function wcb_class_session_form_shortcode() {
     // Get groups for dropdown using proven logic from active-members-test.php
     $groups = wcb_get_all_groups();
     
+    // Also get standalone memberships like Competitive Team
+    $standalone_memberships = wcb_get_standalone_memberships();
+    
+    // Debug: Log what we're getting
+    error_log('Standalone memberships count: ' . count($standalone_memberships));
+    foreach ($standalone_memberships as $membership) {
+        error_log('Found membership: ID=' . $membership->ID . ', Title=' . $membership->post_title . ', Status=' . $membership->post_status);
+    }
+    
     // Get schools for dropdown
     $schools = get_terms([
         'taxonomy' => 'school', // Your school taxonomy
@@ -171,8 +180,13 @@ function wcb_class_session_form_shortcode() {
                 <select id="selected_group" name="selected_group" onchange="loadGroupMembers()">
                     <option value="">Select Class/Program</option>
                     <?php foreach ($groups as $group): ?>
-                        <option value="<?php echo $group->ID; ?>">
+                        <option value="group_<?php echo $group->ID; ?>">
                             <?php echo esc_html($group->post_title); ?>
+                        </option>
+                    <?php endforeach; ?>
+                    <?php foreach ($standalone_memberships as $membership): ?>
+                        <option value="membership_<?php echo $membership->ID; ?>">
+                            <?php echo esc_html($membership->post_title); ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
@@ -633,7 +647,21 @@ function wcb_handle_class_session_submission() {
     if ($class_type === 'School') {
         wp_set_object_terms($post_id, intval($_POST['selected_school']), 'school');
     } else {
-        update_field('selected_group', intval($_POST['selected_group']), $post_id);
+        $selected_group = $_POST['selected_group'];
+        
+        // Parse the selection to determine if it's a group or membership
+        if (strpos($selected_group, 'group_') === 0) {
+            $group_id = intval(substr($selected_group, 6));
+            update_field('selected_group', $group_id, $post_id);
+        } elseif (strpos($selected_group, 'membership_') === 0) {
+            $membership_id = intval(substr($selected_group, 11));
+            update_field('selected_membership', $membership_id, $post_id);
+            // Also save as selected_group for backward compatibility
+            update_field('selected_group', $membership_id, $post_id);
+        } else {
+            // Fallback for old format (just numeric ID)
+            update_field('selected_group', intval($selected_group), $post_id);
+        }
     }
     
     // Save attendance list (as repeater-style data)
@@ -697,44 +725,78 @@ function wcb_ajax_load_group_members() {
         wp_die('Security check failed');
     }
 
-    $group_id = intval($_POST['group_id']);
+    $selection = $_POST['group_id'];
 
-    if (!$group_id) {
-        wp_send_json_error('Invalid group ID');
+    if (empty($selection)) {
+        wp_send_json_error('Invalid selection');
     }
 
-    // Get group information
-    $group = get_post($group_id);
-    if (!$group || $group->post_type !== 'memberpressgroup') {
-        wp_send_json_error('Group not found');
+    // Parse the selection to determine if it's a group or membership
+    if (strpos($selection, 'group_') === 0) {
+        $group_id = intval(substr($selection, 6));
+        
+        // Get group information
+        $group = get_post($group_id);
+        if (!$group || $group->post_type !== 'memberpressgroup') {
+            wp_send_json_error('Group not found');
+        }
+        
+        // Handle group members (existing logic)
+        $result = wcb_load_group_members_data($group_id, $group->post_title);
+        
+    } elseif (strpos($selection, 'membership_') === 0) {
+        $membership_id = intval(substr($selection, 11));
+        
+        // Get membership information
+        $membership = get_post($membership_id);
+        if (!$membership || $membership->post_type !== 'memberpressproduct') {
+            wp_send_json_error('Membership not found');
+        }
+        
+        // Handle individual membership members
+        $result = wcb_load_membership_members_data($membership_id, $membership->post_title);
+        
+    } else {
+        wp_send_json_error('Invalid selection format');
     }
 
-    // Use the exact same logic as active-members-test.php to get group members
+    if ($result['success']) {
+        wp_send_json_success($result['data']);
+    } else {
+        wp_send_json_error($result['message']);
+    }
+}
+
+// Helper function to load group members data
+function wcb_load_group_members_data($group_id, $group_name) {
+
     global $wpdb;
     $txn_table = $wpdb->prefix . 'mepr_transactions';
 
     // Check if MemberPress transactions table exists
     $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$txn_table'") == $txn_table;
     if (!$table_exists) {
-        wp_send_json_error('MemberPress not properly configured');
+        return ['success' => false, 'message' => 'MemberPress not properly configured'];
     }
 
     // Get memberships in this group using the proven function
     $group_memberships = wcb_get_group_memberships($group_id);
 
     if (empty($group_memberships)) {
-        wp_send_json_success([
-            'group_name' => $group->post_title,
-            'member_count' => 0,
-            'members' => []
-        ]);
+        return [
+            'success' => true,
+            'data' => [
+                'group_name' => $group_name,
+                'member_count' => 0,
+                'members' => []
+            ]
+        ];
     }
 
     $membership_ids = array_map(function($m) { return $m->ID; }, $group_memberships);
     $placeholders = implode(',', array_fill(0, count($membership_ids), '%d'));
 
     // Get members who have active transactions for memberships in this group
-    // Use EXACT same query as active-members-test.php
     $group_members = $wpdb->get_results($wpdb->prepare("
         SELECT DISTINCT u.ID, u.display_name, u.user_email
         FROM {$wpdb->users} u
@@ -756,11 +818,85 @@ function wcb_ajax_load_group_members() {
         ];
     }
 
-    wp_send_json_success([
-        'group_name' => $group->post_title,
-        'member_count' => count($members),
-        'members' => $members
+    return [
+        'success' => true,
+        'data' => [
+            'group_name' => $group_name,
+            'member_count' => count($members),
+            'members' => $members
+        ]
+    ];
+}
+
+// Helper function to load individual membership members data
+function wcb_load_membership_members_data($membership_id, $membership_name) {
+    global $wpdb;
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+
+    // Check if MemberPress transactions table exists
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$txn_table'") == $txn_table;
+    if (!$table_exists) {
+        return ['success' => false, 'message' => 'MemberPress not properly configured'];
+    }
+
+    // Get members who have active transactions for this specific membership
+    $membership_members = $wpdb->get_results($wpdb->prepare("
+        SELECT DISTINCT u.ID, u.display_name, u.user_email
+        FROM {$wpdb->users} u
+        JOIN {$txn_table} t ON u.ID = t.user_id
+        WHERE t.product_id = %d
+        AND t.status IN ('confirmed', 'complete')
+        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+        AND u.user_login != 'bwgdev'
+        ORDER BY u.display_name
+    ", $membership_id));
+
+    // Format members for frontend
+    $members = [];
+    foreach ($membership_members as $member) {
+        $members[] = [
+            'id' => $member->ID,
+            'name' => $member->display_name,
+            'email' => $member->user_email
+        ];
+    }
+
+    return [
+        'success' => true,
+        'data' => [
+            'group_name' => $membership_name,
+            'member_count' => count($members),
+            'members' => $members
+        ]
+    ];
+}
+
+// Helper function to get standalone memberships (like Competitive Team)
+function wcb_get_standalone_memberships() {
+    // Get all membership products first
+    $all_memberships = get_posts([
+        'post_type' => 'memberpressproduct',
+        'post_status' => 'publish',
+        'numberposts' => -1
     ]);
+    
+    // Specific standalone memberships that should be available for sessions
+    $standalone_membership_ids = [
+        1932 // Competitive Team
+    ];
+    
+    $memberships = [];
+    
+    // Filter to only include our specific standalone memberships
+    foreach ($all_memberships as $membership) {
+        if (in_array($membership->ID, $standalone_membership_ids)) {
+            $memberships[] = $membership;
+            error_log('Found standalone membership: ID=' . $membership->ID . ', Title=' . $membership->post_title);
+        }
+    }
+    
+    error_log('Returning ' . count($memberships) . ' standalone memberships from ' . count($all_memberships) . ' total memberships');
+    return $memberships;
 }
 
 // Register AJAX handlers for both logged-in and non-logged-in users

@@ -360,10 +360,6 @@ body.popup-open {
   transition: all 0.3s ease;
 }
 
-.student-result-item:last-child {
-  border-bottom: none;
-}
-
 .student-result-item:hover {
   background: #f8f9fa;
 }

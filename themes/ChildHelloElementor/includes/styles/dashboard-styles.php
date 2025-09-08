@@ -222,8 +222,19 @@ function wcb_dashboard_styles_and_scripts() {
             $('.sessions-header h3').html('📋 Filtered Sessions (' + visibleRows + ' shown)');
         });
         
-        // Add tooltips to buttons
-        $('[title]').tooltip();
+         // Add modern tooltips to buttons with better positioning
+         $('[title]').tooltip({
+             show: { effect: "fadeIn", duration: 200 },
+             hide: { effect: "fadeOut", duration: 150 },
+             position: {
+                 my: "center bottom-10",
+                 at: "center top",
+                 collision: "flipfit"
+             },
+             classes: {
+                 "ui-tooltip": "wcb-modern-tooltip"
+             }
+         });
         
         console.log('West City Boxing Dashboard initialized successfully!');
     });
