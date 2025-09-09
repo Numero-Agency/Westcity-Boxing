@@ -120,21 +120,19 @@ function single_referral_shortcode($atts) {
         }
     }
     
-    // Format dates safely
+    // Format dates safely using the helper function
     $formatted_referral_date = 'Unknown Date';
     if ($referral_date && !empty(trim($referral_date))) {
-        $timestamp = strtotime($referral_date);
-        if ($timestamp !== false) {
-            $formatted_referral_date = date('l, F j, Y', $timestamp);
-        }
+        $formatted_referral_date = function_exists('wcb_format_date_for_display') ? 
+            wcb_format_date_for_display($referral_date) : 
+            date('d/m/Y', strtotime($referral_date));
     }
     
     $formatted_dob = 'Unknown';
     if ($date_of_birth && !empty(trim($date_of_birth))) {
-        $timestamp = strtotime($date_of_birth);
-        if ($timestamp !== false) {
-            $formatted_dob = date('F j, Y', $timestamp);
-        }
+        $formatted_dob = function_exists('wcb_format_date_for_display') ? 
+            wcb_format_date_for_display($date_of_birth) : 
+            date('d/m/Y', strtotime($date_of_birth));
     }
     
     // Get creator info
@@ -176,7 +174,7 @@ function single_referral_shortcode($atts) {
             <div class="referral-section young-person-section">
                 <h3 class="section-title"><span class="dashicons dashicons-admin-users"></span> Young Person Details</h3>
                 <div class="details-grid">
-                    <div class="detail-item">
+                    <div class="detail-item full-width">
                         <span class="detail-label">Full Name:</span>
                         <span class="detail-value"><?php echo esc_html($full_name); ?></span>
                     </div>
@@ -185,12 +183,12 @@ function single_referral_shortcode($atts) {
                         <span class="detail-value"><?php echo esc_html($formatted_dob); ?> <?php echo $age ? '(' . $age . ' years old)' : ''; ?></span>
                     </div>
                     <div class="detail-item">
-                        <span class="detail-label">Ethnicity:</span>
-                        <span class="detail-value"><?php echo esc_html($ethnicity ?: 'Not specified'); ?></span>
-                    </div>
-                    <div class="detail-item">
                         <span class="detail-label">Gender:</span>
                         <span class="detail-value"><?php echo esc_html($gender ?: 'Not specified'); ?></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Ethnicity:</span>
+                        <span class="detail-value"><?php echo esc_html($ethnicity ?: 'Not specified'); ?></span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Phone:</span>
@@ -372,12 +370,12 @@ function single_referral_shortcode($atts) {
                     </div>
                     <div class="meta-item">
                         <span class="meta-label">Created:</span>
-                        <span class="meta-value"><?php echo esc_html(date('F j, Y g:i A', strtotime($referral_post->post_date))); ?></span>
+                        <span class="meta-value"><?php echo esc_html(function_exists('wcb_format_date_for_display') ? wcb_format_date_for_display($referral_post->post_date) : date('d/m/Y', strtotime($referral_post->post_date))); ?></span>
                     </div>
                     <?php if ($referral_post->post_modified !== $referral_post->post_date): ?>
                     <div class="meta-item">
                         <span class="meta-label">Last updated:</span>
-                        <span class="meta-value"><?php echo esc_html(date('F j, Y g:i A', strtotime($referral_post->post_modified))); ?></span>
+                        <span class="meta-value"><?php echo esc_html(function_exists('wcb_format_date_for_display') ? wcb_format_date_for_display($referral_post->post_modified) : date('d/m/Y', strtotime($referral_post->post_modified))); ?></span>
                     </div>
                     <?php endif; ?>
                 </div>
@@ -469,6 +467,12 @@ function single_referral_shortcode($atts) {
         background: #e2e3e5;
         color: #383d41;
         border: 1px solid #d6d8db;
+    }
+    
+    .referral-badge.status-completed {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
     }
     
     .referral-actions {
@@ -595,19 +599,15 @@ function single_referral_shortcode($atts) {
         display: flex;
         align-items: center;
         gap: 12px;
-        padding: 12px;
-        background: #f8f9fa;
-        border: 1px solid #e5e5e5;
-        border-radius: 6px;
-        transition: background-color 0.2s ease;
+        padding: 8px 0;
     }
     
     .detail-item.wide {
         grid-column: 1 / -1;
     }
     
-    .detail-item:hover {
-        background: #f0f0f0;
+    .detail-item.full-width {
+        grid-column: 1 / -1;
     }
     
     .detail-label {
@@ -628,23 +628,20 @@ function single_referral_shortcode($atts) {
     }
     
     .detail-value.medical-info {
-        background: white;
-        padding: 16px;
-        border-radius: 6px;
-        border: 1px solid #e5e5e5;
         color: #333333;
         font-size: 14px;
         line-height: 1.6;
     }
     
     .detail-value a {
-        color: #000000;
+        color: #007cba;
         text-decoration: none;
         border-bottom: 1px solid #e5e5e5;
     }
     
     .detail-value a:hover {
-        border-bottom-color: #000000;
+        color: #005a87;
+        border-bottom-color: #005a87;
     }
     
     .content-blocks {
@@ -707,7 +704,6 @@ function single_referral_shortcode($atts) {
         align-items: center;
         padding: 12px;
         background: #f8f9fa;
-        border: 1px solid #e5e5e5;
         border-radius: 6px;
         transition: background-color 0.2s ease;
     }
@@ -734,6 +730,7 @@ function single_referral_shortcode($atts) {
     .meta-value.status-reviewed { color: #155724; font-weight: bold; }
     .meta-value.status-processed { color: #0c5460; font-weight: bold; }
     .meta-value.status-contacted { color: #383d41; font-weight: bold; }
+    .meta-value.status-completed { color: #721c24; font-weight: bold; }
     
     /* Responsive Design */
     @media (max-width: 768px) {

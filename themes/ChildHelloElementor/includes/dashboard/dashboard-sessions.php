@@ -1,6 +1,55 @@
 <?php
 // Sessions List Component
 
+// Helper function to consistently format dates as dd/mm/yyyy
+function wcb_format_date_for_display($date_value, $fallback_date = null) {
+    if (empty($date_value)) {
+        return $fallback_date ? date('d/m/Y', strtotime($fallback_date)) : '';
+    }
+    
+    // Handle datetime-local format (2024-03-15T14:30)
+    if (preg_match('/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/', $date_value, $matches)) {
+        return $matches[3] . '/' . $matches[2] . '/' . $matches[1];
+    }
+    
+    // Handle ISO date format (2024-03-15)
+    if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $date_value, $matches)) {
+        return $matches[3] . '/' . $matches[2] . '/' . $matches[1];
+    }
+    
+    // Handle dd/mm/yyyy format (already correct)
+    if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $date_value, $matches)) {
+        // Ensure two-digit day and month
+        $day = str_pad($matches[1], 2, '0', STR_PAD_LEFT);
+        $month = str_pad($matches[2], 2, '0', STR_PAD_LEFT);
+        return $day . '/' . $month . '/' . $matches[3];
+    }
+    
+    // Handle mm/dd/yyyy format (need to swap)
+    if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $date_value, $matches)) {
+        // If the first number is > 12, it's likely dd/mm/yyyy already
+        if (intval($matches[1]) > 12) {
+            $day = str_pad($matches[1], 2, '0', STR_PAD_LEFT);
+            $month = str_pad($matches[2], 2, '0', STR_PAD_LEFT);
+            return $day . '/' . $month . '/' . $matches[3];
+        } else {
+            // Otherwise assume mm/dd/yyyy and swap
+            $day = str_pad($matches[2], 2, '0', STR_PAD_LEFT);
+            $month = str_pad($matches[1], 2, '0', STR_PAD_LEFT);
+            return $day . '/' . $month . '/' . $matches[3];
+        }
+    }
+    
+    // Try strtotime as last resort, but force dd/mm/yyyy output
+    $timestamp = strtotime($date_value);
+    if ($timestamp && $timestamp > 0) {
+        return date('d/m/Y', $timestamp);
+    }
+    
+    // Ultimate fallback
+    return $fallback_date ? date('d/m/Y', strtotime($fallback_date)) : date('d/m/Y');
+}
+
 function all_sessions_list_shortcode() {
     $sessions = get_posts([
         'post_type' => 'session_log',
@@ -148,26 +197,9 @@ function all_sessions_list_shortcode() {
                         
                         // Format date - use intervention_date for mentoring sessions
                         if ($session_type_raw === 'Mentoring' && !empty($intervention_date)) {
-                            $date_timestamp = strtotime($intervention_date);
-                            if ($date_timestamp) {
-                                $formatted_date = date('d/m/Y', $date_timestamp);
-                            } else {
-                                $formatted_date = date('d/m/Y', strtotime($session->post_date));
-                            }
+                            $formatted_date = wcb_format_date_for_display($intervention_date, $session->post_date);
                         } elseif (!empty($date)) {
-                            // Handle both datetime-local format (2024-03-15T14:30) and regular date formats
-                            $date_timestamp = strtotime($date);
-                            if ($date_timestamp && $date_timestamp > 0) {
-                                $formatted_date = date('d/m/Y', $date_timestamp);
-                            } else {
-                                // Try to parse datetime-local format manually
-                                if (preg_match('/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/', $date, $matches)) {
-                                    $formatted_date = $matches[3] . '/' . $matches[2] . '/' . $matches[1];
-                                } else {
-                                    // Fallback to post creation date
-                                    $formatted_date = date('d/m/Y', strtotime($session->post_date));
-                                }
-                            }
+                            $formatted_date = wcb_format_date_for_display($date, $session->post_date);
                         } else {
                             // Fallback to post creation date
                             $formatted_date = date('d/m/Y', strtotime($session->post_date));

@@ -51,7 +51,12 @@ function single_competition_shortcode($atts) {
     $creator_name = $creator ? $creator->display_name : 'Unknown';
     $created_date = $competition_post->post_date;
     $modified_date = $competition_post->post_modified;
-    $formatted_date = $event_date ? date('l, F j, Y', strtotime($event_date)) : 'Unknown Date';
+    // Use consistent date formatting helper (same as dashboard and sessions)
+    if (function_exists('wcb_format_date_for_display')) {
+        $formatted_date = wcb_format_date_for_display($event_date);
+    } else {
+        $formatted_date = $event_date ? date('d/m/Y', strtotime($event_date)) : 'Unknown Date';
+    }
     
     // Get new multi-student data
     $students_involved = get_field('students_involved', $competition_id) ?: [];

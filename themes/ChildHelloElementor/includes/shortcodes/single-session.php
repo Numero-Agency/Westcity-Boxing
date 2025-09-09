@@ -1,6 +1,55 @@
 <?php
 // Single Session Display Component
 
+// Helper function to consistently format dates as dd/mm/yyyy (same as dashboard)
+function wcb_format_date_for_display_single($date_value, $fallback_date = null) {
+    if (empty($date_value)) {
+        return $fallback_date ? date('d/m/Y', strtotime($fallback_date)) : '';
+    }
+    
+    // Handle datetime-local format (2024-03-15T14:30)
+    if (preg_match('/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/', $date_value, $matches)) {
+        return $matches[3] . '/' . $matches[2] . '/' . $matches[1];
+    }
+    
+    // Handle ISO date format (2024-03-15)
+    if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $date_value, $matches)) {
+        return $matches[3] . '/' . $matches[2] . '/' . $matches[1];
+    }
+    
+    // Handle dd/mm/yyyy format (already correct)
+    if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $date_value, $matches)) {
+        // Ensure two-digit day and month
+        $day = str_pad($matches[1], 2, '0', STR_PAD_LEFT);
+        $month = str_pad($matches[2], 2, '0', STR_PAD_LEFT);
+        return $day . '/' . $month . '/' . $matches[3];
+    }
+    
+    // Handle mm/dd/yyyy format (need to swap)
+    if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $date_value, $matches)) {
+        // If the first number is > 12, it's likely dd/mm/yyyy already
+        if (intval($matches[1]) > 12) {
+            $day = str_pad($matches[1], 2, '0', STR_PAD_LEFT);
+            $month = str_pad($matches[2], 2, '0', STR_PAD_LEFT);
+            return $day . '/' . $month . '/' . $matches[3];
+        } else {
+            // Otherwise assume mm/dd/yyyy and swap
+            $day = str_pad($matches[2], 2, '0', STR_PAD_LEFT);
+            $month = str_pad($matches[1], 2, '0', STR_PAD_LEFT);
+            return $day . '/' . $month . '/' . $matches[3];
+        }
+    }
+    
+    // Try strtotime as last resort, but force dd/mm/yyyy output
+    $timestamp = strtotime($date_value);
+    if ($timestamp && $timestamp > 0) {
+        return date('d/m/Y', $timestamp);
+    }
+    
+    // Ultimate fallback
+    return $fallback_date ? date('d/m/Y', strtotime($fallback_date)) : date('d/m/Y');
+}
+
 function single_session_shortcode($atts) {
     $atts = shortcode_atts([
         'session_id' => '',
@@ -75,7 +124,7 @@ function single_session_shortcode($atts) {
         }
         
         // Format date
-        $formatted_date = $date ? date('d/m/Y', strtotime($date)) : 'Unknown Date';
+        $formatted_date = wcb_format_date_for_display_single($date, $session->post_date);
 
         // Format time - try dedicated time fields first
         $session_time = get_field('session_time', $session_id);
@@ -146,7 +195,7 @@ function single_session_shortcode($atts) {
         }
         
         // Format date
-        $formatted_date = $date ? date('d/m/Y', strtotime($date)) : 'Unknown Date';
+        $formatted_date = wcb_format_date_for_display_single($date, $session->post_date);
 
         // Format time - try dedicated time fields first
         $session_time = get_field('session_time', $session_id);
@@ -191,7 +240,7 @@ function single_session_shortcode($atts) {
             <div class="session-title-section">
                 <h1 class="session-title"><?php echo esc_html($class_name); ?></h1>
                 <div class="session-meta">
-                    <span class="session-date"><span class="dashicons dashicons-calendar-alt"></span> <?php echo get_the_date('d/m/Y', $session); ?></span>
+                    <span class="session-date"><span class="dashicons dashicons-calendar-alt"></span> <?php echo esc_html($formatted_date); ?></span>
                     <?php if ($formatted_time): ?>
                     <span class="session-time"><span class="dashicons dashicons-clock"></span> <?php echo esc_html($formatted_time); ?></span>
                     <?php endif; ?>
@@ -611,7 +660,7 @@ function single_session_shortcode($atts) {
                                     <div class="detail-icon"><span class="dashicons dashicons-calendar-alt"></span></div>
                                     <div class="detail-content">
                                         <div class="detail-label">Date</div>
-                                        <div class="detail-value"><?php echo get_the_date('M j, Y', $session); ?></div>
+                                        <div class="detail-value"><?php echo esc_html($formatted_date); ?></div>
                                     </div>
                                 </div>
                                 

@@ -55,13 +55,11 @@
     position: relative;
 }
 
+/* Base tooltip styling with smart positioning */
 [data-tooltip]:hover::before,
 [data-tooltip]:focus::before {
     content: attr(data-tooltip);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%) translateY(-8px);
+    position: fixed; /* Use fixed positioning for better viewport handling */
     background: rgba(0, 0, 0, 0.9);
     color: white;
     padding: 8px 12px;
@@ -80,90 +78,79 @@
     pointer-events: none;
     animation: tooltipFadeIn 0.2s ease-out forwards;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
-
-/* Arrow for CSS tooltips */
-[data-tooltip]:hover::after,
-[data-tooltip]:focus::after {
-    content: '';
-    position: absolute;
-    bottom: 100%;
+    
+    /* Smart positioning - default above element (better for action buttons) */
+    bottom: calc(100% + 8px);
     left: 50%;
-    transform: translateX(-50%) translateY(-2px);
-    border: 5px solid transparent;
-    border-top-color: rgba(0, 0, 0, 0.9);
-    z-index: 9998;
-    opacity: 0;
-    pointer-events: none;
-    animation: tooltipFadeIn 0.2s ease-out forwards;
-}
-
-/* Tooltip positioning variants */
-[data-tooltip].tooltip-top::before {
-    bottom: 100%;
-    top: auto;
-    transform: translateX(-50%) translateY(-8px);
-}
-
-[data-tooltip].tooltip-top::after {
-    bottom: 100%;
-    top: auto;
-    border-top-color: rgba(0, 0, 0, 0.9);
-    border-bottom-color: transparent;
-    transform: translateX(-50%) translateY(-2px);
-}
-
-[data-tooltip].tooltip-bottom::before {
-    top: 100%;
-    bottom: auto;
-    transform: translateX(-50%) translateY(8px);
-}
-
-[data-tooltip].tooltip-bottom::after {
-    top: 100%;
-    bottom: auto;
-    border-bottom-color: rgba(0, 0, 0, 0.9);
-    border-top-color: transparent;
-    transform: translateX(-50%) translateY(2px);
-}
-
-[data-tooltip].tooltip-left::before {
-    right: 100%;
-    left: auto;
-    top: 50%;
-    bottom: auto;
-    transform: translateX(-8px) translateY(-50%);
-}
-
-[data-tooltip].tooltip-left::after {
-    right: 100%;
-    left: auto;
-    top: 50%;
-    bottom: auto;
-    border-left-color: rgba(0, 0, 0, 0.9);
-    border-right-color: transparent;
-    border-top-color: transparent;
-    transform: translateX(-2px) translateY(-50%);
-}
-
-[data-tooltip].tooltip-right::before {
-    left: 100%;
     right: auto;
-    top: 50%;
-    bottom: auto;
-    transform: translateX(8px) translateY(-50%);
+    top: auto;
+    transform: translateX(-50%);
+    
+    /* Ensure tooltip stays within viewport */
+    min-width: 0;
+    max-width: min(200px, 90vw);
 }
 
-[data-tooltip].tooltip-right::after {
-    left: 100%;
-    right: auto;
-    top: 50%;
-    bottom: auto;
-    border-right-color: rgba(0, 0, 0, 0.9);
-    border-left-color: transparent;
-    border-top-color: transparent;
-    transform: translateX(2px) translateY(-50%);
+/* Arrows removed for cleaner appearance */
+
+/* Dynamic positioning classes for jQuery UI tooltips */
+.wcb-modern-tooltip.tooltip-above {
+    margin-bottom: 5px;
 }
+
+.wcb-modern-tooltip.tooltip-below {
+    margin-top: 5px;
+}
+
+.wcb-modern-tooltip.tooltip-left {
+    margin-right: 5px;
+}
+
+.wcb-modern-tooltip.tooltip-right {
+    margin-left: 5px;
+}
+
+/* Viewport-aware positioning for CSS tooltips */
+/* When element is near top of viewport - show tooltip below */
+[data-tooltip].near-top:hover::before,
+[data-tooltip].near-top:focus::before {
+    top: calc(100% + 8px);
+    bottom: auto;
+    transform: translateX(-50%);
+}
+
+
+
+/* When element is near bottom of viewport - show tooltip above (this is now default) */
+[data-tooltip].near-bottom:hover::before,
+[data-tooltip].near-bottom:focus::before {
+    bottom: calc(100% + 8px);
+    top: auto;
+    transform: translateX(-50%);
+}
+
+
+
+/* When element is near left edge - align tooltip to left */
+[data-tooltip].near-left:hover::before,
+[data-tooltip].near-left:focus::before {
+    left: 0;
+    transform: translateX(0);
+}
+
+
+
+/* When element is near right edge - align tooltip to right */
+[data-tooltip].near-right:hover::before,
+[data-tooltip].near-right:focus::before {
+    left: auto;
+    right: 0;
+    transform: translateX(0);
+}
+
+
+
+/* Old arrow positioning rules removed for cleaner appearance */
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
@@ -176,12 +163,19 @@
     }
 }
 
-/* Special styling for action buttons */
-.btn-view[title],
-.btn-edit[title],
-.action-btn[title] {
-    position: relative;
+/* Special styling for action buttons - force tooltips above */
+.btn-view[data-tooltip]:hover::before,
+.btn-edit[data-tooltip]:hover::before,
+.action-btn[data-tooltip]:hover::before,
+.btn-view[data-tooltip]:focus::before,
+.btn-edit[data-tooltip]:focus::before,
+.action-btn[data-tooltip]:focus::before {
+    bottom: calc(100% + 12px) !important;
+    top: auto !important;
+    transform: translateX(-50%) !important;
 }
+
+
 
 /* Ensure tooltips appear above modals and other high z-index elements */
 .ui-tooltip {

@@ -66,64 +66,61 @@ function wcb_competitions_table_shortcode($atts) {
 
     ob_start();
     ?>
-    <div class="<?php echo esc_attr($atts['class']); ?>" id="competitions-table">
+    <div class="all-competitions-container">
         <!-- Table Header -->
-        <div class="table-header">
-            <h2><span class="dashicons dashicons-awards"></span> Competitions</h2>
-            <div class="header-actions">
-                <a href="/log-competition" class="btn-primary">
+        <div class="competitions-header">
+            <div class="competitions-title-section">
+                <h3><span class="dashicons dashicons-awards"></span> Competitions</h3>
+                <span class="competitions-count"><?php echo count($competitions); ?> competitions total</span>
+            </div>
+            <div class="competitions-filter-actions">
+                <a href="/log-competition" class="btn-log-simple btn-log-competition">
                     <span class="dashicons dashicons-plus"></span> Log Competition
                 </a>
             </div>
         </div>
         <?php if ($atts['show_search'] === 'true' || $atts['show_filters'] === 'true'): ?>
         <!-- Search and Filters -->
-        <div class="table-filters">
-            <form method="get" class="filters-form">
+        <div class="competitions-filters">
+            <form method="get" class="competitions-filters-form">
                 <?php if ($atts['show_search'] === 'true'): ?>
-                <div class="search-field">
+                <div class="filter-search">
                     <input type="text" name="search" value="<?php echo esc_attr($search); ?>" 
-                           placeholder="Search competitions..." class="search-input">
-                    <button type="submit" class="search-btn">
+                           placeholder="Search competitions..." class="filter-input">
+                    <button type="submit" class="filter-submit">
                         <span class="dashicons dashicons-search"></span>
                     </button>
                 </div>
                 <?php endif; ?>
                 <?php if ($atts['show_filters'] === 'true'): ?>
-                <div class="date-filters">
+                <div class="filter-dates">
                     <input type="date" name="date_from" value="<?php echo esc_attr($date_from); ?>" 
-                           placeholder="From date" class="date-input">
+                           class="filter-input">
                     <input type="date" name="date_to" value="<?php echo esc_attr($date_to); ?>" 
-                           placeholder="To date" class="date-input">
-                    <button type="submit" class="filter-btn">Filter</button>
+                           class="filter-input">
+                    <button type="submit" class="filter-submit">Filter</button>
                     <?php if ($search || $date_from || $date_to): ?>
-                    <a href="?" class="clear-filters">Clear</a>
+                    <a href="?" class="filter-clear">Clear</a>
                     <?php endif; ?>
                 </div>
                 <?php endif; ?>
             </form>
         </div>
         <?php endif; ?>
-        <!-- Results Info -->
-        <div class="results-info">
-            <span class="results-count">
-                Showing <?php echo esc_html($offset + 1); ?>-<?php echo esc_html(min($offset + $limit, $total_count)); ?> 
-                of <?php echo esc_html($total_count); ?> competitions
-            </span>
-        </div>
-        <!-- Competitions Table -->
-        <div class="table-container">
-            <?php if (!empty($competitions)): ?>
-            <table class="competitions-table">
+        
+        <?php if (!empty($competitions)): ?>
+        
+        <div class="competitions-table-container">
+            <table class="competitions-table" id="competitions-table">
                 <thead>
                     <tr>
-                        <th>Event Name</th>
-                        <th>Date</th>
-                        <th>Location</th>
-                        <th>Student</th>
-                        <th>Results</th>
-                        <th>Highlights</th>
-                        <th>Actions</th>
+                        <th><span class="dashicons dashicons-awards"></span> Event Name</th>
+                        <th><span class="dashicons dashicons-calendar-alt"></span> Date</th>
+                        <th><span class="dashicons dashicons-location"></span> Location</th>
+                        <th><span class="dashicons dashicons-admin-users"></span> Student</th>
+                        <th><span class="dashicons dashicons-chart-bar"></span> Results</th>
+                        <th><span class="dashicons dashicons-star-filled"></span> Highlights</th>
+                        <th><span class="dashicons dashicons-admin-tools"></span> Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -132,12 +129,22 @@ function wcb_competitions_table_shortcode($atts) {
                     $event_name = get_field('event_name', $competition->ID);
                     $event_date = get_field('event_date', $competition->ID);
                     $where_was_it_hosted = get_field('where_was_it_hosted', $competition->ID);
-                    $student_involved = get_field('student_involved', $competition->ID);
+                    
+                    // Get both new and legacy student fields
+                    $students_involved = get_field('students_involved', $competition->ID) ?: []; // New multi-student format
+                    $student_detailed_results = get_field('student_detailed_results', $competition->ID) ?: [];
+                    $student_involved = get_field('student_involved', $competition->ID); // Legacy single student format
+                    
                     $who_else_attended = get_field('who_else_attended', $competition->ID);
                     $results_wins = get_field('results_wins', $competition->ID);
                     $results_lost = get_field('results_lost', $competition->ID);
                     $highlights = get_field('highlights', $competition->ID);
-                    $formatted_date = $event_date ? date('M j, Y', strtotime($event_date)) : 'Unknown';
+                    // Use consistent date formatting helper (same as dashboard)
+                    if (function_exists('wcb_format_date_for_display')) {
+                        $formatted_date = wcb_format_date_for_display($event_date);
+                    } else {
+                        $formatted_date = $event_date ? date('d/m/Y', strtotime($event_date)) : 'Unknown';
+                    }
                     
                     // Debug student field data (only when debug parameter is set)
                     if (current_user_can('administrator') && isset($_GET['debug'])) {
@@ -146,28 +153,61 @@ function wcb_competitions_table_shortcode($atts) {
                         error_log('Student Involved Type: ' . gettype($student_involved));
                     }
                     
-                    // Handle ACF User field format
-                    $student_user_data = null;
-                    $student_name = 'Not specified';
+                    // Process student data using same logic as single competition page
+                    $processed_students = [];
+                    $student_display_names = [];
                     
-                    if (!empty($student_involved)) {
-                        // Handle array format (ACF User field returns associative array)
-                        if (is_array($student_involved) && isset($student_involved['display_name'])) {
-                            $student_name = $student_involved['display_name'];
-                            $student_user_data = (object) $student_involved;
-                        }
-                        // Handle object format
-                        elseif (is_object($student_involved) && isset($student_involved->display_name)) {
-                            $student_user_data = $student_involved;
-                            $student_name = $student_involved->display_name;
-                        }
-                        // Fallback: if it's just an ID (legacy or manual entry)
-                        elseif (is_numeric($student_involved) && $student_involved > 0) {
-                            $student_user_data = get_userdata($student_involved);
-                            if ($student_user_data) {
-                                $student_name = $student_user_data->display_name;
+                    // Handle new multi-student format first
+                    if (!empty($students_involved) && !empty($student_detailed_results)) {
+                        foreach ($student_detailed_results as $result) {
+                            if (isset($result['student_id'])) {
+                                $student_user = get_userdata($result['student_id']);
+                                if ($student_user) {
+                                    $processed_students[] = $student_user;
+                                    $student_display_names[] = $student_user->display_name;
+                                }
                             }
                         }
+                    } 
+                    // Handle legacy single-student format
+                    elseif (!empty($student_involved)) {
+                        $student_user = null;
+                        if (is_array($student_involved) && isset($student_involved['display_name'])) {
+                            $student_user = (object) $student_involved;
+                        } elseif (is_object($student_involved) && isset($student_involved->display_name)) {
+                            $student_user = $student_involved;
+                        } elseif (is_numeric($student_involved) && $student_involved > 0) {
+                            $student_user = get_userdata($student_involved);
+                        }
+                        
+                        if ($student_user) {
+                            $processed_students[] = $student_user;
+                            $student_display_names[] = $student_user->display_name;
+                        }
+                    }
+                    
+                    // Create display string for students
+                    if (!empty($student_display_names)) {
+                        if (count($student_display_names) === 1) {
+                            $student_display = $student_display_names[0];
+                        } else {
+                            $student_display = implode(', ', array_slice($student_display_names, 0, 2));
+                            if (count($student_display_names) > 2) {
+                                $student_display .= ' +' . (count($student_display_names) - 2) . ' more';
+                            }
+                        }
+                    } else {
+                        $student_display = '';
+                    }
+                    
+                    // Debug info
+                    if (current_user_can('administrator') && isset($_GET['debug'])) {
+                        error_log('=== COMPETITION DEBUG ID: ' . $competition->ID . ' ===');
+                        error_log('Students Involved (new): ' . print_r($students_involved, true));
+                        error_log('Student Detailed Results: ' . print_r($student_detailed_results, true));
+                        error_log('Student Involved (legacy): ' . print_r($student_involved, true));
+                        error_log('Final Student Display: ' . $student_display);
+                        error_log('Processed Students Count: ' . count($processed_students));
                     }
                     ?>
                     <tr>
@@ -178,11 +218,25 @@ function wcb_competitions_table_shortcode($atts) {
                         </td>
                         <td class="event-date"><?php echo esc_html($formatted_date); ?></td>
                         <td class="event-location"><?php echo esc_html($where_was_it_hosted); ?></td>
-                        <td class="student-involved" style="color: #333 !important;">
-                            <?php echo esc_html($student_name); ?>
+                        <td class="student-involved">
+                            <?php if (!empty($student_display)): ?>
+                                <div class="student-info">
+                                    <span class="student-name"><?php echo esc_html($student_display); ?></span>
+                                    <?php if (count($processed_students) === 1 && isset($processed_students[0]->user_email)): ?>
+                                        <div class="student-email"><?php echo esc_html($processed_students[0]->user_email); ?></div>
+                                    <?php elseif (count($processed_students) > 1): ?>
+                                        <div class="student-count"><?php echo count($processed_students); ?> students</div>
+                                    <?php endif; ?>
+                                </div>
+                            <?php else: ?>
+                                <span class="no-student">No students specified</span>
+                            <?php endif; ?>
                             <?php if (current_user_can('administrator') && isset($_GET['debug'])): ?>
                                 <br><small style="color: #999; font-size: 10px;">
-                                    [ID: <?php echo $competition->ID; ?>] [Type: <?php echo gettype($student_involved); ?>]
+                                    [ID: <?php echo $competition->ID; ?>] 
+                                    [New: <?php echo !empty($students_involved) ? count($students_involved) : '0'; ?>] 
+                                    [Legacy: <?php echo !empty($student_involved) ? 'Yes' : 'No'; ?>]
+                                    [Display: "<?php echo $student_display; ?>"]
                                 </small>
                             <?php endif; ?>
                         </td>
@@ -190,31 +244,31 @@ function wcb_competitions_table_shortcode($atts) {
                             <span class="wins"><?php echo esc_html($results_wins); ?>W</span>
                             <span class="losses"><?php echo esc_html($results_lost); ?>L</span>
                         </td>
-                        <td class="highlights"><?php echo esc_html($highlights); ?></td>
-                        <td class="actions">
-                            <a href="<?php echo get_permalink($competition->ID); ?>" class="btn-view" title="View Details">
-                                <span class="dashicons dashicons-visibility"></span>
-                            </a>
-                            <?php if (current_user_can('edit_posts') || get_current_user_id() == $competition->post_author): ?>
-                            <a href="<?php echo admin_url('post.php?post=' . $competition->ID . '&action=edit'); ?>" class="btn-edit" title="Edit Competition">
-                                <span class="dashicons dashicons-edit"></span>
-                            </a>
-                            <?php endif; ?>
+                        <td class="highlights"><?php echo esc_html($highlights ?: 'No highlights recorded'); ?></td>
+                        <td class="competition-actions">
+                            <div class="action-buttons">
+                                <a href="<?php echo get_permalink($competition->ID); ?>" class="btn-view" title="View Details">
+                                    <span class="dashicons dashicons-visibility"></span>
+                                </a>
+                                <?php if (current_user_can('edit_posts') || get_current_user_id() == $competition->post_author): ?>
+                                <a href="<?php echo admin_url('post.php?post=' . $competition->ID . '&action=edit'); ?>" class="btn-edit" title="Edit Competition">
+                                    <span class="dashicons dashicons-edit"></span>
+                                </a>
+                                <?php endif; ?>
+                            </div>
                         </td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>
             </table>
-            <?php else: ?>
-            <div class="no-results">
-                <div class="no-results-icon">
-                    <span class="dashicons dashicons-awards"></span>
-                </div>
-                <h3>No competitions found</h3>
-                <p>There are no competitions matching your criteria.</p>
-                <a href="/log-competition" class="btn-primary">Log Your First Competition</a>
-            </div>
-            <?php endif; ?>
+        <?php else: ?>
+        <div class="no-competitions">
+            <div class="no-competitions-icon"><span class="dashicons dashicons-awards"></span></div>
+            <h3>No competitions found</h3>
+            <p>There are no competitions matching your criteria.</p>
+            <a href="/log-competition" class="btn-create-competition">Log First Competition</a>
+        </div>
+        <?php endif; ?>
         </div>
         <!-- Pagination -->
         <?php if ($total_pages > 1): ?>
@@ -229,285 +283,227 @@ function wcb_competitions_table_shortcode($atts) {
         <?php endif; ?>
     </div>
     <style>
-    /* Override browser default table styling */
-    .competitions-table {
+    /* Modern Minimalistic Black & White Competitions Table - Matching Dashboard Style */
+    .all-competitions-container {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: white;
+        border: 1px solid #e5e5e5;
+        overflow: hidden;
+        margin-bottom: 40px;
+    }
+    
+    /* Force override browser table defaults */
+    .all-competitions-container table {
+        border: none !important;
         border-collapse: collapse !important;
         border-spacing: 0 !important;
-        width: 100% !important;
+        margin: 0 !important;
     }
-
-    .competitions-table,
-    .competitions-table th,
-    .competitions-table td {
+    
+    .all-competitions-container th,
+    .all-competitions-container td {
         border: none !important;
+        margin: 0 !important;
+        padding: 16px 20px !important;
+        border-bottom: 1px solid #f1f1f1 !important;
+    }
+    
+    .all-competitions-container th {
         border-bottom: 1px solid #e5e5e5 !important;
-        box-shadow: none !important;
-        background-clip: padding-box !important;
-    }
-
-    .competitions-table th,
-    .competitions-table td {
-        padding: 12px !important;
-        vertical-align: middle !important;
-        text-align: left !important;
-        font-size: 14px !important;
-        color: #333 !important;
-    }
-
-    .competitions-table th {
-        background-color: #f8f9fa !important;
-        font-weight: 600 !important;
-        border-bottom: 2px solid #dee2e6 !important;
-    }
-
-    .competitions-table tbody tr:hover {
-        background-color: #f8f9fa !important;
-    }
-
-    .competitions-table tbody tr:nth-child(even) {
-        background-color: #ffffff !important;
-    }
-
-    .competitions-table tbody tr:nth-child(odd) {
-        background-color: #ffffff !important;
-    }
-
-    /* Competitions table specific styles */
-    .wcb-competitions-table {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 20px;
     }
     
-    .stats-section {
-        margin-bottom: 30px;
-    }
-    
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 20px;
-        margin-bottom: 20px;
-    }
-    
-    .stat-card {
-        background: white;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        text-align: center;
-        border-top: 4px solid #e74c3c;
-    }
-    
-    .stat-number {
-        font-size: 32px;
-        font-weight: bold;
-        color: #2c3e50;
-        margin-bottom: 5px;
-    }
-    
-    .stat-label {
-        font-size: 14px;
-        color: #666;
-        font-weight: 500;
-    }
-    
-    .table-header {
+    .competitions-header {
+        background: #000000;
+        color: white;
+        padding: 20px 24px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 15px;
-        border-bottom: 2px solid #e1e1e1;
+        flex-wrap: wrap;
+        gap: 20px;
+        border-bottom: 1px solid #e5e5e5;
     }
     
-    .table-header h2 {
-        margin: 0;
-        color: #2c3e50;
+    .competitions-title-section h3 {
+        margin: 0 0 8px 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: white;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
+        text-transform: uppercase;
     }
     
-    .header-actions {
-        display: flex;
-        gap: 10px;
-    }
-    
-    .btn-primary {
-        background: #e74c3c;
+    .competitions-title-section h3 .dashicons {
+        font-size: 20px;
         color: white;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 6px;
-        text-decoration: none;
-        font-weight: bold;
+    }
+    
+    .competitions-count {
+        font-size: 14px;
+        color: white;
+        opacity: 0.9;
+        font-weight: 500;
+    }
+    
+    .competitions-filter-actions {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+    
+    .btn-log-simple {
         display: inline-flex;
         align-items: center;
-        gap: 5px;
-        transition: all 0.3s ease;
-    }
-    
-    .btn-primary:hover {
-        background: #c0392b;
-    }
-    
-    .table-filters {
-        background: #f8f9fa;
-        padding: 20px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-    }
-    
-    .filters-form {
-        display: flex;
-        gap: 20px;
-        align-items: center;
-        flex-wrap: wrap;
-    }
-    
-    .search-field {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }
-    
-    .search-input {
-        padding: 10px;
-        border: 2px solid #ddd;
-        border-radius: 6px;
-        width: 250px;
-    }
-    
-    .search-btn {
-        background: #3498db;
-        color: white;
-        border: none;
-        padding: 10px 15px;
-        border-radius: 6px;
-        cursor: pointer;
-    }
-    
-    .date-filters {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-    }
-    
-    .date-input {
-        padding: 10px;
-        border: 2px solid #ddd;
-        border-radius: 6px;
-    }
-    
-    .filter-btn {
-        background: #27ae60;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 6px;
-        cursor: pointer;
-    }
-    
-    .clear-filters {
-        color: #e74c3c;
+        justify-content: center;
+        padding: 8px 16px;
         text-decoration: none;
-        padding: 10px 15px;
+        font-size: 13px;
+        font-weight: 600;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+        border: none;
     }
     
-    .results-info {
-        margin-bottom: 15px;
-        color: #666;
-        font-size: 14px;
+    .btn-log-competition {
+        background: #4caf50;
+        color: white !important;
     }
     
-    .table-container {
+    .btn-log-competition:hover {
+        background: #45a049;
+        color: white !important;
+        text-decoration: none;
+    }
+    
+    .competitions-table-container {
+        overflow-x: auto;
         background: white;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        overflow: hidden;
+        border: none;
+        border-radius: 0;
     }
     
-    .event-name {
-        position: relative;
+    .competitions-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        font-size: 14px;
+        min-width: 900px;
+        border: none;
+        border-spacing: 0;
+        table-layout: auto;
     }
     
+    .competitions-table th {
+        background: #f8f9fa;
+        color: #000000;
+        padding: 16px 20px;
+        text-align: left;
+        font-weight: 600;
+        border: none;
+        border-bottom: 1px solid #e5e5e5;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        vertical-align: top;
+    }
+    
+    .competitions-table th .dashicons {
+        font-size: 16px;
+        margin-right: 6px;
+        vertical-align: middle;
+        color: #666666;
+    }
+    
+    .competitions-table td {
+        padding: 16px 20px;
+        border: none;
+        border-bottom: 1px solid #f1f1f1;
+        vertical-align: middle;
+        color: #000000;
+        background: white;
+        text-align: left;
+    }
+    
+    .competitions-table tr:hover {
+        background: #fafafa;
+    }
+    
+    .competitions-table tr:hover td {
+        background: #fafafa;
+    }
+    
+    /* Highlights column styling */
+    .competitions-table td.highlights {
+        max-width: 220px;
+        word-wrap: break-word;
+        white-space: normal;
+        line-height: 1.4;
+    }
+    
+    /* Competition specific styling */
     .competition-link {
-        font-weight: bold;
-        color: #2c3e50 !important;
+        font-weight: 600;
+        color: #000000 !important;
         text-decoration: none;
     }
     
     .competition-link:hover {
-        color: #e74c3c !important;
+        color: #666666 !important;
         text-decoration: none;
     }
     
-    .has-highlights {
-        position: relative;
-        display: inline-block;
-        margin-left: 5px;
-        color: #f39c12;
-    }
-    
-    .has-highlights .tooltip {
-        position: absolute;
-        bottom: 100%;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #2c3e50;
-        color: white;
-        padding: 5px 10px;
-        border-radius: 4px;
-        font-size: 12px;
-        white-space: nowrap;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.3s ease;
-    }
-    
-    .has-highlights:hover .tooltip {
-        opacity: 1;
-    }
-    
-    .results-summary {
+    /* Student column styling */
+    .student-info {
         display: flex;
-        gap: 10px;
+        flex-direction: column;
+        gap: 2px;
+    }
+    
+    .student-name {
+        font-weight: 600;
+        color: #000000;
+        font-size: 14px;
+    }
+    
+    .student-email {
+        font-size: 12px;
+        color: #666666;
+        font-style: italic;
+    }
+    
+    .student-count {
+        font-size: 12px;
+        color: #007cba;
+        font-weight: 500;
+        font-style: italic;
+    }
+    
+    .no-student {
+        color: #999999;
+        font-style: italic;
+        font-size: 13px;
     }
     
     .wins {
         color: #27ae60;
-        font-weight: bold;
+        font-weight: 600;
+        margin-right: 8px;
     }
     
     .losses {
         color: #e74c3c;
-        font-weight: bold;
+        font-weight: 600;
     }
     
-    .win-rate-display {
+    /* Action Buttons */
+    .action-buttons {
         display: flex;
-        align-items: center;
         gap: 10px;
-    }
-    
-    .win-rate-bar {
-        width: 50px;
-        height: 8px;
-        background: #e1e1e1;
-        border-radius: 4px;
-        overflow: hidden;
-    }
-    
-    .win-rate-fill {
-        height: 100%;
-        background: #27ae60;
-        transition: width 0.3s ease;
-    }
-    
-    .actions {
-        display: flex;
-        gap: 5px;
+        justify-content: center;
+        align-items: center;
     }
     
     .btn-view,
@@ -517,16 +513,13 @@ function wcb_competitions_table_shortcode($atts) {
         justify-content: center;
         width: 35px;
         height: 35px;
-        border-radius: 6px;
+        background: #3498db;
+        color: white !important;
         text-decoration: none;
+        border-radius: 6px;
         transition: background-color 0.3s ease;
         border: none;
         cursor: pointer;
-    }
-    
-    .btn-view {
-        background: #3498db;
-        color: white;
     }
     
     .btn-view:hover {
@@ -537,7 +530,6 @@ function wcb_competitions_table_shortcode($atts) {
     
     .btn-edit {
         background: #f39c12;
-        color: white;
     }
     
     .btn-edit:hover {
@@ -546,100 +538,234 @@ function wcb_competitions_table_shortcode($atts) {
         text-decoration: none;
     }
     
-    .no-results {
+    /* No Competitions State */
+    .no-competitions {
         text-align: center;
-        padding: 60px 20px;
-        color: #666;
+        padding: 60px 30px;
+        color: #666666;
+        background: white;
     }
     
-    .no-results-icon {
-        font-size: 48px;
-        color: #ddd;
+    .no-competitions-icon {
         margin-bottom: 20px;
     }
     
-    .no-results h3 {
-        margin: 0 0 10px 0;
-        color: #2c3e50;
+    .no-competitions-icon .dashicons {
+        font-size: 48px;
+        color: #666666;
     }
     
+    .no-competitions h3 {
+        margin: 0 0 16px 0;
+        font-size: 24px;
+        color: #000000;
+        font-weight: 600;
+    }
+    
+    .no-competitions p {
+        margin: 0 0 24px 0;
+        color: #666666;
+        font-size: 16px;
+    }
+    
+    .btn-create-competition {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 12px 24px;
+        background: #000000;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-create-competition:hover {
+        background: #333333;
+        color: white;
+        text-decoration: none;
+        transform: translateY(-1px);
+    }
+    
+    /* Filters */
+    .competitions-filters {
+        background: #f8f9fa;
+        padding: 16px 24px;
+        border-bottom: 1px solid #e5e5e5;
+    }
+    
+    .competitions-filters-form {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .filter-search,
+    .filter-dates {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+    
+    .filter-input {
+        padding: 8px 12px;
+        border: 1px solid #e5e5e5;
+        background: white;
+        color: #000000;
+        font-size: 14px;
+        outline: none;
+        border-radius: 4px;
+    }
+    
+    .filter-submit {
+        padding: 8px 16px;
+        background: #000000;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .filter-submit:hover {
+        background: #333333;
+    }
+    
+    .filter-clear {
+        color: #666666;
+        text-decoration: none;
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+    
+    .filter-clear:hover {
+        color: #000000;
+        text-decoration: none;
+    }
+    
+    /* Pagination */
     .pagination {
         display: flex;
         justify-content: center;
         gap: 10px;
         margin-top: 30px;
+        padding: 20px;
     }
     
     .page-link {
         padding: 10px 15px;
         background: white;
-        color: #2c3e50;
+        color: #000000;
         text-decoration: none;
-        border: 2px solid #ddd;
-        border-radius: 6px;
+        border: 1px solid #e5e5e5;
+        border-radius: 4px;
         transition: all 0.3s ease;
     }
     
     .page-link:hover,
     .page-link.active {
-        background: #e74c3c;
+        background: #000000;
         color: white;
-        border-color: #e74c3c;
+        border-color: #000000;
+        text-decoration: none;
     }
     
-    .error {
-        background: #f8d7da;
-        color: #721c24;
-        padding: 20px;
-        border-radius: 6px;
-        border: 1px solid #f5c6cb;
-        text-align: center;
-        font-weight: bold;
-    }
-    
+    /* Responsive Design */
     @media (max-width: 768px) {
-        .table-header {
+        .competitions-header {
             flex-direction: column;
-            gap: 15px;
-            align-items: flex-start;
-        }
-        
-        .filters-form {
-            flex-direction: column;
+            gap: 16px;
             align-items: stretch;
         }
         
-        .search-field,
-        .date-filters {
+        .competitions-title-section h3 {
+            font-size: 16px;
+        }
+        
+        .competitions-filters-form {
+            flex-direction: column;
+            gap: 12px;
+            align-items: stretch;
+        }
+        
+        .filter-search,
+        .filter-dates {
             width: 100%;
             justify-content: stretch;
         }
         
-        .search-input {
-            width: 100%;
+        .competitions-table th,
+        .competitions-table td {
+            padding: 12px 16px;
+            font-size: 12px;
         }
         
-        .table-container {
-            overflow-x: auto;
+        .competitions-table td.highlights {
+            max-width: 180px;
+            font-size: 11px;
         }
         
-        .competitions-table {
-            min-width: 600px;
+        .action-buttons {
+            gap: 6px;
         }
         
-        .stats-grid {
-            grid-template-columns: repeat(2, 1fr);
+        .btn-view,
+        .btn-edit {
+            width: 30px;
+            height: 30px;
+        }
+        
+        .no-competitions h3 {
+            font-size: 20px;
+        }
+        
+        .no-competitions p {
+            font-size: 14px;
         }
     }
     
-    @media (max-width: 480px) {
-        .stats-grid {
-            grid-template-columns: 1fr;
+    @media (max-width: 600px) {
+        .competitions-table th:nth-child(3),
+        .competitions-table td:nth-child(3),
+        .competitions-table th:nth-child(6),
+        .competitions-table td:nth-child(6) {
+            display: none;
         }
         
         .competitions-table th,
         .competitions-table td {
-            padding: 10px;
+            padding: 10px 12px;
+        }
+        
+        .competitions-table th .dashicons {
+            font-size: 14px;
+            margin-right: 4px;
+        }
+        
+        .competitions-filters-form {
+            gap: 8px;
+        }
+        
+        .btn-log-simple {
+            padding: 6px 10px;
+            font-size: 11px;
+        }
+        
+        .action-buttons {
+            gap: 4px;
+        }
+        
+        .btn-view,
+        .btn-edit {
+            width: 28px;
+            height: 28px;
         }
     }
     </style>
