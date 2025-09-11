@@ -304,20 +304,21 @@ function wcb_get_parent_children($parent_user_id) {
     global $wpdb;
     $txn_table = $wpdb->prefix . 'mepr_transactions';
 
-    // Get WCB Mentoring membership ID to exclude
+    // Get WCB Mentoring and Competitive membership IDs to exclude (they're not paid)
     $wcb_mentoring_id = 1738;
+    $competitive_team_id = 1932;
 
-    // Get all active members (same query as active-members-test.php)
-    $active_members = $wpdb->get_results("
+    // Get all active members (excluding mentoring and competitive memberships)
+    $active_members = $wpdb->get_results($wpdb->prepare("
         SELECT DISTINCT u.ID, u.display_name, u.user_email
         FROM {$wpdb->users} u
         JOIN {$txn_table} t ON u.ID = t.user_id
         WHERE t.status IN ('confirmed', 'complete')
         AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-        AND t.product_id != {$wcb_mentoring_id}
+        AND t.product_id NOT IN (%d, %d)
         AND u.user_login != 'bwgdev'
         ORDER BY u.display_name
-    ");
+    ", $wcb_mentoring_id, $competitive_team_id));
 
     // Get children linked to this parent
     $linked_children_ids = get_user_meta($parent_user_id, 'wcb_linked_children', true);
@@ -345,8 +346,9 @@ function wcb_get_child_membership_status($child_user) {
     $user_id = $child_user->ID;
     $txn_table = $wpdb->prefix . 'mepr_transactions';
 
-    // Get user's most recent active transaction (same logic as active-members-test.php)
+    // Get user's most recent active transaction (excluding mentoring and competitive - they're not paid)
     $wcb_mentoring_id = 1738;
+    $competitive_team_id = 1932;
 
     $transaction = $wpdb->get_row($wpdb->prepare("
         SELECT t.*, p.post_title as product_name
@@ -354,11 +356,11 @@ function wcb_get_child_membership_status($child_user) {
         JOIN {$wpdb->posts} p ON t.product_id = p.ID
         WHERE t.user_id = %d
         AND t.status IN ('confirmed', 'complete')
-        AND t.product_id != %d
+        AND t.product_id NOT IN (%d, %d)
         AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
         ORDER BY t.created_at DESC
         LIMIT 1
-    ", $user_id, $wcb_mentoring_id));
+    ", $user_id, $wcb_mentoring_id, $competitive_team_id));
 
     // Default status
     $status = [
@@ -452,6 +454,7 @@ function wcb_link_child_to_parent($parent_user_id, $child_identifier) {
     global $wpdb;
     $txn_table = $wpdb->prefix . 'mepr_transactions';
     $wcb_mentoring_id = 1738;
+    $competitive_team_id = 1932;
 
     // Find child user by email, username, or display name
     $child_user = get_user_by('email', $child_identifier);
@@ -473,7 +476,7 @@ function wcb_link_child_to_parent($parent_user_id, $child_identifier) {
         return ['success' => false, 'message' => 'No user found with that email, username, or name.'];
     }
 
-    // Check if this user is an active member (same logic as active-members-test.php)
+    // Check if this user is an active member (excluding mentoring and competitive - they're not paid)
     $is_active_member = $wpdb->get_var($wpdb->prepare("
         SELECT COUNT(*)
         FROM {$wpdb->users} u
@@ -481,9 +484,9 @@ function wcb_link_child_to_parent($parent_user_id, $child_identifier) {
         WHERE u.ID = %d
         AND t.status IN ('confirmed', 'complete')
         AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-        AND t.product_id != %d
+        AND t.product_id NOT IN (%d, %d)
         AND u.user_login != 'bwgdev'
-    ", $child_user->ID, $wcb_mentoring_id));
+    ", $child_user->ID, $wcb_mentoring_id, $competitive_team_id));
 
     if (!$is_active_member) {
         return ['success' => false, 'message' => $child_user->display_name . ' is not currently an active member.'];
