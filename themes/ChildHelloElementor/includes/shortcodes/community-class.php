@@ -1,6 +1,135 @@
 <?php
 // Community Class Component with Member List and Session Logs
 
+// Helper function to consistently format dates as dd/mm/yyyy (same as dashboard-sessions.php)
+function wcb_format_community_date_for_display($date_value, $fallback_date = null) {
+    if (empty($date_value)) {
+        return $fallback_date ? date('d/m/Y', strtotime($fallback_date)) : '';
+    }
+    
+    // Handle datetime-local format (2024-03-15T14:30)
+    if (preg_match('/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/', $date_value, $matches)) {
+        return $matches[3] . '/' . $matches[2] . '/' . $matches[1];
+    }
+    
+    // Handle ISO date format (2024-03-15)
+    if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $date_value, $matches)) {
+        return $matches[3] . '/' . $matches[2] . '/' . $matches[1];
+    }
+    
+    // Handle dd/mm/yyyy format (already correct)
+    if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $date_value, $matches)) {
+        // Ensure two-digit day and month
+        $day = str_pad($matches[1], 2, '0', STR_PAD_LEFT);
+        $month = str_pad($matches[2], 2, '0', STR_PAD_LEFT);
+        return $day . '/' . $month . '/' . $matches[3];
+    }
+    
+    // Try strtotime as last resort, but force dd/mm/yyyy output
+    $timestamp = strtotime($date_value);
+    if ($timestamp && $timestamp > 0) {
+        return date('d/m/Y', $timestamp);
+    }
+    
+    // Ultimate fallback
+    return $fallback_date ? date('d/m/Y', strtotime($fallback_date)) : date('d/m/Y');
+}
+
+// Helper function to extract time from datetime string
+function wcb_extract_time_from_datetime($date_value) {
+    // Debug: Log the input value (only for administrators)
+    if (current_user_can('administrator')) {
+        error_log("=== TIME EXTRACTION DEBUG ===");
+        error_log("Input date_value: '" . $date_value . "'");
+    }
+
+    // Handle empty/null values
+    if (empty($date_value)) {
+        if (current_user_can('administrator')) {
+            error_log("Date value is empty, returning empty string");
+        }
+        return '';
+    }
+
+    // Handle datetime-local format (YYYY-MM-DDTHH:MM)
+    if (preg_match('/(\d{4})-(\d{2})-(\d{2})T(\d{1,2}):(\d{2})/', $date_value, $matches)) {
+        $hour = intval($matches[4]);
+        $minute = intval($matches[5]);
+
+        if (current_user_can('administrator')) {
+            error_log("Matched datetime-local format: " . $matches[0]);
+            error_log("Extracted hour: $hour, minute: $minute");
+        }
+
+        return date('g:i A', mktime($hour, $minute, 0));
+    }
+
+    // Handle datetime-local format with space separator (YYYY-MM-DD HH:MM)
+    if (preg_match('/(\d{4})-(\d{2})-(\d{2})\s+(\d{1,2}):(\d{2})/', $date_value, $matches)) {
+        $hour = intval($matches[4]);
+        $minute = intval($matches[5]);
+
+        if (current_user_can('administrator')) {
+            error_log("Matched datetime with space format: " . $matches[0]);
+            error_log("Extracted hour: $hour, minute: $minute");
+        }
+
+        return date('g:i A', mktime($hour, $minute, 0));
+    }
+
+    // Handle MySQL datetime format (YYYY-MM-DD HH:MM:SS)
+    if (preg_match('/(\d{4})-(\d{2})-(\d{2})\s+(\d{1,2}):(\d{2}):(\d{2})/', $date_value, $matches)) {
+        $hour = intval($matches[4]);
+        $minute = intval($matches[5]);
+        $second = intval($matches[6]);
+
+        if (current_user_can('administrator')) {
+            error_log("Matched MySQL datetime format: " . $matches[0]);
+            error_log("Extracted hour: $hour, minute: $minute, second: $second");
+        }
+
+        return date('g:i A', mktime($hour, $minute, $second));
+    }
+
+    // Handle time only format (HH:MM)
+    if (preg_match('/^(\d{1,2}):(\d{2})$/', $date_value, $matches)) {
+        $hour = intval($matches[1]);
+        $minute = intval($matches[2]);
+
+        if (current_user_can('administrator')) {
+            error_log("Matched time-only format: " . $matches[0]);
+            error_log("Extracted hour: $hour, minute: $minute");
+        }
+
+        return date('g:i A', mktime($hour, $minute, 0));
+    }
+
+    // Try using strtotime as fallback
+    $timestamp = strtotime($date_value);
+    if ($timestamp && $timestamp > 0) {
+        $hour = date('G', $timestamp);
+        $minute = date('i', $timestamp);
+
+        if (current_user_can('administrator')) {
+            error_log("Using strtotime fallback");
+            error_log("Parsed timestamp: $timestamp");
+            error_log("Extracted hour: $hour, minute: $minute");
+        }
+
+        // Only return time if it's not midnight (which often means no time was provided)
+        if ($hour != 0 || $minute != 0) {
+            return date('g:i A', $timestamp);
+        }
+    }
+
+    if (current_user_can('administrator')) {
+        error_log("No time pattern matched, returning empty string");
+        error_log("=== END TIME EXTRACTION DEBUG ===");
+    }
+
+    return '';
+}
+
 function community_class_shortcode($atts) {
     $atts = shortcode_atts([
         'per_page' => '10',
@@ -1373,7 +1502,7 @@ function wcb_ajax_load_community_members() {
     $rows = '';
     foreach ($users as $user) {
         $session_count = wcb_get_user_community_session_count($user->ID);
-        $join_date = date('M j, Y', strtotime($user->user_registered));
+        $join_date = date('d/m/Y', strtotime($user->user_registered));
 
         // Get member status based on transactions
         $status_info = wcb_get_member_status($user->ID);
@@ -1448,51 +1577,102 @@ function wcb_ajax_load_community_sessions() {
         $instructor_id = get_field('instructor', $session->ID);
         $attendance = get_field('attendance', $session->ID);
 
+        // Debug: Log session data for administrators
+        if (current_user_can('administrator')) {
+            error_log("=== SESSION DEBUG ===");
+            error_log("Session ID: " . $session->ID);
+            error_log("Session Title: " . $session->post_title);
+            error_log("Post Date: " . $session->post_date);
+        }
+
         // Try multiple ways to get the date
         $date_to_use = null;
 
         // Method 1: Try ACF field
         if (!empty($session_date)) {
             $date_to_use = $session_date;
+            if (current_user_can('administrator')) {
+                error_log("Using ACF field value: '" . $session_date . "'");
+            }
         }
 
         // Method 2: Try raw meta value
         if (empty($date_to_use)) {
-            $date_to_use = get_post_meta($session->ID, 'session_date', true);
+            $raw_meta = get_post_meta($session->ID, 'session_date', true);
+            if (!empty($raw_meta)) {
+                $date_to_use = $raw_meta;
+                if (current_user_can('administrator')) {
+                    error_log("Using raw meta value: '" . $raw_meta . "'");
+                }
+            }
         }
 
         // Method 3: Try field_ prefixed meta (ACF sometimes stores this way)
         if (empty($date_to_use)) {
-            $date_to_use = get_post_meta($session->ID, 'field_session_date', true);
+            $field_meta = get_post_meta($session->ID, 'field_session_date', true);
+            if (!empty($field_meta)) {
+                $date_to_use = $field_meta;
+                if (current_user_can('administrator')) {
+                    error_log("Using field_ prefixed meta: '" . $field_meta . "'");
+                }
+            }
         }
 
-        // Method 4: Fallback to post date
+        // Method 5: Try our raw backup meta (contains original datetime-local format)
         if (empty($date_to_use)) {
-            $date_to_use = $session->post_date;
+            $raw_backup = get_post_meta($session->ID, '_wcb_session_datetime_raw', true);
+            if (!empty($raw_backup)) {
+                $date_to_use = $raw_backup;
+                if (current_user_can('administrator')) {
+                    error_log("Using raw backup meta: '" . $raw_backup . "'");
+                }
+            }
         }
 
-        // Format the date
-        if ($date_to_use) {
-            // Handle different date formats
-            $timestamp = false;
-
-            if (is_numeric($date_to_use)) {
-                $timestamp = $date_to_use;
-            } elseif (strtotime($date_to_use)) {
-                $timestamp = strtotime($date_to_use);
+        // Method 4: Fallback to post publish date (WordPress stores in Y-m-d H:i:s format)
+        if (empty($date_to_use)) {
+            // Use the post's publish date directly
+            $date_to_use = $session->post_date; // This is in YYYY-MM-DD HH:MM:SS format
+            if (current_user_can('administrator')) {
+                error_log("Using post date fallback: '" . $session->post_date . "'");
             }
+        }
 
-            if ($timestamp && $timestamp > 0) {
-                $formatted_date = date('M j, Y', $timestamp);
-                $formatted_time = date('g:i A', $timestamp);
-            } else {
-                // Last resort: use post date
-                $formatted_date = date('M j, Y', strtotime($session->post_date));
-                $formatted_time = date('g:i A', strtotime($session->post_date));
+        if (current_user_can('administrator')) {
+            error_log("Final date_to_use: '" . $date_to_use . "'");
+        }
+
+        // Format the date using our helper function
+        $formatted_date = wcb_format_community_date_for_display($date_to_use, $session->post_date);
+
+        // Extract time if present in the date string
+        $formatted_time = wcb_extract_time_from_datetime($date_to_use);
+
+        // If no time found, try to extract from post date
+        if (empty($formatted_time)) {
+            $post_time = get_the_time('g:i A', $session);
+            // Only use post time if it's not midnight (which indicates no specific time was set)
+            if ($post_time !== '12:00 AM' && $post_time !== '12:00 AM') {
+                $formatted_time = $post_time;
+                if (current_user_can('administrator')) {
+                    error_log("Using post time as fallback: '" . $post_time . "'");
+                }
             }
-        } else {
-            $formatted_date = date('M j, Y', strtotime($session->post_date));
-            $formatted_time = date('g:i A', strtotime($session->post_date));
+        }
+
+        // Additional fallback: if we have a datetime-local value but time extraction failed,
+        // try to extract time from the original session_date value
+        if (empty($formatted_time) && !empty($session_date)) {
+            $formatted_time = wcb_extract_time_from_datetime($session_date);
+            if (current_user_can('administrator') && !empty($formatted_time)) {
+                error_log("Extracted time from original ACF field: '" . $formatted_time . "'");
+            }
+        }
+
+        if (current_user_can('administrator')) {
+            error_log("Formatted date: '" . $formatted_date . "'");
+            error_log("Formatted time: '" . $formatted_time . "'");
+            error_log("=== END SESSION DEBUG ===");
         }
         
         $instructor = $instructor_id ? get_user_by('ID', $instructor_id) : null;
@@ -1577,10 +1757,28 @@ function wcb_ajax_add_community_session() {
     $attendance = isset($_POST['attendance']) ? array_map('intval', $_POST['attendance']) : [];
     $notes = sanitize_textarea_field($_POST['session_notes']);
     
+    // Parse the datetime-local format properly for the title
+    $title_date = $session_date;
+    if (strpos($session_date, 'T') !== false) {
+        // datetime-local format: YYYY-MM-DDTHH:MM
+        $date_parts = explode('T', $session_date);
+        if (count($date_parts) == 2) {
+            $date_part = $date_parts[0]; // YYYY-MM-DD
+            $dateTime = DateTime::createFromFormat('Y-m-d', $date_part);
+            if ($dateTime) {
+                $title_date = $dateTime->format('d/m/Y');
+            } else {
+                $title_date = date('d/m/Y', strtotime($session_date));
+            }
+        }
+    } else {
+        $title_date = date('d/m/Y', strtotime($session_date));
+    }
+    
     // Create post
     $post_id = wp_insert_post([
         'post_type' => 'community_session',
-        'post_title' => 'Community Session - ' . date('M j, Y', strtotime($session_date)),
+        'post_title' => 'Community Session - ' . $title_date,
         'post_status' => 'publish',
         'post_author' => get_current_user_id()
     ]);
@@ -1591,7 +1789,20 @@ function wcb_ajax_add_community_session() {
         update_field('instructor', $instructor, $post_id);
         update_field('attendance', $attendance, $post_id);
         update_field('session_notes', $notes, $post_id);
-        
+
+        // Also save the raw datetime-local value as backup meta
+        update_post_meta($post_id, '_wcb_session_datetime_raw', $session_date);
+
+        // Debug: Verify what was saved
+        if (current_user_can('administrator')) {
+            $saved_date = get_field('session_date', $post_id);
+            $saved_meta = get_post_meta($post_id, 'session_date', true);
+            $saved_raw = get_post_meta($post_id, '_wcb_session_datetime_raw', true);
+            error_log("Saved ACF field: '" . $saved_date . "'");
+            error_log("Saved meta field: '" . $saved_meta . "'");
+            error_log("Saved raw backup: '" . $saved_raw . "'");
+        }
+
         wp_send_json_success('Session added successfully');
     } else {
         wp_send_json_error('Failed to create session');
@@ -1644,36 +1855,37 @@ function wcb_ajax_get_session_details() {
         $date_to_use = get_post_meta($session_id, 'field_session_date', true);
     }
 
+    // Method 5: Try our raw backup meta (contains original datetime-local format)
+    if (empty($date_to_use)) {
+        $date_to_use = get_post_meta($session_id, '_wcb_session_datetime_raw', true);
+    }
+
     // Method 4: Fallback to post date
     if (empty($date_to_use)) {
         $post = get_post($session_id);
         $date_to_use = $post->post_date;
     }
 
-    // Format the date
-    if ($date_to_use) {
-        // Handle different date formats
-        $timestamp = false;
+    // Format the date using our helper function
+    $post = get_post($session_id);
+    $formatted_date = wcb_format_community_date_for_display($date_to_use, $post->post_date);
 
-        if (is_numeric($date_to_use)) {
-            $timestamp = $date_to_use;
-        } elseif (strtotime($date_to_use)) {
-            $timestamp = strtotime($date_to_use);
-        }
+    // Extract time if present in the date string
+    $formatted_time = wcb_extract_time_from_datetime($date_to_use);
 
-        if ($timestamp && $timestamp > 0) {
-            $formatted_date = date('d/m/Y', $timestamp);
-            $formatted_time = date('g:i A', $timestamp);
-        } else {
-            // Last resort: use post date
-            $post = get_post($session_id);
-            $formatted_date = date('d/m/Y', strtotime($post->post_date));
-            $formatted_time = date('g:i A', strtotime($post->post_date));
+    // If no time found, try to extract from post date
+    if (empty($formatted_time)) {
+        $post_time = get_the_time('g:i A', $post);
+        // Only use post time if it's not midnight (which indicates no specific time was set)
+        if ($post_time !== '12:00 AM' && $post_time !== '12:00 AM') {
+            $formatted_time = $post_time;
         }
-    } else {
-        $post = get_post($session_id);
-        $formatted_date = date('d/m/Y', strtotime($post->post_date));
-        $formatted_time = date('g:i A', strtotime($post->post_date));
+    }
+
+    // Additional fallback: if we have a datetime-local value but time extraction failed,
+    // try to extract time from the original session_date value
+    if (empty($formatted_time) && !empty($session_date)) {
+        $formatted_time = wcb_extract_time_from_datetime($session_date);
     }
 
     $instructor = $instructor_id ? get_user_by('ID', $instructor_id) : null;
@@ -1985,14 +2197,14 @@ function wcb_get_member_status($user_id) {
 
             if ($days_until_expiry <= 2) {
                 // Expires within 2 days (weekly membership adjustment)
-                $expiry_date = date('M j', $expiry_timestamp);
+                $expiry_date = date('d/m/Y', $expiry_timestamp);
                 return [
                     'status' => 'expiring_soon',
                     'html' => '<span class="status-badge status-warning" title="Expires ' . $expiry_date . '">Expires Soon</span>'
                 ];
             } else {
                 // Active with good time remaining (5+ days)
-                $expiry_date = date('M j', $expiry_timestamp);
+                $expiry_date = date('d/m/Y', $expiry_timestamp);
                 return [
                     'status' => 'active',
                     'html' => '<span class="status-badge status-active" title="Expires ' . $expiry_date . '">Active</span>'
@@ -2008,10 +2220,10 @@ function wcb_get_member_status($user_id) {
 
             if ($days_since_expiry <= 30) {
                 // Recently expired (within 30 days)
-                $expiry_date = date('M j', $expiry_timestamp);
+                $expiry_date = date('d/m/Y', $expiry_timestamp);
                 return [
-                    'status' => 'recently_expired',
-                    'html' => '<span class="status-badge status-expired" title="Expired ' . $expiry_date . '">Recently Expired</span>'
+                    'status' => 'expired',
+                    'html' => '<span class="status-badge status-expired" title="Expired ' . $expiry_date . '">Expired</span>'
                 ];
             } else {
                 // Long expired
@@ -2062,14 +2274,14 @@ function wcb_get_member_expiry($user_id) {
 
         $expiry_timestamp = strtotime($expires_at);
         if ($expiry_timestamp > time()) {
-            return date('M j, Y', $expiry_timestamp);
+            return date('d/m/Y', $expiry_timestamp);
         }
     }
 
     // All transactions expired
     $latest_expired = $transactions[0];
     if (!empty($latest_expired->expires_at) && $latest_expired->expires_at !== '0000-00-00 00:00:00') {
-        return date('M j, Y', strtotime($latest_expired->expires_at)) . ' (Expired)';
+        return date('d/m/Y', strtotime($latest_expired->expires_at)) . ' (Expired)';
     }
 
     return 'Expired';
@@ -2099,7 +2311,7 @@ function wcb_ajax_get_community_member_details() {
     $status_info = wcb_get_member_status($user_id);
     $expiry_info = wcb_get_member_expiry($user_id);
     $session_count = wcb_get_user_community_session_count($user_id);
-    $join_date = date('M j, Y', strtotime($user->user_registered));
+    $join_date = date('d/m/Y', strtotime($user->user_registered));
 
     // Get subscription details
     $subscription_details = wcb_get_user_subscription_details($user_id);
@@ -2205,11 +2417,11 @@ function wcb_get_user_subscription_details($user_id) {
         $details['Status'] = ucfirst($transaction->status);
 
         if (!empty($transaction->created_at) && $transaction->created_at !== '0000-00-00 00:00:00') {
-            $details['Start Date'] = date('M j, Y', strtotime($transaction->created_at));
+            $details['Start Date'] = date('d/m/Y', strtotime($transaction->created_at));
         }
 
         if (!empty($transaction->expires_at) && $transaction->expires_at !== '0000-00-00 00:00:00') {
-            $details['Expires'] = date('M j, Y', strtotime($transaction->expires_at));
+            $details['Expires'] = date('d/m/Y', strtotime($transaction->expires_at));
         } else {
             $details['Expires'] = 'Lifetime';
         }
@@ -2292,7 +2504,7 @@ function wcb_get_user_recent_payments($user_id, $limit = 5) {
 
         $payment = [
             'amount' => number_format($txn->amount, 2),
-            'date' => date('M j, Y', strtotime($txn->created_at)),
+            'date' => date('d/m/Y', strtotime($txn->created_at)),
             'method' => $method,
             'description' => $txn->product_name ?: 'Community Class'
         ];
@@ -2586,10 +2798,28 @@ function wcb_handle_community_session_submission() {
         return ['success' => false, 'message' => 'Instructor is required'];
     }
 
+    // Parse the datetime-local format properly for the title
+    $title_date = $session_date;
+    if (strpos($session_date, 'T') !== false) {
+        // datetime-local format: YYYY-MM-DDTHH:MM
+        $date_parts = explode('T', $session_date);
+        if (count($date_parts) == 2) {
+            $date_part = $date_parts[0]; // YYYY-MM-DD
+            $dateTime = DateTime::createFromFormat('Y-m-d', $date_part);
+            if ($dateTime) {
+                $title_date = $dateTime->format('d/m/Y');
+            } else {
+                $title_date = date('d/m/Y', strtotime($session_date));
+            }
+        }
+    } else {
+        $title_date = date('d/m/Y', strtotime($session_date));
+    }
+
     // Create post
     $post_id = wp_insert_post([
         'post_type' => 'community_session',
-        'post_title' => 'Community Session - ' . date('M j, Y', strtotime($session_date)),
+        'post_title' => 'Community Session - ' . $title_date,
         'post_status' => 'publish',
         'post_author' => get_current_user_id()
     ]);
@@ -2600,6 +2830,9 @@ function wcb_handle_community_session_submission() {
         update_field('instructor', $instructor, $post_id);
         update_field('attendance', $attendance, $post_id);
         update_field('session_notes', $notes, $post_id);
+
+        // Also save the raw datetime-local value as backup meta
+        update_post_meta($post_id, '_wcb_session_datetime_raw', $session_date);
 
         return ['success' => true, 'message' => 'Session logged successfully'];
     } else {
