@@ -636,15 +636,18 @@ function dashboard_stats_shortcode() {
                 <div class="age-not-specified-members-container">
                     <?php foreach ($members_without_age as $member): ?>
                     <div class="age-not-specified-member-card">
-                        <div class="member-card-header">
-                            <div class="member-info">
-                                <h4 class="member-name"><?php echo esc_html($member['name']); ?></h4>
-                                <div class="member-email"><?php echo esc_html($member['email']); ?></div>
-                            </div>
-                            <div class="status-badge missing-info">
-                                Missing Age
-                            </div>
-                        </div>
+                         <div class="member-card-header">
+                             <div class="member-info">
+                                 <h4 class="member-name">
+                                     <?php echo esc_html($member['name']); ?>
+                                     <span class="age-info">(<?php echo esc_html($member['age_display']); ?>)</span>
+                                 </h4>
+                                 <div class="member-email"><?php echo esc_html($member['email']); ?></div>
+                             </div>
+                             <div class="status-badge missing-info">
+                                 Missing Age
+                             </div>
+                         </div>
                         <div class="member-card-body">
                             <div class="member-details-grid">
                                 <div class="detail-item">
@@ -719,13 +722,16 @@ function dashboard_stats_shortcode() {
                     <?php foreach ($waitlist_members_detailed as $member): ?>
                     <div class="waitlist-member-card">
                         <div class="member-card-header">
-                            <div class="member-info">
-                                <h4 class="member-name"><?php echo esc_html($member['name']); ?></h4>
-                                <div class="member-email"><?php echo esc_html($member['email']); ?></div>
-                            </div>
-                            <div class="status-badge waitlist-status">
-                                On Waitlist
-                            </div>
+                             <div class="member-info">
+                                 <h4 class="member-name">
+                                     <?php echo esc_html($member['name']); ?>
+                                     <span class="age-info-waitlist">(<?php echo esc_html($member['age_display']); ?>)</span>
+                                 </h4>
+                                 <div class="member-email"><?php echo esc_html($member['email']); ?></div>
+                             </div>
+                             <div class="status-badge waitlist-status">
+                                 On Waitlist
+                             </div>
                         </div>
                         <div class="member-card-body">
                             <div class="member-details-grid">
@@ -1316,13 +1322,37 @@ function dashboard_stats_shortcode() {
         flex: 1;
     }
 
-    .member-name {
-        font-weight: 600;
-        color: #212529;
-        font-size: 16px;
-        margin: 0 0 4px 0;
-        line-height: 1.3;
-    }
+     .member-name {
+         font-weight: 600;
+         color: #212529;
+         font-size: 16px;
+         margin: 0 0 4px 0;
+         line-height: 1.3;
+     }
+
+     .age-info {
+         font-weight: 400;
+         color: #dc3545;
+         font-size: 12px;
+         margin-left: 8px;
+         background: #f8d7da;
+         padding: 2px 6px;
+         border-radius: 4px;
+         border: 1px solid #f5c6cb;
+         white-space: nowrap;
+     }
+
+     .age-info-waitlist {
+         font-weight: 400;
+         color: #1976d2;
+         font-size: 12px;
+         margin-left: 8px;
+         background: #e3f2fd;
+         padding: 2px 6px;
+         border-radius: 4px;
+         border: 1px solid #bbdefb;
+         white-space: nowrap;
+     }
 
     .member-email {
         font-size: 13px;
@@ -2790,11 +2820,11 @@ function get_member_age_breakdown($active_members = null) {
     
     $member_ids = implode(',', $active_members);
     
-    // Get ALL age data for active members (including empty/missing)
+    // Get ALL date of birth data for active members (including empty/missing)
     $age_data = $wpdb->get_results("
         SELECT COALESCE(um.meta_value, '') as meta_value, u.ID as user_id
         FROM {$wpdb->users} u
-        LEFT JOIN {$wpdb->usermeta} um ON u.ID = um.user_id AND um.meta_key = 'mepr_age'
+        LEFT JOIN {$wpdb->usermeta} um ON u.ID = um.user_id AND um.meta_key = 'mepr_date_of_birth'
         WHERE u.ID IN ($member_ids)
         ORDER BY u.ID
     ");
@@ -2816,7 +2846,7 @@ function get_member_age_breakdown($active_members = null) {
             continue;
         }
         
-        $age = calculate_age_from_data($data->meta_value);
+        $age = calculate_age_from_dob($data->meta_value);
         
         // Process ALL members (including those without valid age data)
         $processed_users[] = $data->user_id;
@@ -2842,18 +2872,48 @@ function get_member_age_breakdown($active_members = null) {
     return $age_groups;
 }
 
-// Helper function to calculate age from mepr_age field
-function calculate_age_from_data($age_value) {
+// Helper function to calculate age from mepr_date_of_birth field
+function calculate_age_from_dob($dob_value) {
     // Clean the input
-    $age_value = trim($age_value);
-    
-    // The mepr_age field should contain a numeric age value
-    if (is_numeric($age_value) && $age_value > 0 && $age_value < 120) {
-        return intval($age_value);
+    $dob_value = trim($dob_value);
+
+    // Check if we have a valid date of birth
+    if (empty($dob_value) || $dob_value === 'not specified' || $dob_value === 'Not specified') {
+        return null;
     }
-    
-    // If we can't determine age, return null instead of a default
-    // This way we don't count invalid/missing data
+
+    // Try to parse the date of birth - handle multiple date formats
+    $dob = null;
+
+    // First try DD/MM/YYYY format (common MemberPress format)
+    if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $dob_value, $matches)) {
+        $day = str_pad($matches[1], 2, '0', STR_PAD_LEFT);
+        $month = str_pad($matches[2], 2, '0', STR_PAD_LEFT);
+        $year = $matches[3];
+        $dob = date_create_from_format('d/m/Y', "$day/$month/$year");
+    }
+
+    // If that failed, try other common formats
+    if (!$dob) {
+        // Try standard date_create (handles YYYY-MM-DD, MM/DD/YYYY, etc.)
+        $dob = date_create($dob_value);
+    }
+
+    // If still no valid date, return null
+    if (!$dob) {
+        return null;
+    }
+
+    // Calculate age
+    $today = date_create('today');
+    $age = date_diff($dob, $today)->y;
+
+    // Validate the calculated age (reasonable range)
+    if ($age >= 0 && $age < 120) {
+        return $age;
+    }
+
+    // If age calculation seems invalid, return null
     return null;
 }
 
@@ -3343,28 +3403,32 @@ function get_members_without_ethnicity_data($active_member_ids) {
 // NEW: Function to get members without age data
 function get_members_without_age_data($active_member_ids) {
     global $wpdb;
-    
+
     if (empty($active_member_ids)) {
         return [];
     }
-    
+
     $member_ids = implode(',', $active_member_ids);
     $txn_table = $wpdb->prefix . 'mepr_transactions';
-    
-    // Get members who have missing or empty age data
-    $members_without_age = $wpdb->get_results("
+
+    // Get ALL members first, then filter those with missing/invalid date of birth data
+    $all_members = $wpdb->get_results("
         SELECT u.ID as user_id, u.display_name as name, u.user_email as email,
-               COALESCE(um.meta_value, '') as age_value
+                COALESCE(um.meta_value, '') as dob_value
         FROM {$wpdb->users} u
-        LEFT JOIN {$wpdb->usermeta} um ON u.ID = um.user_id AND um.meta_key = 'mepr_age'
+        LEFT JOIN {$wpdb->usermeta} um ON u.ID = um.user_id AND um.meta_key = 'mepr_date_of_birth'
         WHERE u.ID IN ($member_ids)
-        AND (um.meta_value IS NULL OR um.meta_value = '' OR um.meta_value = 'not specified' OR um.meta_value = 'Not specified')
         ORDER BY u.display_name ASC
     ");
-    
+
     $members_data = [];
-    
-    foreach ($members_without_age as $member) {
+
+    foreach ($all_members as $member) {
+        // Use the same logic as get_member_age_breakdown to determine if age data is missing/invalid
+        $age = calculate_age_from_dob($member->dob_value);
+
+        // Only include members who have missing or invalid age data
+        if ($age === null) {
         // Get member's program information
         $member_program_info = $wpdb->get_row($wpdb->prepare("
             SELECT p.post_title as program_name, t.created_at as member_since
@@ -3376,11 +3440,11 @@ function get_members_without_age_data($active_member_ids) {
             ORDER BY t.created_at DESC
             LIMIT 1
         ", $member->user_id));
-        
+
         if ($member_program_info) {
             $member_since = date('d/m/Y', strtotime($member_program_info->member_since));
             $days_active = floor((time() - strtotime($member_program_info->member_since)) / (60 * 60 * 24));
-            
+
             // Get membership type from program name
             $membership_type = '';
             if (stripos($member_program_info->program_name, 'monthly') !== false) {
@@ -3390,7 +3454,13 @@ function get_members_without_age_data($active_member_ids) {
             } elseif (stripos($member_program_info->program_name, 'term') !== false) {
                 $membership_type = 'Full Term';
             }
-            
+
+            // Determine what age/DOB info to display
+            $age_display = 'No Date of Birth';
+            if (!empty($member->dob_value) && $member->dob_value !== 'not specified' && $member->dob_value !== 'Not specified') {
+                $age_display = 'Invalid DOB: ' . $member->dob_value;
+            }
+
             $members_data[] = [
                 'user_id' => $member->user_id,
                 'name' => $member->name ?: 'No Name',
@@ -3398,11 +3468,13 @@ function get_members_without_age_data($active_member_ids) {
                 'program' => $member_program_info->program_name,
                 'membership_type' => $membership_type,
                 'member_since' => $member_since,
-                'days_active' => $days_active . ' days'
+                'days_active' => $days_active . ' days',
+                'age_display' => $age_display
             ];
         }
+        } // End if ($age === null)
     }
-    
+
     return $members_data;
 }
 
@@ -3412,15 +3484,17 @@ function get_waitlist_members_detailed() {
     
     $txn_table = $wpdb->prefix . 'mepr_transactions';
     
-    // Get detailed waitlist member information using the same logic as the count function
+    // Get detailed waitlist member information including date of birth
     $waitlist_members = $wpdb->get_results("
         SELECT DISTINCT u.ID as user_id, u.display_name as name, u.user_email as email,
                p.post_title as program_name, t.created_at as joined_date,
-               t.id as transaction_id, s.id as subscription_id
+               t.id as transaction_id, s.id as subscription_id,
+               COALESCE(um.meta_value, '') as dob_value
         FROM {$wpdb->users} u
         JOIN {$txn_table} t ON u.ID = t.user_id
         JOIN {$wpdb->posts} p ON t.product_id = p.ID
         LEFT JOIN {$wpdb->prefix}mepr_subscriptions s ON t.subscription_id = s.id
+        LEFT JOIN {$wpdb->usermeta} um ON u.ID = um.user_id AND um.meta_key = 'mepr_date_of_birth'
         WHERE t.status IN ('confirmed', 'complete')
         AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
         AND p.post_type = 'memberpressproduct'
@@ -3444,6 +3518,10 @@ function get_waitlist_members_detailed() {
         } elseif (stripos($member->program_name, 'term') !== false) {
             $membership_type = 'Full Term';
         }
+
+        // Calculate age from date of birth
+        $age = calculate_age_from_dob($member->dob_value);
+        $age_display = ($age !== null) ? $age . ' years old' : 'Age not specified';
         
         $members_data[] = [
             'user_id' => $member->user_id,
@@ -3455,7 +3533,8 @@ function get_waitlist_members_detailed() {
             'days_waiting' => $days_waiting . ' days',
             'days_waiting_number' => $days_waiting, // For calculations
             'subscription_id' => $member->subscription_id,
-            'transaction_id' => $member->transaction_id
+            'transaction_id' => $member->transaction_id,
+            'age_display' => $age_display
         ];
     }
     
