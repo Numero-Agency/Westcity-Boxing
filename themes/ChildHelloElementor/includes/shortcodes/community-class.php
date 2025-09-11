@@ -2260,16 +2260,21 @@ function wcb_get_user_recent_payments($user_id, $limit = 5) {
         return $payments;
     }
 
-    // Get recent transactions
+    // Exclude mentoring and competitive memberships (they're not paid)
+    $wcb_mentoring_id = 1738;
+    $competitive_team_id = 1932;
+
+    // Get recent transactions (excluding mentoring and competitive)
     $transactions = $wpdb->get_results($wpdb->prepare("
         SELECT t.*, p.post_title as product_name
         FROM {$txn_table} t
         LEFT JOIN {$wpdb->posts} p ON t.product_id = p.ID
         WHERE t.user_id = %d
         AND t.status IN ('confirmed', 'complete')
+        AND t.product_id NOT IN (%d, %d)
         ORDER BY t.created_at DESC
         LIMIT %d
-    ", $user_id, $limit));
+    ", $user_id, $wcb_mentoring_id, $competitive_team_id, $limit));
 
     foreach ($transactions as $txn) {
         // Determine payment method

@@ -3235,8 +3235,9 @@ function wcb_get_student_detailed_payment_info($user_id) {
         return $result;
     }
 
-    // Get user's most recent active transaction
+    // Get user's most recent active transaction (excluding mentoring and competitive)
     $wcb_mentoring_id = 1738;
+    $competitive_team_id = 1932;
 
     $transaction = $wpdb->get_row($wpdb->prepare("
         SELECT t.*, p.post_title as product_name
@@ -3244,11 +3245,11 @@ function wcb_get_student_detailed_payment_info($user_id) {
         JOIN {$wpdb->posts} p ON t.product_id = p.ID
         WHERE t.user_id = %d
         AND t.status IN ('confirmed', 'complete')
-        AND t.product_id != %d
+        AND t.product_id NOT IN (%d, %d)
         AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
         ORDER BY t.created_at DESC
         LIMIT 1
-    ", $user_id, $wcb_mentoring_id));
+    ", $user_id, $wcb_mentoring_id, $competitive_team_id));
 
     if (!$transaction) {
         return $result;
@@ -3257,11 +3258,7 @@ function wcb_get_student_detailed_payment_info($user_id) {
     // Detect payment type
     $payment_type = wcb_detect_student_payment_type($transaction);
 
-    // Check if this is a competitive membership (ID: 1932) - treat as active, not needing activation
-    $competitive_team_id = 1932;
-    $is_competitive = ($transaction->product_id == $competitive_team_id);
-
-    if ($payment_type === 'stripe' || $is_competitive) {
+    if ($payment_type === 'stripe') {
         $result['is_stripe'] = true;
 
         // Get subscription details
@@ -3279,9 +3276,6 @@ function wcb_get_student_detailed_payment_info($user_id) {
         } else {
             $details['Expires'] = 'Lifetime';
         }
-
-        // For competitive memberships, treat exactly like regular memberships
-        // No special labeling needed - they're just for identification purposes
 
         // Get subscription info if available
         if ($subs_exists && !empty($transaction->subscription_id)) {

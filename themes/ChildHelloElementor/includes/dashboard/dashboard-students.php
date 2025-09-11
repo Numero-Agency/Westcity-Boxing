@@ -238,18 +238,19 @@ function wcb_get_membership_status_counts() {
 
     $total_active_count = 0;
 
-    // Step 1: Get ALL active members first (same as active-members-test.php)
+    // Step 1: Get ALL active members first (excluding mentoring and competitive)
     $wcb_mentoring_id = 1738;
+    $competitive_team_id = 1932;
     $all_active_members = $wpdb->get_results($wpdb->prepare("
         SELECT DISTINCT u.ID, u.display_name
         FROM {$wpdb->users} u
         JOIN {$txn_table} t ON u.ID = t.user_id
         WHERE t.status IN ('confirmed', 'complete')
         AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-        AND t.product_id != %d
+        AND t.product_id NOT IN (%d, %d)
         AND u.user_login != 'bwgdev'
         ORDER BY u.ID
-    ", $wcb_mentoring_id));
+    ", $wcb_mentoring_id, $competitive_team_id));
 
     // Step 2: Filter by groups (same as active-members-test.php)
     $program_group_members = [];
@@ -284,10 +285,10 @@ function wcb_get_membership_status_counts() {
                     WHERE t.user_id = %d
                     AND t.status IN ('confirmed', 'complete')
                     AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-                    AND t.product_id != %d
+                    AND t.product_id NOT IN (%d, %d)
                     ORDER BY t.created_at DESC
                     LIMIT 1
-                ", $active_member->ID, $wcb_mentoring_id));
+                ", $active_member->ID, $wcb_mentoring_id, $competitive_team_id));
 
                 if ($user_transaction && in_array($user_transaction->product_id, $membership_ids)) {
                     $program_group_members[$active_member->ID] = $active_member;
@@ -340,21 +341,22 @@ function wcb_get_paid_stripe_members_count() {
     }
     
     $wcb_mentoring_id = 1738;
+    $competitive_team_id = 1932;
     
-    // Get members with Stripe payments (using same logic as wcb_get_student_payment_status)
+    // Get members with Stripe payments (excluding mentoring and competitive)
     $stripe_members = $wpdb->get_results($wpdb->prepare("
         SELECT DISTINCT u.ID
         FROM {$wpdb->users} u
         JOIN {$txn_table} t ON u.ID = t.user_id
         WHERE t.status IN ('confirmed', 'complete')
         AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-        AND t.product_id != %d
+        AND t.product_id NOT IN (%d, %d)
         AND u.user_login != 'bwgdev'
         AND t.gateway IS NOT NULL
         AND t.gateway != ''
         AND t.gateway != 'manual'
         AND (t.gateway LIKE '%%stripe%%' OR t.gateway REGEXP '^sz[a-z0-9\\-]+$')
-    ", $wcb_mentoring_id));
+    ", $wcb_mentoring_id, $competitive_team_id));
     
     return count($stripe_members);
 }
@@ -1040,17 +1042,17 @@ function wcb_ajax_load_dashboard_students_table() {
     $wcb_mentoring_id = 1738;
     $competitive_team_id = 1932; // Competitive Team membership ID
 
-    // Step 1: Get ALL active members first (same as active-members-test.php)
+    // Step 1: Get ALL active members first (excluding mentoring and competitive)
     $all_active_members = $wpdb->get_results($wpdb->prepare("
         SELECT DISTINCT u.ID, u.display_name, u.user_email, u.user_registered
         FROM {$wpdb->users} u
         JOIN {$txn_table} t ON u.ID = t.user_id
         WHERE t.status IN ('confirmed', 'complete')
         AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-        AND t.product_id != %d
+        AND t.product_id NOT IN (%d, %d)
         AND u.user_login != 'bwgdev'
         ORDER BY u.ID
-    ", $wcb_mentoring_id));
+    ", $wcb_mentoring_id, $competitive_team_id));
 
     // Step 2: Filter by groups (same as active-members-test.php)
     $all_program_members = [];
@@ -1085,33 +1087,15 @@ function wcb_ajax_load_dashboard_students_table() {
                     WHERE t.user_id = %d
                     AND t.status IN ('confirmed', 'complete')
                     AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-                    AND t.product_id != %d
+                    AND t.product_id NOT IN (%d, %d)
                     ORDER BY t.created_at DESC
                     LIMIT 1
-                ", $active_member->ID, $wcb_mentoring_id));
+                ", $active_member->ID, $wcb_mentoring_id, $competitive_team_id));
 
                 if ($user_transaction && in_array($user_transaction->product_id, $membership_ids)) {
                     $all_program_members[$active_member->ID] = $active_member;
                 }
             }
-        }
-    }
-
-    // Step 3: Also include Competitive Team members (they should remain active)
-    foreach ($all_active_members as $active_member) {
-        // Check if they have Competitive Team membership
-        $competitive_transaction = $wpdb->get_row($wpdb->prepare("
-            SELECT t.*
-            FROM {$txn_table} t
-            WHERE t.user_id = %d
-            AND t.product_id = %d
-            AND t.status IN ('confirmed', 'complete')
-            AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-            LIMIT 1
-        ", $active_member->ID, $competitive_team_id));
-
-        if ($competitive_transaction) {
-            $all_program_members[$active_member->ID] = $active_member;
         }
     }
 
@@ -1130,19 +1114,19 @@ function wcb_ajax_load_dashboard_students_table() {
         // Filter for Stripe/paid members only
         $target_members = [];
         foreach ($filtered_members as $member) {
-            // Check if this member has Stripe payment
+            // Check if this member has Stripe payment (excluding mentoring and competitive)
             $has_stripe = $wpdb->get_var($wpdb->prepare("
                 SELECT COUNT(*)
                 FROM {$txn_table} t
                 WHERE t.user_id = %d
                 AND t.status IN ('confirmed', 'complete')
                 AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-                AND t.product_id != %d
+                AND t.product_id NOT IN (%d, %d)
                 AND t.gateway IS NOT NULL
                 AND t.gateway != ''
                 AND t.gateway != 'manual'
                 AND (t.gateway LIKE '%%stripe%%' OR t.gateway REGEXP '^sz[a-z0-9\\\\-]+$')
-            ", $member->ID, $wcb_mentoring_id));
+            ", $member->ID, $wcb_mentoring_id, $competitive_team_id));
             
             if ($has_stripe > 0) {
                 $target_members[] = $member;
@@ -1449,8 +1433,9 @@ function wcb_get_user_status_info($user_id, $current_filter) {
     global $wpdb;
     $txn_table = $wpdb->prefix . 'mepr_transactions';
     $wcb_mentoring_id = 1738;
+    $competitive_team_id = 1932;
 
-    // Check if user has active transactions
+    // Check if user has active transactions (excluding mentoring and competitive)
     $active_transaction = $wpdb->get_row($wpdb->prepare("
         SELECT t.*, p.post_title as membership_name
         FROM {$txn_table} t
@@ -1458,10 +1443,10 @@ function wcb_get_user_status_info($user_id, $current_filter) {
         WHERE t.user_id = %d
         AND t.status IN ('confirmed', 'complete')
         AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-        AND t.product_id != %d
+        AND t.product_id NOT IN (%d, %d)
         ORDER BY t.created_at DESC
         LIMIT 1
-    ", $user_id, $wcb_mentoring_id));
+    ", $user_id, $wcb_mentoring_id, $competitive_team_id));
 
     if ($active_transaction) {
         // Check if it's a waitlist membership
@@ -1674,6 +1659,7 @@ function wcb_ajax_export_students() {
     $status = sanitize_text_field($_GET['status']);
     $search = sanitize_text_field($_GET['search']);
     $wcb_mentoring_id = 1738;
+    $competitive_team_id = 1932;
 
     // Build query based on status (same logic as table loading)
     $base_where = "WHERE u.user_login != 'bwgdev'";
@@ -1694,7 +1680,7 @@ function wcb_ajax_export_students() {
                 {$base_where}
                 AND t.status IN ('confirmed', 'complete')
                 AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-                AND t.product_id != {$wcb_mentoring_id}
+                AND t.product_id NOT IN ({$wcb_mentoring_id}, {$competitive_team_id})
                 {$search_where}
                 ORDER BY u.display_name
             ";
@@ -1742,7 +1728,7 @@ function wcb_ajax_export_students() {
                 {$base_where}
                 AND t.status IN ('confirmed', 'complete')
                 AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-                AND t.product_id != {$wcb_mentoring_id}
+                AND t.product_id NOT IN ({$wcb_mentoring_id}, {$competitive_team_id})
                 AND t.gateway IS NOT NULL
                 AND t.gateway != ''
                 AND t.gateway != 'manual'
