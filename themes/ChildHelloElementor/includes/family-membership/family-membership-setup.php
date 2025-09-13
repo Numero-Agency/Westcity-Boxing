@@ -368,7 +368,7 @@ function wcb_get_child_membership_status($child_user) {
         'status_text' => 'No Active Membership',
         'program_name' => 'Not Enrolled',
         'expires_date' => null,
-        'renewal_url' => '/membership-plans/'
+        'renewal_url' => home_url('/membership-plans/')
     ];
 
     if ($transaction) {
@@ -711,43 +711,43 @@ function wcb_get_membership_group_info($product_id) {
         // Mini Cadet Boys patterns
         'Mini Cadet Boys' => [
             'group_name' => 'Mini Cadet Boys (9-11 Years) Group 1',
-            'group_url' => 'https://westcityboxing.local/plans/mini-cadet-boys-9-11-years-group-1/'
+            'group_url' => home_url('/plans/mini-cadet-boys-9-11-years-group-1/')
         ],
 
         // Cadet Boys Group 1 patterns
         'Cadet Boys (12-14 Years) Group 1' => [
             'group_name' => 'Cadet Boys Group 1',
-            'group_url' => 'https://westcityboxing.local/plans/cadet-boys-group-1/'
+            'group_url' => home_url('/plans/cadet-boys-group-1/')
         ],
 
         // Cadet Boys Group 2 patterns
         'Cadet Boys (12-14 Years) Group 2' => [
             'group_name' => 'Cadet Boys Group 2',
-            'group_url' => 'https://westcityboxing.local/plans/cadet-boys-group-2/'
+            'group_url' => home_url('/plans/cadet-boys-group-2/')
         ],
 
         // Youth Boys Group 1 patterns
         'Youth Boys (15-18 Years) Group 1' => [
             'group_name' => 'Youth Boys Group 1',
-            'group_url' => 'https://westcityboxing.local/plans/youth-boys-group-1/'
+            'group_url' => home_url('/plans/youth-boys-group-1/')
         ],
 
         // Youth Boys Group 2 patterns
         'Youth Boys (15-18 Years) Group 2' => [
             'group_name' => 'Youth Boys Group 2',
-            'group_url' => 'https://westcityboxing.local/plans/youth-boys-group-2/'
+            'group_url' => home_url('/plans/youth-boys-group-2/')
         ],
 
         // Mini Cadets Girls patterns
         'Mini Cadet Girls' => [
             'group_name' => 'Mini Cadets Girls Group 1',
-            'group_url' => 'https://westcityboxing.local/plans/mini-cadets-girls-group-1/'
+            'group_url' => home_url('/plans/mini-cadets-girls-group-1/')
         ],
 
         // Youth Girls patterns
         'Youth Girls (13-18 Years) Group 1' => [
             'group_name' => 'Youth Girls Group 1',
-            'group_url' => 'https://westcityboxing.local/plans/youth-girls-group-1/'
+            'group_url' => home_url('/plans/youth-girls-group-1/')
         ]
     ];
 
