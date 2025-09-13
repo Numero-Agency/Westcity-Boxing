@@ -641,10 +641,14 @@ function wcb_ajax_simple_parent_registration() {
     // Log the user in
     wp_set_current_user($user_id);
     wp_set_auth_cookie($user_id);
+    
+    // Force WordPress to recognize the user is logged in
+    do_action('wp_login', $username, get_user_by('id', $user_id));
 
     wp_send_json_success([
         'message' => 'Registration completed successfully! Redirecting to your family dashboard...',
-        'redirect_url' => home_url('/family-dashboard/')
+        'redirect_url' => home_url('/family-dashboard/'),
+        'user_id' => $user_id
     ]);
 }
 add_action('wp_ajax_wcb_simple_parent_registration', 'wcb_ajax_simple_parent_registration');

@@ -64,8 +64,18 @@ function wcb_parent_invitation_form_shortcode($atts) {
         <div id="invitation-result" style="margin-top: 20px;"></div>
     </div>
     
+    <?php
+    ?>
+    
     <script>
     jQuery(document).ready(function($) {
+        // Check if wcb_ajax is available
+        if (typeof wcb_ajax === 'undefined') {
+            console.error('WCB AJAX object not found. Please reload the page.');
+            $('#invitation-result').html('<div class="wcb-notice wcb-notice-error">Error: Page scripts not loaded properly. Please reload the page.</div>');
+            return;
+        }
+        
         $('#parent-invitation-form').on('submit', function(e) {
             e.preventDefault();
             
@@ -181,8 +191,17 @@ function wcb_parent_registration_form_shortcode($atts) {
         <div id="registration-result" style="margin-top: 20px;"></div>
     </div>
     
+    <?php ?>
+    
     <script>
     jQuery(document).ready(function($) {
+        // Check if wcb_ajax is available
+        if (typeof wcb_ajax === 'undefined') {
+            console.error('WCB AJAX object not found. Please reload the page.');
+            $('#registration-result').html('<div class="wcb-notice wcb-notice-error">Error: Page scripts not loaded properly. Please reload the page.</div>');
+            return;
+        }
+        
         $('#parent-registration-form').on('submit', function(e) {
             e.preventDefault();
             
@@ -227,16 +246,20 @@ function wcb_parent_registration_form_shortcode($atts) {
                     if (response.success) {
                         $result.html('<div class="wcb-notice wcb-notice-success">' + response.data.message + '</div>');
                         
-                        // Redirect to family dashboard after 2 seconds
-                        setTimeout(function() {
+                        // Redirect immediately to family dashboard
+                        if (response.data.redirect_url) {
                             window.location.href = response.data.redirect_url;
-                        }, 2000);
+                        } else {
+                            // Fallback redirect
+                            window.location.href = '/family-dashboard/';
+                        }
                     } else {
                         $result.html('<div class="wcb-notice wcb-notice-error">Error: ' + response.data + '</div>');
                         $submitBtn.prop('disabled', false).html('<span class="dashicons dashicons-admin-users"></span> Complete Registration');
                     }
                 },
-                error: function() {
+                error: function(xhr, status, error) {
+                    console.error('Registration error:', xhr.responseText);
                     $result.html('<div class="wcb-notice wcb-notice-error">Connection error. Please try again.</div>');
                     $submitBtn.prop('disabled', false).html('<span class="dashicons dashicons-admin-users"></span> Complete Registration');
                 }

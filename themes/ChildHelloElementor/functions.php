@@ -53,6 +53,11 @@ function wcb_load_files() {
         'ajax/student-search.php',
         'ajax/student-profile.php',
         
+        // Family Membership System
+        'family-membership/parent-registration.php',
+        'family-membership/family-registration-ajax.php',
+        'family-membership/family-membership-setup.php',
+        
         // Shortcodes
         'shortcodes/single-session.php',
         'shortcodes/student-sessions.php',
@@ -239,7 +244,13 @@ function wcb_enqueue_assets() {
              filemtime(WCB_THEME_PATH . '/assets/js/global-tooltips.js'),
              true
          );
-     }
+      }
+      
+      // Localize AJAX for all scripts that need it
+      wp_localize_script('jquery', 'wcb_ajax', array(
+          'ajax_url' => admin_url('admin-ajax.php'),
+          'nonce' => wp_create_nonce('wcb_nonce')
+      ));
 }
 add_action('wp_enqueue_scripts', 'wcb_enqueue_assets');
 
