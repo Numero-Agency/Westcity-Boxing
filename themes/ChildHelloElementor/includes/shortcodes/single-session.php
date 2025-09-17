@@ -255,7 +255,7 @@ function single_session_shortcode($atts) {
             
             <?php if ($atts['show_edit_link'] === 'true' && current_user_can('edit_posts')): ?>
             <div class="session-actions">
-                <a href="https://westcityboxing.local/staff-dashboard/" 
+                <a href="<?php echo home_url('/staff-dashboard/'); ?>" 
                    class="btn-dashboard-modern">Dashboard</a>
                 <a href="<?php echo admin_url('post.php?post=' . $session_id . '&action=edit'); ?>" 
                    class="btn-edit-modern">Edit Session</a>
