@@ -110,16 +110,21 @@ function programs_table_shortcode($atts) {
         
         // Function to get sign-up URL for a program name
         function getSignupUrl(programName) {
-            var signupUrls = {
-                'Cadet Boys Group 1': 'https://westcityboxing.local/plans/cadet-boys-group-1/',
-                'Cadet Boys Group 2': 'https://westcityboxing.local/plans/cadet-boys-group-2/',
-                'Mini Cadet Boys (9-11 Years) Group 1': 'https://westcityboxing.local/plans/mini-cadet-boys-9-11-years-group-1/',
-                'Mini Cadets Girls Group 1': 'https://westcityboxing.local/plans/mini-cadets-girls-group-1/',
-                'Youth Boys Group 1': 'https://westcityboxing.local/plans/youth-boys-group-1/',
-                'Youth Boys Group 2': 'https://westcityboxing.local/plans/youth-boys-group-2/',
-                'Youth Girls Group 1': 'https://westcityboxing.local/plans/youth-girls-group-1/'
+            var baseUrl = '<?php echo home_url(); ?>';
+            var signupPaths = {
+                'Cadet Boys Group 1': '/plans/cadet-boys-group-1/',
+                'Cadet Boys Group 2': '/plans/cadet-boys-group-2/',
+                'Mini Cadet Boys (9-11 Years) Group 1': '/plans/mini-cadet-boys-9-11-years-group-1/',
+                'Mini Cadets Girls Group 1': '/plans/mini-cadets-girls-group-1/',
+                'Youth Boys Group 1': '/plans/youth-boys-group-1/',
+                'Youth Boys Group 2': '/plans/youth-boys-group-2/',
+                'Youth Girls Group 1': '/plans/youth-girls-group-1/'
             };
-            return signupUrls[programName] || null;
+            
+            if (signupPaths[programName]) {
+                return baseUrl + signupPaths[programName];
+            }
+            return null;
         }
         
         function loadProgramsTable() {
@@ -914,19 +919,23 @@ add_action('admin_init', 'wcb_run_mentoring_sessions_fix_once');
 
 // Helper function to get sign-up URL for a program
 function wcb_get_program_signup_url($program_title) {
-    // Map program names to their sign-up URLs
-    $signup_urls = [
-        'Cadet Boys Group 1' => 'https://westcityboxing.local/plans/cadet-boys-group-1/',
-        'Cadet Boys Group 2' => 'https://westcityboxing.local/plans/cadet-boys-group-2/',
-        'Mini Cadet Boys (9-11 Years) Group 1' => 'https://westcityboxing.local/plans/mini-cadet-boys-9-11-years-group-1/',
-        'Mini Cadets Girls Group 1' => 'https://westcityboxing.local/plans/mini-cadets-girls-group-1/',
-        'Youth Boys Group 1' => 'https://westcityboxing.local/plans/youth-boys-group-1/',
-        'Youth Boys Group 2' => 'https://westcityboxing.local/plans/youth-boys-group-2/',
-        'Youth Girls Group 1' => 'https://westcityboxing.local/plans/youth-girls-group-1/'
+    // Map program names to their sign-up URL paths (relative)
+    $signup_paths = [
+        'Cadet Boys Group 1' => '/plans/cadet-boys-group-1/',
+        'Cadet Boys Group 2' => '/plans/cadet-boys-group-2/',
+        'Mini Cadet Boys (9-11 Years) Group 1' => '/plans/mini-cadet-boys-9-11-years-group-1/',
+        'Mini Cadets Girls Group 1' => '/plans/mini-cadets-girls-group-1/',
+        'Youth Boys Group 1' => '/plans/youth-boys-group-1/',
+        'Youth Boys Group 2' => '/plans/youth-boys-group-2/',
+        'Youth Girls Group 1' => '/plans/youth-girls-group-1/'
     ];
     
-    // Check if we have a sign-up URL for this program
-    return isset($signup_urls[$program_title]) ? $signup_urls[$program_title] : null;
+    // Check if we have a sign-up path for this program and build full URL
+    if (isset($signup_paths[$program_title])) {
+        return home_url($signup_paths[$program_title]);
+    }
+    
+    return null;
 }
 
 // AJAX Handler for loading programs table
