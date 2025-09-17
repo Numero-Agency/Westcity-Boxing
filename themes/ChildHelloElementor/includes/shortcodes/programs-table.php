@@ -108,6 +108,20 @@ function programs_table_shortcode($atts) {
             $('.programs-table-header h3').html('<span class="dashicons dashicons-awards"></span> Programs & Memberships');
         };
         
+        // Function to get sign-up URL for a program name
+        function getSignupUrl(programName) {
+            var signupUrls = {
+                'Cadet Boys Group 1': 'https://westcityboxing.local/plans/cadet-boys-group-1/',
+                'Cadet Boys Group 2': 'https://westcityboxing.local/plans/cadet-boys-group-2/',
+                'Mini Cadet Boys (9-11 Years) Group 1': 'https://westcityboxing.local/plans/mini-cadet-boys-9-11-years-group-1/',
+                'Mini Cadets Girls Group 1': 'https://westcityboxing.local/plans/mini-cadets-girls-group-1/',
+                'Youth Boys Group 1': 'https://westcityboxing.local/plans/youth-boys-group-1/',
+                'Youth Boys Group 2': 'https://westcityboxing.local/plans/youth-boys-group-2/',
+                'Youth Girls Group 1': 'https://westcityboxing.local/plans/youth-girls-group-1/'
+            };
+            return signupUrls[programName] || null;
+        }
+        
         function loadProgramsTable() {
             $('#programs-loading').show();
             $('#programs-table-body').html('');
@@ -152,8 +166,14 @@ function programs_table_shortcode($atts) {
             
             programType = programType || 'group';
             
-            // Update header title
-            $('.programs-table-header h3').html('<span class="dashicons dashicons-awards"></span> ' + programName);
+            // Update header title with sign-up button if applicable
+            var signupUrl = getSignupUrl(programName);
+            var titleHtml = '<span class="dashicons dashicons-awards"></span> ' + programName;
+            if (signupUrl) {
+                titleHtml += '<a href="' + signupUrl + '" target="_blank" class="program-signup-btn-inline">' +
+                           '<span class="dashicons dashicons-plus-alt"></span> Sign Up</a>';
+            }
+            $('.programs-table-header h3').html(titleHtml);
             
             // Hide table content
             $('.programs-table-content').hide();
@@ -530,6 +550,60 @@ function programs_table_shortcode($atts) {
         align-items: flex-start;
     }
     
+    .program-signup-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 16px;
+        background: #007cba;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .program-signup-btn:hover {
+        background: #005a87;
+        color: white;
+        text-decoration: none;
+        transform: translateY(-1px);
+    }
+    
+    .program-signup-btn-inline {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 6px 12px;
+        background: #007cba;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: all 0.2s ease;
+        margin-left: 12px;
+        vertical-align: middle;
+    }
+    
+    .program-signup-btn-inline:hover {
+        background: #005a87;
+        color: white;
+        text-decoration: none;
+        transform: translateY(-1px);
+    }
+    
+    .program-signup-btn-inline .dashicons {
+        font-size: 14px;
+    }
+    
     .back-to-programs-btn {
         display: inline-flex;
         align-items: center;
@@ -837,6 +911,23 @@ function wcb_run_mentoring_sessions_fix_once() {
     }
 }
 add_action('admin_init', 'wcb_run_mentoring_sessions_fix_once');
+
+// Helper function to get sign-up URL for a program
+function wcb_get_program_signup_url($program_title) {
+    // Map program names to their sign-up URLs
+    $signup_urls = [
+        'Cadet Boys Group 1' => 'https://westcityboxing.local/plans/cadet-boys-group-1/',
+        'Cadet Boys Group 2' => 'https://westcityboxing.local/plans/cadet-boys-group-2/',
+        'Mini Cadet Boys (9-11 Years) Group 1' => 'https://westcityboxing.local/plans/mini-cadet-boys-9-11-years-group-1/',
+        'Mini Cadets Girls Group 1' => 'https://westcityboxing.local/plans/mini-cadets-girls-group-1/',
+        'Youth Boys Group 1' => 'https://westcityboxing.local/plans/youth-boys-group-1/',
+        'Youth Boys Group 2' => 'https://westcityboxing.local/plans/youth-boys-group-2/',
+        'Youth Girls Group 1' => 'https://westcityboxing.local/plans/youth-girls-group-1/'
+    ];
+    
+    // Check if we have a sign-up URL for this program
+    return isset($signup_urls[$program_title]) ? $signup_urls[$program_title] : null;
+}
 
 // AJAX Handler for loading programs table
 function wcb_ajax_load_programs_table() {
