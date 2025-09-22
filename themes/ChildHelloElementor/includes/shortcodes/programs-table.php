@@ -201,6 +201,11 @@ function programs_table_shortcode($atts) {
                 success: function(response) {
                     if (response.success) {
                         $('#program-details-overlay .program-overlay-content').html(response.data.html);
+                        
+                        // Debug output
+                        if (response.data.debug) {
+                            console.log('Program Details Debug:', response.data.debug);
+                        }
                     } else {
                         $('#program-details-overlay .program-overlay-content').html(
                             '<div class="program-error">Error loading program details: ' + response.data + '</div>'
@@ -769,6 +774,40 @@ function programs_table_shortcode($atts) {
         border-radius: 4px;
     }
     
+    /* School-specific styling */
+    .school-type-badge {
+        background: #28a745;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        margin-left: 8px;
+        display: inline-block;
+        vertical-align: middle;
+    }
+    
+    .school-info-box {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 6px;
+        border-left: 4px solid #28a745;
+    }
+    
+    .school-info-box p {
+        margin: 0;
+        font-size: 14px;
+        color: #666666;
+        line-height: 1.6;
+    }
+    
+    .school-info-box strong {
+        color: #000000;
+        font-weight: 600;
+    }
+    
     /* Responsive Design */
     @media (max-width: 768px) {
         .programs-table-header {
@@ -996,6 +1035,42 @@ function wcb_ajax_load_programs_table() {
         }
     }
 
+    // Add Schools to the programs array
+    // Try different possible post type names
+    $possible_school_types = ['schools', 'school', 'wcb_schools', 'wcb_school'];
+    $schools_found = false;
+    
+    foreach ($possible_school_types as $post_type_name) {
+        $schools = get_posts([
+            'post_type' => $post_type_name,
+            'post_status' => 'publish',
+            'posts_per_page' => -1,
+            'orderby' => 'title',
+            'order' => 'ASC'
+        ]);
+        
+        if (!empty($schools)) {
+            $schools_found = true;
+            wcb_debug_log("Found " . count($schools) . " schools with post type: " . $post_type_name);
+            
+            foreach ($schools as $school) {
+                // Apply search filter if provided
+                if (empty($search) || stripos($school->post_title, $search) !== false) {
+                    $school_obj = new stdClass();
+                    $school_obj->ID = $school->ID;
+                    $school_obj->post_title = $school->post_title;
+                    $school_obj->type = 'school';
+                    $programs[] = $school_obj;
+                }
+            }
+            break; // Stop after finding schools
+        }
+    }
+    
+    if (!$schools_found) {
+        wcb_debug_log("No schools found with any of these post types: " . implode(', ', $possible_school_types));
+    }
+
     $using_groups = true;
 
     // Generate table rows
@@ -1014,6 +1089,11 @@ function wcb_ajax_load_programs_table() {
 
                 // Get most recent session for this group
                 $recent_session = wcb_get_group_recent_session($program_id);
+            } elseif ($program_type === 'school') {
+                // School program
+                $member_count = wcb_get_school_student_count($program_id);
+                $session_count = wcb_get_school_session_count($program_id);
+                $recent_session = wcb_get_school_recent_session($program_id);
             } else {
                 // Individual membership/program
                 $member_count = wcb_get_program_member_count($program_id);
@@ -1032,8 +1112,14 @@ function wcb_ajax_load_programs_table() {
             $status = $is_active ? 'Active' : 'Inactive';
             $status_class = $is_active ? 'active' : 'inactive';
 
+            // Add type indicator for schools
+            $program_name_display = esc_html($program->post_title);
+            if ($program_type === 'school') {
+                $program_name_display .= ' <span class="school-type-badge">School</span>';
+            }
+
             $rows_html .= '<tr>';
-            $rows_html .= '<td><div class="program-name">' . esc_html($program->post_title) . '</div></td>';
+            $rows_html .= '<td><div class="program-name">' . $program_name_display . '</div></td>';
             $rows_html .= '<td><span class="member-count">' . esc_html($member_count) . '</span></td>';
             $rows_html .= '<td><span class="session-count">' . esc_html($session_count) . '</span></td>';
             $rows_html .= '<td>' . ($recent_session ? esc_html(date('M j, Y', strtotime($recent_session))) : 'No sessions') . '</td>';
@@ -1069,12 +1155,17 @@ function wcb_ajax_load_program_details() {
     // DEBUG: Log what we received
     wcb_debug_log("wcb_ajax_load_program_details: Program ID: {$program_id}, Type: {$program_type}");
     
+    // Ensure program_type is properly set
+    if (!in_array($program_type, ['group', 'membership', 'school'])) {
+        $program_type = 'group'; // Default fallback
+    }
+    
     if (!$program_id) {
         wp_send_json_error('Invalid program ID');
         return;
     }
     
-    // Handle individual memberships vs groups differently
+    // Handle individual memberships vs groups vs schools differently
     if ($program_type === 'membership') {
         // For individual memberships, we need to get the title from our mapping
         $additional_memberships = [
@@ -1089,6 +1180,16 @@ function wcb_ajax_load_program_details() {
         
         $program_title = $additional_memberships[$program_id];
         $program_content = ''; // Individual memberships don't have content in this context
+    } elseif ($program_type === 'school') {
+        // Get the school post
+        $school = get_post($program_id);
+        if (!$school) {
+            wp_send_json_error('School not found');
+            return;
+        }
+        
+        $program_title = $school->post_title;
+        $program_content = $school->post_content;
     } else {
         // Get the program (group)
         $program = get_post($program_id);
@@ -1112,6 +1213,21 @@ function wcb_ajax_load_program_details() {
         $sessions = wcb_get_group_sessions($program_id, 10);
         $total_session_count = wcb_get_group_session_count($program_id);
         $using_groups = true;
+    } elseif ($program_type === 'school') {
+        // School statistics
+        $member_count = wcb_get_school_student_count($program_id);
+        $session_count = wcb_get_school_session_count($program_id);
+        $recent_session = wcb_get_school_recent_session($program_id);
+        
+        // Get school students (not members)
+        $members = wcb_get_school_students($program_id);
+        // Get school sessions
+        $sessions = wcb_get_school_sessions($program_id, 10);
+        $total_session_count = wcb_get_school_session_count($program_id);
+        $using_groups = false;
+        
+        // Debug log
+        wcb_debug_log("School {$program_id}: Found " . count($members) . " students, {$session_count} sessions");
     } else {
         // Individual membership statistics
         $member_count = wcb_get_program_member_count($program_id);
@@ -1129,15 +1245,29 @@ function wcb_ajax_load_program_details() {
     }
     
     ob_start();
+    
+    // Determine if this is a school program
+    $is_school = ($program_type === 'school');
+    
+    // Debug output for schools
+    if ($is_school) {
+        wcb_debug_log("Rendering School Details: ID={$program_id}, Title={$program_title}, Students=" . count($members));
+        if (empty($members)) {
+            error_log("WARNING: No students found for school {$program_id}. ACF field might not be configured correctly.");
+        }
+    }
     ?>
     <div class="program-details">
         <div class="program-details-header">
             <div class="program-details-info">
                 <div class="program-details-meta">
-                    <span><span class="dashicons dashicons-groups"></span> <?php echo esc_html($member_count); ?> Members</span>
+                    <span><span class="dashicons dashicons-groups"></span> <?php echo esc_html($member_count); ?> <?php echo $is_school ? 'Students' : 'Members'; ?></span>
                     <span><span class="dashicons dashicons-chart-bar"></span> <?php echo esc_html($session_count); ?> Total Sessions</span>
                     <?php if ($recent_session): ?>
                     <span><span class="dashicons dashicons-calendar-alt"></span> Last session: <?php echo date('M j, Y', strtotime($recent_session)); ?></span>
+                    <?php endif; ?>
+                    <?php if ($is_school): ?>
+                    <span><span class="dashicons dashicons-admin-site"></span> School Program</span>
                     <?php endif; ?>
                 </div>
             </div>
@@ -1157,7 +1287,7 @@ function wcb_ajax_load_program_details() {
                 <div class="program-stats-grid">
                     <div class="program-stat-card">
                         <h4><?php echo esc_html($member_count); ?></h4>
-                        <p>Total Members</p>
+                        <p><?php echo $is_school ? 'Total Students' : 'Total Members'; ?></p>
                     </div>
                     <div class="program-stat-card">
                         <h4><?php echo esc_html($session_count); ?></h4>
@@ -1182,34 +1312,66 @@ function wcb_ajax_load_program_details() {
             </div>
             <?php endif; ?>
             
-            <!-- Current Members -->
+            <!-- Current Members/Students -->
             <div class="program-details-section">
                 <h3 class="program-section-title">
-                    <span class="dashicons dashicons-groups"></span> Current Members (<?php echo count($members); ?>)
+                    <span class="dashicons dashicons-groups"></span> 
+                    <?php echo $is_school ? 'Students' : 'Current Members'; ?> 
+                    (<?php echo count($members); ?>)
                 </h3>
                 <?php if (!empty($members)): ?>
                 <table class="members-table">
                     <thead>
                         <tr>
                             <th>Name</th>
-                            <th>Email</th>
-                            <th>Join Date</th>
-                            <th>Status</th>
+                            <?php if ($is_school): ?>
+                                <th>Date of Birth</th>
+                                <th>Ethnicity</th>
+                            <?php else: ?>
+                                <th>Email</th>
+                                <th>Join Date</th>
+                                <th>Status</th>
+                            <?php endif; ?>
                         </tr>
                     </thead>
                     <tbody>
                         <?php foreach ($members as $member): ?>
                         <tr>
                             <td><?php echo esc_html($member['name']); ?></td>
-                            <td><?php echo esc_html($member['email']); ?></td>
-                            <td><?php echo esc_html($member['join_date']); ?></td>
-                            <td><?php echo esc_html($member['status']); ?></td>
+                            <?php if ($is_school): ?>
+                                <td><?php 
+                                    if (!empty($member['date_of_birth'])) {
+                                        $date_str = $member['date_of_birth'];
+                                        
+                                        // Parse the date - ACF returns Y-m-d format
+                                        $timestamp = strtotime($date_str);
+                                        if ($timestamp !== false && $timestamp > 0) {
+                                            // Successfully parsed - format for display
+                                            echo esc_html(date('M j, Y', $timestamp));
+                                        } else {
+                                            // Just show the date as is if valid format
+                                            echo esc_html($date_str);
+                                        }
+                                    } else {
+                                        echo '<em>Not provided</em>';
+                                    }
+                                ?></td>
+                                <td><?php echo !empty($member['ethnicity']) ? esc_html($member['ethnicity']) : '<em>Not specified</em>'; ?></td>
+                            <?php else: ?>
+                                <td><?php echo esc_html($member['email']); ?></td>
+                                <td><?php echo esc_html($member['join_date']); ?></td>
+                                <td><?php echo esc_html($member['status']); ?></td>
+                            <?php endif; ?>
                         </tr>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
                 <?php else: ?>
-                <div class="no-members">No members currently enrolled in this program</div>
+                <div class="no-members">
+                    <?php echo $is_school 
+                        ? 'No students currently enrolled in this school' 
+                        : 'No members currently enrolled in this program'; ?>
+                </div>
                 <?php endif; ?>
             </div>
             
@@ -1250,11 +1412,11 @@ function wcb_ajax_load_program_details() {
                 </table>
                 <?php if (count($sessions) >= 10): ?>
                 <p class="sessions-note">
-                    <em>Showing 10 most recent sessions. Total sessions for this program: <?php echo esc_html($total_session_count); ?></em>
+                    <em>Showing 10 most recent sessions. Total sessions for <?php echo $is_school ? 'this school' : 'this program'; ?>: <?php echo esc_html($total_session_count); ?></em>
                 </p>
                 <?php endif; ?>
                 <?php else: ?>
-                <div class="no-sessions">No sessions recorded for this program</div>
+                <div class="no-sessions">No sessions recorded for <?php echo $is_school ? 'this school' : 'this program'; ?></div>
                 <?php endif; ?>
             </div>
         </div>
@@ -1265,7 +1427,12 @@ function wcb_ajax_load_program_details() {
     
     wp_send_json_success([
         'html' => $html,
-        'program_name' => $program_title
+        'program_name' => $program_title,
+        'debug' => [
+            'program_type' => $program_type,
+            'member_count' => $member_count,
+            'members_array_count' => count($members)
+        ]
     ]);
 }
 add_action('wp_ajax_wcb_load_program_details', 'wcb_ajax_load_program_details');
@@ -1866,6 +2033,232 @@ function wcb_get_program_sessions($program_id, $limit = 10) {
             'type' => $session_type,
             'attendance' => $attendance_display,
             'notes' => $notes_display
+        ];
+    }
+    
+    return $sessions;
+}
+
+// ===========================
+// School Helper Functions
+// ===========================
+
+// Get student count for a school
+function wcb_get_school_student_count($school_id) {
+    // Try to get the field data
+    $students = get_field('student', $school_id);
+    
+    // If that doesn't work, try with the field key
+    if (empty($students)) {
+        $students = get_field('field_school_students', $school_id);
+    }
+    
+    // If still empty, try getting raw post meta
+    if (empty($students)) {
+        $students = get_post_meta($school_id, 'student', true);
+    }
+    
+    $count = is_array($students) ? count($students) : 0;
+    
+    // Debug log
+    wcb_debug_log("wcb_get_school_student_count for school {$school_id}: {$count} students found");
+    
+    return $count;
+}
+
+// Get school students list with detailed information
+function wcb_get_school_students($school_id) {
+    // Try to get the field data
+    $students_data = get_field('student', $school_id);
+    
+    // If that doesn't work, try with the field key
+    if (empty($students_data)) {
+        $students_data = get_field('field_school_students', $school_id);
+    }
+    
+    // If still empty, try getting raw post meta
+    if (empty($students_data)) {
+        $students_data = get_post_meta($school_id, 'student', true);
+    }
+    
+    $students = [];
+    
+    // Debug log
+    wcb_debug_log("wcb_get_school_students for school {$school_id}: Raw data type = " . gettype($students_data));
+    
+    if (is_array($students_data) && !empty($students_data)) {
+        foreach ($students_data as $student) {
+            $age = '';
+            $dob = '';
+            
+            // Debug all student fields
+            wcb_debug_log("Student fields available: " . implode(', ', array_keys($student)));
+            
+            // Check if date_of_birth exists and is not empty
+            if (!empty($student['date_of_birth'])) {
+                $dob = $student['date_of_birth'];
+                
+                try {
+                    // ACF date picker can return dates in different formats
+                    // Try to parse the date
+                    $birth_date = new DateTime($dob);
+                    $today = new DateTime();
+                    $age_diff = $today->diff($birth_date);
+                    $age = $age_diff->y . ' years';
+                    
+                    // If age is negative or over 100, something's wrong
+                    if ($age_diff->y < 0 || $age_diff->y > 100) {
+                        $age = 'Invalid age';
+                    }
+                } catch (Exception $e) {
+                    wcb_debug_log("Error parsing date for student {$student['student_name']}: " . $e->getMessage());
+                    $age = 'Unknown';
+                }
+            } else {
+                $age = 'Not provided';
+            }
+            
+            // Debug the date field
+            wcb_debug_log("Student: {$student['student_name']}, DOB raw: '{$dob}', Age calculated: {$age}");
+            
+            $students[] = [
+                'name' => isset($student['student_name']) ? $student['student_name'] : 'Unknown',
+                'date_of_birth' => $dob,
+                'age' => $age,
+                'ethnicity' => isset($student['student_ethnicity']) ? $student['student_ethnicity'] : 'Not specified',
+                'join_date' => 'N/A', // Schools don't have join dates like memberships
+                'status' => 'Enrolled',
+                'email' => '' // Schools students don't have emails in this context
+            ];
+        }
+    } elseif (empty($students_data)) {
+        // If no students found, return empty array with a note
+        wcb_debug_log("wcb_get_school_students: No students found for school {$school_id}. Field might not be set up.");
+    }
+    
+    wcb_debug_log("wcb_get_school_students: Returning " . count($students) . " students");
+    
+    return $students;
+}
+
+// Get session count for a school
+function wcb_get_school_session_count($school_id) {
+    $args = [
+        'post_type' => 'session_log',
+        'post_status' => 'publish',
+        'posts_per_page' => -1,
+        'meta_query' => [
+            [
+                'key' => 'selected_school',
+                'value' => $school_id,
+                'compare' => '='
+            ]
+        ]
+    ];
+    
+    $sessions = get_posts($args);
+    return count($sessions);
+}
+
+// Get most recent session date for a school
+function wcb_get_school_recent_session($school_id) {
+    global $wpdb;
+    
+    // Query to get the most recent session date for this school
+    $query = $wpdb->prepare("
+        SELECT pm2.meta_value as session_date
+        FROM {$wpdb->posts} p
+        JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+        LEFT JOIN {$wpdb->postmeta} pm2 ON p.ID = pm2.post_id AND pm2.meta_key = 'session_date'
+        WHERE p.post_type = 'session_log'
+        AND p.post_status = 'publish'
+        AND pm.meta_key = 'selected_school'
+        AND pm.meta_value = %d
+        AND pm2.meta_value IS NOT NULL
+        AND pm2.meta_value != ''
+        ORDER BY STR_TO_DATE(pm2.meta_value, '%%Y-%%m-%%dT%%H:%%i:%%s') DESC
+        LIMIT 1
+    ", $school_id);
+    
+    $result = $wpdb->get_var($query);
+    
+    if ($result) {
+        return $result;
+    }
+    
+    // Fallback: get the most recent session by post date
+    $fallback_query = $wpdb->prepare("
+        SELECT p.post_date
+        FROM {$wpdb->posts} p
+        JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+        WHERE p.post_type = 'session_log'
+        AND p.post_status = 'publish'
+        AND pm.meta_key = 'selected_school'
+        AND pm.meta_value = %d
+        ORDER BY p.post_date DESC
+        LIMIT 1
+    ", $school_id);
+    
+    return $wpdb->get_var($fallback_query);
+}
+
+// Get school sessions
+function wcb_get_school_sessions($school_id, $limit = 10) {
+    global $wpdb;
+    
+    // Get sessions with proper date ordering
+    $query = $wpdb->prepare("
+        SELECT p.ID, p.post_date, pm2.meta_value as session_date
+        FROM {$wpdb->posts} p
+        JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+        LEFT JOIN {$wpdb->postmeta} pm2 ON p.ID = pm2.post_id AND pm2.meta_key = 'session_date'
+        WHERE p.post_type = 'session_log'
+        AND p.post_status = 'publish'
+        AND pm.meta_key = 'selected_school'
+        AND pm.meta_value = %d
+        ORDER BY 
+            CASE 
+                WHEN pm2.meta_value IS NOT NULL AND pm2.meta_value != '' 
+                THEN STR_TO_DATE(pm2.meta_value, '%%Y-%%m-%%dT%%H:%%i:%%s')
+                ELSE p.post_date 
+            END DESC
+        LIMIT %d
+    ", $school_id, $limit);
+    
+    $session_posts = $wpdb->get_results($query);
+    $sessions = [];
+    
+    foreach ($session_posts as $session_post) {
+        $session_id = $session_post->ID;
+        
+        // Use the session_date from query or fall back to getting it directly
+        $date = $session_post->session_date;
+        if (empty($date)) {
+            $date = get_field('session_date', $session_id);
+        }
+        if (empty($date)) {
+            $date = $session_post->post_date;
+        }
+        
+        $instructor = get_field('instructor', $session_id);
+        $attendance_names = get_field('school_attendance_names', $session_id);
+        $attendance_count = is_array($attendance_names) ? count($attendance_names) : 0;
+        
+        // Format date properly
+        $formatted_date = 'Unknown';
+        if ($date) {
+            $timestamp = strtotime($date);
+            if ($timestamp !== false) {
+                $formatted_date = date('M j, Y', $timestamp);
+            }
+        }
+        
+        $sessions[] = [
+            'id' => $session_id,
+            'date' => $formatted_date,
+            'type' => 'School Session',
+            'attendance' => $attendance_count . ' students',
+            'notes' => $instructor ? 'Instructor: ' . $instructor : 'No instructor recorded'
         ];
     }
     

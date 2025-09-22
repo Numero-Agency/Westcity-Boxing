@@ -155,11 +155,19 @@ function all_sessions_list_shortcode() {
                         $session_type_raw = $session_type_data['name'];
                         $session_type_slug = $session_type_data['slug'];
                         
-                        // Get class name from membership or group
+                        // Get class name from membership, group, or school
                         $class_name = 'Unknown Class';
+                        $school_id = get_field('selected_school', $session_id);
 
-                        // Try new format first (selected_group)
-                        if ($group_id) {
+                        // Check for school first
+                        if ($school_id) {
+                            $school_post = get_post($school_id);
+                            if($school_post) {
+                                $class_name = $school_post->post_title;
+                            }
+                        }
+                        // Try new format (selected_group)
+                        elseif ($group_id) {
                             $group_post = get_post($group_id);
                             if($group_post) {
                                 $class_name = $group_post->post_title;
@@ -240,6 +248,17 @@ function all_sessions_list_shortcode() {
                                 $student = get_user_by('ID', $student_id);
                                 $student_info = $student ? $student->display_name : 'Unknown Student';
                             }
+                        } elseif ($class_type === 'School' && $school_id) {
+                            // School session - get attendance from school_attendance_names
+                            $school_attendance_names = get_field('school_attendance_names', $session_id);
+                            $total_present = is_array($school_attendance_names) ? count($school_attendance_names) : 0;
+                            $total_excused = 0;
+                            
+                            // Get total students in school
+                            $school_students = get_field('student', $school_id);
+                            $total_students = is_array($school_students) ? count($school_students) : 0;
+                            
+                            $student_info = '';
                         } else {
                             // Group session - use real attendance data and group member count
                             $total_present = count($attended_students);

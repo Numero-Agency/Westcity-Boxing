@@ -39,6 +39,9 @@ define('WCB_INCLUDES_PATH', WCB_THEME_PATH . '/includes');
 // Auto-loader for our custom files
 function wcb_load_files() {
     $files = [
+        // Post Types
+        'post-types/schools.php',
+        
         // Database
         'database/competitions-table.php',
         

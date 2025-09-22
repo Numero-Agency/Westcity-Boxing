@@ -95,7 +95,11 @@ function dashboard_stats_shortcode() {
     
     // Get referrals data for the selected date range
     $total_referrals = get_referrals_count_in_date_range($date_from, $date_to);
-    
+
+    // Get schools data
+    $schools_data = get_schools_data();
+    $total_schools = count($schools_data);
+
     ob_start();
     ?>
     <div class="dashboard-stats-container">
@@ -190,6 +194,11 @@ function dashboard_stats_shortcode() {
             <h3><?php echo $total_referrals; ?></h3>
             <p><span class="dashicons dashicons-share"></span> Total Referrals</p>
             <small>During selected period</small>
+        </div>
+        <div class="stat-card schools clickable-stat" data-popup="schools">
+            <h3><?php echo $total_schools; ?></h3>
+            <p><span class="dashicons dashicons-building"></span> Total Schools</p>
+            <small>Click to view breakdown</small>
         </div>
     </div>
     </div>
@@ -796,7 +805,53 @@ function dashboard_stats_shortcode() {
             </div>
         </div>
     </div>
-    
+
+    <!-- Schools Breakdown Popup -->
+    <div id="schools-popup" class="stats-popup" style="display: none;">
+        <div class="popup-overlay"></div>
+        <div class="popup-content">
+            <div class="popup-header">
+                <h3><span class="dashicons dashicons-building"></span> Schools Breakdown</h3>
+                <button class="popup-close">&times;</button>
+            </div>
+            <div class="popup-body">
+                <?php if (!empty($schools_data)): ?>
+                <div class="schools-list">
+                    <?php foreach ($schools_data as $school): ?>
+                    <div class="school-item">
+                        <div class="school-info">
+                            <h4><?php echo esc_html($school['name']); ?></h4>
+                            <div class="school-stats">
+                                <span class="student-count"><?php echo $school['student_count']; ?> students</span>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <div class="breakdown-summary">
+                    <p><strong>Total Schools:</strong> <?php echo $total_schools; ?></p>
+                    <p><strong>Total Students:</strong> <?php echo array_sum(array_column($schools_data, 'student_count')); ?></p>
+                    <p><strong>Largest School:</strong> <?php
+                        $largest_school = '';
+                        $max_students = 0;
+                        foreach ($schools_data as $school) {
+                            if ($school['student_count'] > $max_students) {
+                                $max_students = $school['student_count'];
+                                $largest_school = $school['name'];
+                            }
+                        }
+                        echo esc_html($largest_school) . ' (' . $max_students . ' students)';
+                    ?></p>
+                </div>
+                <?php else: ?>
+                <div class="no-data">
+                    <p>No schools found with enrolled students.</p>
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
     <script>
     jQuery(document).ready(function($) {
         // Handle clickable stat cards
@@ -1026,6 +1081,10 @@ function dashboard_stats_shortcode() {
     
     .stat-card.referrals {
         border-top-color: #87CEEB;
+    }
+
+    .stat-card.schools {
+        border-top-color: #32CD32;
     }
     
     .stat-card:hover {
@@ -1555,10 +1614,58 @@ function dashboard_stats_shortcode() {
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
     
-    .waitlist-member-card:hover {
+        .waitlist-member-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-color: #1976d2;
+        }
+
+        /* Responsive schools list */
+        .schools-list {
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 14px;
+        }
+
+    /* Schools Popup Styles */
+    .schools-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .school-item {
+        background: white;
+        border: 1px solid #e5e5e5;
+        border-radius: 8px;
+        padding: 16px;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .school-item:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        border-color: #1976d2;
+        border-color: #32CD32;
+    }
+
+    .school-info h4 {
+        margin: 0 0 8px 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #000000;
+    }
+
+    .school-stats {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .student-count {
+        font-size: 14px;
+        color: #666666;
+        font-weight: 500;
     }
 
     /* Action buttons for card layout */
@@ -1793,6 +1900,11 @@ function dashboard_stats_shortcode() {
         .not-specified-members-container,
         .age-not-specified-members-container,
         .waitlist-members-container {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .schools-list {
             grid-template-columns: 1fr;
             gap: 12px;
         }
@@ -3575,6 +3687,38 @@ function get_longest_wait_time($waitlist_members) {
     }
     
     return $longest_wait;
+}
+
+// NEW: Function to get schools data
+function get_schools_data() {
+    $possible_school_types = ['schools', 'school', 'wcb_schools', 'wcb_school'];
+    $schools_data = [];
+
+    foreach ($possible_school_types as $post_type_name) {
+        $schools = get_posts([
+            'post_type' => $post_type_name,
+            'post_status' => 'publish',
+            'posts_per_page' => -1,
+            'orderby' => 'title',
+            'order' => 'ASC'
+        ]);
+
+        if (!empty($schools)) {
+            foreach ($schools as $school) {
+                $student_count = wcb_get_school_student_count($school->ID);
+                if ($student_count > 0) { // Only include schools with students
+                    $schools_data[] = [
+                        'id' => $school->ID,
+                        'name' => $school->post_title,
+                        'student_count' => $student_count
+                    ];
+                }
+            }
+            break; // Stop after finding schools
+        }
+    }
+
+    return $schools_data;
 }
 
 // Register the shortcode

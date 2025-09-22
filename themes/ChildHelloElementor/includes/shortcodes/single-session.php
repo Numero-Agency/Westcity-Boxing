@@ -174,10 +174,21 @@ function single_session_shortcode($atts) {
         // Get class name and total member count
         $class_name = 'Unknown Class';
         $total_group_members = 0;
+        $class_type = get_field('class_type', $session_id);
+        $school_id = get_field('selected_school', $session_id);
 
-        // Check for new format (selected_group) first
-        $selected_group = get_field('selected_group', $session_id);
-        if ($selected_group) {
+        // Check for school first
+        if ($school_id) {
+            $school_post = get_post($school_id);
+            if ($school_post) {
+                $class_name = $school_post->post_title;
+                // Get total students in school
+                $school_students = get_field('student', $school_id);
+                $total_group_members = is_array($school_students) ? count($school_students) : 0;
+            }
+        }
+        // Check for new format (selected_group)
+        elseif ($selected_group = get_field('selected_group', $session_id)) {
             $group_post = get_post($selected_group);
             if ($group_post) {
                 $class_name = $group_post->post_title;
@@ -475,18 +486,29 @@ function single_session_shortcode($atts) {
                                     </div>
                                 </div>
                             <?php else: ?>
+                                <?php
+                                // Determine attendance numbers for schools vs regular classes
+                                $present_count = 0;
+                                $total_count = $total_group_members;
+                                
+                                if ($class_type === 'School' && !empty($school_attendance_names)) {
+                                    $present_count = count($school_attendance_names);
+                                } else {
+                                    $present_count = count($attended_students);
+                                }
+                                ?>
                                 <div class="summary-item">
                                     <div class="summary-icon"><span class="dashicons dashicons-admin-users"></span></div>
                                     <div class="summary-content">
-                                        <div class="summary-number"><?php echo count($attended_students); ?></div>
+                                        <div class="summary-number"><?php echo $present_count; ?></div>
                                         <div class="summary-label">Present</div>
                                     </div>
                                 </div>
                                 <div class="summary-item">
                                     <div class="summary-icon"><span class="dashicons dashicons-chart-bar"></span></div>
                                     <div class="summary-content">
-                                        <div class="summary-number"><?php echo $total_group_members; ?></div>
-                                        <div class="summary-label">Total</div>
+                                        <div class="summary-number"><?php echo $total_count; ?></div>
+                                        <div class="summary-label"><?php echo ($class_type === 'School') ? 'Total Students' : 'Total'; ?></div>
                                     </div>
                                 </div>
                                 <div class="summary-item">
@@ -494,7 +516,7 @@ function single_session_shortcode($atts) {
                                     <div class="summary-content">
                                         <div class="summary-number">
                                             <?php
-                                            $attendance_percentage = $total_group_members > 0 ? round((count($attended_students) / $total_group_members) * 100) : 0;
+                                            $attendance_percentage = $total_count > 0 ? round(($present_count / $total_count) * 100) : 0;
                                             echo $attendance_percentage . '%';
                                             ?>
                                         </div>
@@ -505,7 +527,31 @@ function single_session_shortcode($atts) {
                         </div>
                         
                         <!-- Present Students -->
-                        <?php if (!$associated_student && !empty($attended_students)): ?>
+                        <?php 
+                        // Check if this is a school session
+                        $school_attendance_names = get_field('school_attendance_names', $session_id);
+                        
+                        if ($class_type === 'School' && !empty($school_attendance_names) && is_array($school_attendance_names)): ?>
+                        <!-- School Students -->
+                        <div class="attendee-section">
+                            <h4 class="column-header">Present Students (<?php echo count($school_attendance_names); ?>)</h4>
+                            <div class="scrollable-attendees">
+                                <?php foreach ($school_attendance_names as $student_name): ?>
+                                    <div class="attendee-card student-card">
+                                        <div class="attendee-avatar">
+                                            <div class="avatar-placeholder">
+                                                <span class="dashicons dashicons-admin-users"></span>
+                                            </div>
+                                        </div>
+                                        <div class="attendee-info">
+                                            <div class="attendee-name"><?php echo esc_html($student_name); ?></div>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                        <?php elseif (!$associated_student && !empty($attended_students)): ?>
+                        <!-- Regular Class Students -->
                         <div class="attendee-section">
                             <h4 class="column-header">Present Students (<?php echo count($attended_students); ?>)</h4>
                             <div class="scrollable-attendees">
@@ -689,7 +735,7 @@ function single_session_shortcode($atts) {
                                 <div class="detail-item">
                                     <div class="detail-icon"><span class="dashicons dashicons-groups"></span></div>
                                     <div class="detail-content">
-                                        <div class="detail-label">Class/Program</div>
+                                        <div class="detail-label"><?php echo ($class_type === 'School') ? 'School' : 'Class/Program'; ?></div>
                                         <div class="detail-value"><?php echo esc_html($class_name); ?></div>
                                     </div>
                                 </div>

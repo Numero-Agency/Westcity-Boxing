@@ -2,8 +2,6 @@
 // Class Session Form (handles both Class and School types)
 
 function wcb_class_session_form_shortcode() {
-
-
     // Handle form submission - check for nonce and form fields instead of just submit button
     $is_form_submission = !empty($_POST) && isset($_POST['class_session_nonce']) && isset($_POST['session_date']);
 
@@ -121,12 +119,6 @@ function wcb_class_session_form_shortcode() {
         error_log('Found membership: ID=' . $membership->ID . ', Title=' . $membership->post_title . ', Status=' . $membership->post_status);
     }
     
-    // Get schools for dropdown
-    $schools = get_terms([
-        'taxonomy' => 'school', // Your school taxonomy
-        'hide_empty' => false
-    ]);
-    
     // Note: Members will be loaded dynamically via AJAX when a group is selected
     
     // Define coaches list
@@ -138,6 +130,27 @@ function wcb_class_session_form_shortcode() {
         'Zarah Kumar',
         'Sebastian Grey'
     ];
+    
+    // Get schools for dropdown - try both possible post type names
+    $schools = get_posts([
+        'post_type' => 'schools',
+        'post_status' => 'publish',
+        'posts_per_page' => -1,
+        'orderby' => 'title',
+        'order' => 'ASC'
+    ]);
+    
+    // If no schools found, try singular form
+    if (empty($schools)) {
+        $schools = get_posts([
+            'post_type' => 'school',
+            'post_status' => 'publish',
+            'posts_per_page' => -1,
+            'orderby' => 'title',
+            'order' => 'ASC'
+        ]);
+    }
+
     
     ob_start();
     ?>
@@ -198,14 +211,22 @@ function wcb_class_session_form_shortcode() {
             <!-- 4. School Selection (shows when School is selected) -->
             <div class="form-row" id="school-selection" style="display: none;">
                 <label for="selected_school">Select School *</label>
-                <select id="selected_school" name="selected_school">
-                    <option value="middle-school-west-auckland">Middle School West Auckland</option>
-                    <?php foreach ($schools as $school): ?>
-                        <option value="<?php echo $school->term_id; ?>">
-                            <?php echo esc_html($school->name); ?>
-                        </option>
-                    <?php endforeach; ?>
+                <select id="selected_school" name="selected_school" onchange="loadSchoolStudents()">
+                    <option value="">Select School</option>
+                    <?php if (empty($schools)): ?>
+                        <option value="" disabled>No schools found - please create schools first</option>
+                    <?php else: ?>
+                        <?php foreach ($schools as $school): ?>
+                            <option value="school_<?php echo $school->ID; ?>">
+                                <?php echo esc_html($school->post_title); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </select>
+
+                <div id="school-info" style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px; display: none;">
+                    <small id="school-student-count" style="color: #6c757d;"></small>
+                </div>
             </div>
             
             <!-- 5. Attendance List (Dynamic based on selected group) -->
@@ -300,8 +321,9 @@ function wcb_class_session_form_shortcode() {
             classSelection.style.display = 'none';
             schoolSelect.required = true;
             groupSelect.required = false;
-            // Clear attendance when switching to school
-            clearAttendanceList();
+            // Show empty state when switching to school
+            showAttendanceEmpty();
+            hideSchoolInfo();
         } else if (classType.value === 'Class') {
             schoolSelection.style.display = 'none';
             classSelection.style.display = 'block';
@@ -309,6 +331,7 @@ function wcb_class_session_form_shortcode() {
             groupSelect.required = true;
             // Show empty state when switching to class
             showAttendanceEmpty();
+            hideGroupInfo();
         }
     }
 
@@ -424,6 +447,58 @@ function wcb_class_session_form_shortcode() {
 
     function hideGroupInfo() {
         document.getElementById('group-info').style.display = 'none';
+    }
+
+    function loadSchoolStudents() {
+        const schoolSelect = document.getElementById('selected_school');
+        const schoolId = schoolSelect.value;
+        
+        if (!schoolId) {
+            showAttendanceEmpty();
+            clearStudentSelect();
+            hideSchoolInfo();
+            return;
+        }
+
+        showAttendanceLoading();
+
+        // Make AJAX request to load school students
+        fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                action: 'wcb_load_school_students',
+                school_id: schoolId,
+                nonce: '<?php echo wp_create_nonce('wcb_load_school_students'); ?>'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                populateAttendanceList(data.data.students);
+                populateStudentSelect(data.data.students);
+                showSchoolInfo(data.data.school_name, data.data.student_count);
+            } else {
+                showAttendanceError(data.data || 'Failed to load students');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading school students:', error);
+            showAttendanceError('Failed to load students');
+        });
+    }
+
+    function showSchoolInfo(schoolName, studentCount) {
+        const info = document.getElementById('school-info');
+        const countText = document.getElementById('school-student-count');
+        countText.textContent = `${studentCount} students enrolled in ${schoolName}`;
+        info.style.display = 'block';
+    }
+
+    function hideSchoolInfo() {
+        document.getElementById('school-info').style.display = 'none';
     }
 
     // Add CSS for spinning animation and popup
@@ -645,7 +720,16 @@ function wcb_handle_class_session_submission() {
     
     // Save school or group based on type
     if ($class_type === 'School') {
-        wp_set_object_terms($post_id, intval($_POST['selected_school']), 'school');
+        $selected_school = $_POST['selected_school'];
+        
+        // Parse the school selection to get the ID
+        if (strpos($selected_school, 'school_') === 0) {
+            $school_id = intval(substr($selected_school, 7));
+            // Save school ID as selected_school
+            update_field('selected_school', $school_id, $post_id);
+            // Also save as selected_membership for compatibility with programs table
+            update_field('selected_membership', $school_id, $post_id);
+        }
     } else {
         $selected_group = $_POST['selected_group'];
         
@@ -667,17 +751,51 @@ function wcb_handle_class_session_submission() {
     // Save attendance list (as repeater-style data)
     if (!empty($_POST['attendance_list'])) {
         $attendance_data = [];
-        foreach ($_POST['attendance_list'] as $user_id) {
-            $attendance_data[] = [
-                'student' => intval($user_id),
-                'status' => 'present'
-            ];
+        $attended = [];
+        
+        foreach ($_POST['attendance_list'] as $student_identifier) {
+            // Check if it's a school student (string ID) or regular member (numeric ID)
+            if (strpos($student_identifier, 'school_student_') === 0) {
+                // School student - save as string identifier
+                $attendance_data[] = [
+                    'student' => $student_identifier,
+                    'status' => 'present'
+                ];
+            } else {
+                // Regular member - save as numeric ID
+                $attendance_data[] = [
+                    'student' => intval($student_identifier),
+                    'status' => 'present'
+                ];
+                $attended[] = intval($student_identifier);
+            }
         }
+        
         update_field('attendance_list', $attendance_data, $post_id);
         
-        // Also save in the old format for backward compatibility
-        $attended = array_map('intval', $_POST['attendance_list']);
-        update_field('attended_students', $attended, $post_id);
+        // Save school student names separately if it's a school session
+        if ($class_type === 'School' && !empty($_POST['selected_school'])) {
+            // Save the school student attendance as names
+            $school_attendance_names = [];
+            if (strpos($_POST['selected_school'], 'school_') === 0) {
+                $school_id = intval(substr($_POST['selected_school'], 7));
+                $school_students = get_field('student', $school_id);
+                
+                if (is_array($school_students)) {
+                    $student_id = 10000;
+                    foreach ($school_students as $student) {
+                        $student_key = 'school_student_' . $student_id++;
+                        if (in_array($student_key, $_POST['attendance_list'])) {
+                            $school_attendance_names[] = $student['student_name'] ?? 'Unknown';
+                        }
+                    }
+                }
+            }
+            update_field('school_attendance_names', $school_attendance_names, $post_id);
+        } else {
+            // Save regular member IDs for backward compatibility
+            update_field('attended_students', $attended, $post_id);
+        }
     }
     
     // Save instructor
@@ -899,6 +1017,65 @@ function wcb_get_standalone_memberships() {
     return $memberships;
 }
 
+// AJAX handler for loading school students
+function wcb_ajax_load_school_students() {
+    // Verify nonce
+    if (!wp_verify_nonce($_POST['nonce'], 'wcb_load_school_students')) {
+        wp_send_json_error('Security check failed - nonce invalid');
+        return;
+    }
+
+    $selection = $_POST['school_id'];
+
+    if (empty($selection)) {
+        wp_send_json_error('No school selected');
+        return;
+    }
+        // Parse the school selection
+        if (strpos($selection, 'school_') === 0) {
+            $school_id = intval(substr($selection, 7));
+        
+        // Get school information
+        $school = get_post($school_id);
+        if (!$school) {
+            wp_send_json_error('School not found with ID: ' . $school_id);
+            return;
+        }
+        
+        // Check for both 'schools' and 'school' post types
+        if ($school->post_type !== 'schools' && $school->post_type !== 'school') {
+            wp_send_json_error('Post is not a school. Post type: ' . $school->post_type);
+            return;
+        }
+            
+            // Get school students
+            $students_data = get_field('student', $school_id);
+            $students = [];
+        
+        if (is_array($students_data) && !empty($students_data)) {
+            $student_id = 10000; // Start with a high ID for school students (they're not WP users)
+            foreach ($students_data as $student) {
+                $students[] = [
+                    'id' => 'school_student_' . $student_id++,
+                    'name' => isset($student['student_name']) ? $student['student_name'] : 'Unknown',
+                    'email' => '' // School students don't have emails in this context
+                ];
+            }
+        }
+        
+        wp_send_json_success([
+            'school_name' => $school->post_title,
+            'student_count' => count($students),
+            'students' => $students
+        ]);
+        
+    } else {
+        wp_send_json_error('Invalid selection format. Expected "school_ID", got: ' . $selection);
+    }
+}
+
 // Register AJAX handlers for both logged-in and non-logged-in users
 add_action('wp_ajax_wcb_load_group_members', 'wcb_ajax_load_group_members');
 add_action('wp_ajax_nopriv_wcb_load_group_members', 'wcb_ajax_load_group_members');
+add_action('wp_ajax_wcb_load_school_students', 'wcb_ajax_load_school_students');
+add_action('wp_ajax_nopriv_wcb_load_school_students', 'wcb_ajax_load_school_students');
