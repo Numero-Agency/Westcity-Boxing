@@ -110,7 +110,9 @@ function wcb_intervention_form_shortcode() {
         'Hala Houma',
         'Jasmin bunton',
         'Zarah Kumar',
-        'Sebastian Grey'
+        'Sebastian Grey',
+        'Matthew Grey',
+        'Shamil Kumar'
     ];
 
     // Get students who are part of WBC Mentoring program (ID: 1738) using proven logic

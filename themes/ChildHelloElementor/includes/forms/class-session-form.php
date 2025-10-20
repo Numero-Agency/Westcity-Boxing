@@ -128,7 +128,9 @@ function wcb_class_session_form_shortcode() {
         'Hala Houma',
         'Jasmin bunton',
         'Zarah Kumar',
-        'Sebastian Grey'
+        'Sebastian Grey',
+        'Matthew Grey',
+        'Shamil Kumar'
     ];
     
     // Get schools for dropdown - try both possible post type names
