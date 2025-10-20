@@ -133,8 +133,8 @@ function dashboard_stats_shortcode() {
                     </div>
                 </div>
                 <div class="date-filter-info">
-                    <small><strong>📊 All dashboard stats below are filtered by this date range:</strong><br>
-                    <?php echo date('M j, Y', strtotime($date_from)); ?> to <?php echo date('M j, Y', strtotime($date_to)); ?></small>
+                    <small><strong>📊 Date Filter:</strong> Showing members who joined on/before <strong><?php echo date('M j, Y', strtotime($date_to)); ?></strong> AND whose subscription was active during this period (not expired before <strong><?php echo date('M j, Y', strtotime($date_from)); ?></strong>).<br>
+                    <em>Note: Join dates use MemberPress Registration Date if available, otherwise the first transaction date. Expiry dates from transaction records determine when members stopped being active.</em></small>
                 </div>
             </form>
         </div>
@@ -144,7 +144,7 @@ function dashboard_stats_shortcode() {
                     <div class="stat-card students">
             <h3><?php echo $total_students; ?></h3>
             <p><span class="dashicons dashicons-admin-users"></span> Active Students</p>
-            <small>During selected period</small>
+            <small>Active during selected period</small>
         </div>
             <div class="stat-card sessions clickable-stat" data-popup="sessions">
                 <h3><?php echo $total_sessions; ?></h3>
@@ -1948,6 +1948,77 @@ function dashboard_stats_shortcode() {
     return ob_get_clean();
 }
 
+// Helper function to get member join date from custom fields or transaction
+function wcb_get_member_join_date($user_id, $product_id = null) {
+    global $wpdb;
+    
+    // Priority 1: Check MemberPress custom registration date fields
+    $possible_date_fields = [
+        'mepr_registration_date',
+        'mepr_date_registered'
+    ];
+    
+    foreach ($possible_date_fields as $field_name) {
+        $registration_date = get_user_meta($user_id, $field_name, true);
+        
+        // Skip if empty or invalid placeholder values
+        if (empty($registration_date) || 
+            $registration_date === '0000-00-00' || 
+            $registration_date === '0000-00-00 00:00:00' || 
+            $registration_date === '1970-01-01' ||
+            $registration_date === '1970-01-01 00:00:00') {
+            continue;
+        }
+        
+        // Return valid date in YYYY-MM-DD format
+        $timestamp = null;
+        
+        // Handle DD/MM/YYYY format
+        if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $registration_date, $matches)) {
+            $day = intval($matches[1]);
+            $month = intval($matches[2]);
+            $year = intval($matches[3]);
+            $timestamp = mktime(0, 0, 0, $month, $day, $year);
+        }
+        // Handle YYYY-MM-DD format
+        elseif (preg_match('/^(\d{4})-(\d{2})-(\d{2})/', $registration_date)) {
+            $timestamp = strtotime($registration_date);
+        }
+        
+        if ($timestamp && $timestamp > 0) {
+            return date('Y-m-d', $timestamp);
+        }
+    }
+    
+    // Priority 2: Fallback to transaction created_at date
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+    
+    if ($product_id) {
+        // Get the earliest transaction for this specific product
+        $created_at = $wpdb->get_var($wpdb->prepare("
+            SELECT DATE(created_at)
+            FROM {$txn_table}
+            WHERE user_id = %d
+            AND product_id = %d
+            AND status IN ('confirmed', 'complete')
+            ORDER BY created_at ASC
+            LIMIT 1
+        ", $user_id, $product_id));
+    } else {
+        // Get the earliest transaction for any product
+        $created_at = $wpdb->get_var($wpdb->prepare("
+            SELECT DATE(created_at)
+            FROM {$txn_table}
+            WHERE user_id = %d
+            AND status IN ('confirmed', 'complete')
+            ORDER BY created_at ASC
+            LIMIT 1
+        ", $user_id));
+    }
+    
+    return $created_at ?: null;
+}
+
 // NEW: Function to get active members from the 7 defined program groups using proven logic
 function get_active_members_from_defined_groups($date_from = null, $date_to = null) {
     global $wpdb;
@@ -2001,17 +2072,50 @@ function get_active_members_from_defined_groups($date_from = null, $date_to = nu
             $placeholders = implode(',', array_fill(0, count($membership_ids), '%d'));
 
             // Get members who have active transactions for memberships in this group
-            // Use EXACT same query as active-members-test.php (line 320-329)
-            $group_members = $wpdb->get_results($wpdb->prepare("
-                SELECT DISTINCT u.ID
-                FROM {$wpdb->users} u
-                JOIN {$txn_table} t ON u.ID = t.user_id
-                WHERE t.product_id IN ({$placeholders})
-                AND t.status IN ('confirmed', 'complete')
-                AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-                AND u.user_login != 'bwgdev'
-                ORDER BY u.ID
-            ", ...$membership_ids));
+            // Apply date filter if provided
+            if ($date_from && $date_to) {
+                // Filter by date range: members who joined on/before date_to AND (still active OR expired on/after date_from)
+                // Use custom registration date fields if available, otherwise fall back to transaction created_at
+                $group_members = $wpdb->get_results($wpdb->prepare("
+                    SELECT DISTINCT u.ID
+                    FROM {$wpdb->users} u
+                    JOIN {$txn_table} t ON u.ID = t.user_id
+                    LEFT JOIN {$wpdb->usermeta} um_reg ON u.ID = um_reg.user_id 
+                        AND um_reg.meta_key IN ('mepr_registration_date', 'mepr_date_registered')
+                    WHERE t.product_id IN ({$placeholders})
+                    AND t.status IN ('confirmed', 'complete')
+                    AND (
+                        CASE 
+                            WHEN um_reg.meta_value IS NOT NULL 
+                                AND um_reg.meta_value != '0000-00-00' 
+                                AND um_reg.meta_value != '0000-00-00 00:00:00'
+                                AND um_reg.meta_value != '1970-01-01'
+                                AND um_reg.meta_value != '1970-01-01 00:00:00'
+                            THEN STR_TO_DATE(um_reg.meta_value, '%%d/%%m/%%Y')
+                            ELSE DATE(t.created_at)
+                        END
+                    ) <= %s
+                    AND (
+                        t.expires_at IS NULL 
+                        OR t.expires_at = '0000-00-00 00:00:00'
+                        OR DATE(t.expires_at) >= %s
+                    )
+                    AND u.user_login != 'bwgdev'
+                    ORDER BY u.ID
+                ", array_merge($membership_ids, [$date_to, $date_from])));
+            } else {
+                // No date filter - use current active members logic
+                $group_members = $wpdb->get_results($wpdb->prepare("
+                    SELECT DISTINCT u.ID
+                    FROM {$wpdb->users} u
+                    JOIN {$txn_table} t ON u.ID = t.user_id
+                    WHERE t.product_id IN ({$placeholders})
+                    AND t.status IN ('confirmed', 'complete')
+                    AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+                    AND u.user_login != 'bwgdev'
+                    ORDER BY u.ID
+                ", ...$membership_ids));
+            }
 
             $group_member_ids = array_column($group_members, 'ID');
             $group_member_count = count($group_member_ids);
@@ -2027,15 +2131,44 @@ function get_active_members_from_defined_groups($date_from = null, $date_to = nu
 
     // STEP 2: Also include Competitive Team members (ID: 1932) to match dashboard-students.php logic
     $competitive_team_id = 1932;
-    $competitive_members = $wpdb->get_results($wpdb->prepare("
-        SELECT DISTINCT u.ID
-        FROM {$wpdb->users} u
-        JOIN {$txn_table} t ON u.ID = t.user_id
-        WHERE t.product_id = %d
-        AND t.status IN ('confirmed', 'complete')
-        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-        AND u.user_login != 'bwgdev'
-    ", $competitive_team_id));
+    if ($date_from && $date_to) {
+        $competitive_members = $wpdb->get_results($wpdb->prepare("
+            SELECT DISTINCT u.ID
+            FROM {$wpdb->users} u
+            JOIN {$txn_table} t ON u.ID = t.user_id
+            LEFT JOIN {$wpdb->usermeta} um_reg ON u.ID = um_reg.user_id 
+                AND um_reg.meta_key IN ('mepr_registration_date', 'mepr_date_registered')
+            WHERE t.product_id = %d
+            AND t.status IN ('confirmed', 'complete')
+            AND (
+                CASE 
+                    WHEN um_reg.meta_value IS NOT NULL 
+                        AND um_reg.meta_value != '0000-00-00' 
+                        AND um_reg.meta_value != '0000-00-00 00:00:00'
+                        AND um_reg.meta_value != '1970-01-01'
+                        AND um_reg.meta_value != '1970-01-01 00:00:00'
+                    THEN STR_TO_DATE(um_reg.meta_value, '%%d/%%m/%%Y')
+                    ELSE DATE(t.created_at)
+                END
+            ) <= %s
+            AND (
+                t.expires_at IS NULL 
+                OR t.expires_at = '0000-00-00 00:00:00'
+                OR DATE(t.expires_at) >= %s
+            )
+            AND u.user_login != 'bwgdev'
+        ", $competitive_team_id, $date_to, $date_from));
+    } else {
+        $competitive_members = $wpdb->get_results($wpdb->prepare("
+            SELECT DISTINCT u.ID
+            FROM {$wpdb->users} u
+            JOIN {$txn_table} t ON u.ID = t.user_id
+            WHERE t.product_id = %d
+            AND t.status IN ('confirmed', 'complete')
+            AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+            AND u.user_login != 'bwgdev'
+        ", $competitive_team_id));
+    }
 
     $competitive_count = count($competitive_members);
     
@@ -2051,15 +2184,44 @@ function get_active_members_from_defined_groups($date_from = null, $date_to = nu
 
     // STEP 3: Also include WCB Mentoring members (ID: 1738) for the programs breakdown
     $wcb_mentoring_id = 1738;
-    $mentoring_members = $wpdb->get_results($wpdb->prepare("
-        SELECT DISTINCT u.ID
-        FROM {$wpdb->users} u
-        JOIN {$txn_table} t ON u.ID = t.user_id
-        WHERE t.product_id = %d
-        AND t.status IN ('confirmed', 'complete')
-        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-        AND u.user_login != 'bwgdev'
-    ", $wcb_mentoring_id));
+    if ($date_from && $date_to) {
+        $mentoring_members = $wpdb->get_results($wpdb->prepare("
+            SELECT DISTINCT u.ID
+            FROM {$wpdb->users} u
+            JOIN {$txn_table} t ON u.ID = t.user_id
+            LEFT JOIN {$wpdb->usermeta} um_reg ON u.ID = um_reg.user_id 
+                AND um_reg.meta_key IN ('mepr_registration_date', 'mepr_date_registered')
+            WHERE t.product_id = %d
+            AND t.status IN ('confirmed', 'complete')
+            AND (
+                CASE 
+                    WHEN um_reg.meta_value IS NOT NULL 
+                        AND um_reg.meta_value != '0000-00-00' 
+                        AND um_reg.meta_value != '0000-00-00 00:00:00'
+                        AND um_reg.meta_value != '1970-01-01'
+                        AND um_reg.meta_value != '1970-01-01 00:00:00'
+                    THEN STR_TO_DATE(um_reg.meta_value, '%%d/%%m/%%Y')
+                    ELSE DATE(t.created_at)
+                END
+            ) <= %s
+            AND (
+                t.expires_at IS NULL 
+                OR t.expires_at = '0000-00-00 00:00:00'
+                OR DATE(t.expires_at) >= %s
+            )
+            AND u.user_login != 'bwgdev'
+        ", $wcb_mentoring_id, $date_to, $date_from));
+    } else {
+        $mentoring_members = $wpdb->get_results($wpdb->prepare("
+            SELECT DISTINCT u.ID
+            FROM {$wpdb->users} u
+            JOIN {$txn_table} t ON u.ID = t.user_id
+            WHERE t.product_id = %d
+            AND t.status IN ('confirmed', 'complete')
+            AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+            AND u.user_login != 'bwgdev'
+        ", $wcb_mentoring_id));
+    }
 
     $mentoring_count = count($mentoring_members);
     
@@ -2134,17 +2296,47 @@ function get_active_member_ids_consistent_with_total($date_from = null, $date_to
             $placeholders = implode(',', array_fill(0, count($membership_ids), '%d'));
 
             // Get members who have active transactions for memberships in this group
-            // Use EXACT same query as get_active_members_from_defined_groups
-            $group_members = $wpdb->get_results($wpdb->prepare("
-                SELECT DISTINCT u.ID
-                FROM {$wpdb->users} u
-                JOIN {$txn_table} t ON u.ID = t.user_id
-                WHERE t.product_id IN ({$placeholders})
-                AND t.status IN ('confirmed', 'complete')
-                AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-                AND u.user_login != 'bwgdev'
-                ORDER BY u.ID
-            ", ...$membership_ids));
+            // Apply same date filter logic as get_active_members_from_defined_groups
+            if ($date_from && $date_to) {
+                $group_members = $wpdb->get_results($wpdb->prepare("
+                    SELECT DISTINCT u.ID
+                    FROM {$wpdb->users} u
+                    JOIN {$txn_table} t ON u.ID = t.user_id
+                    LEFT JOIN {$wpdb->usermeta} um_reg ON u.ID = um_reg.user_id 
+                        AND um_reg.meta_key IN ('mepr_registration_date', 'mepr_date_registered')
+                    WHERE t.product_id IN ({$placeholders})
+                    AND t.status IN ('confirmed', 'complete')
+                    AND (
+                        CASE 
+                            WHEN um_reg.meta_value IS NOT NULL 
+                                AND um_reg.meta_value != '0000-00-00' 
+                                AND um_reg.meta_value != '0000-00-00 00:00:00'
+                                AND um_reg.meta_value != '1970-01-01'
+                                AND um_reg.meta_value != '1970-01-01 00:00:00'
+                            THEN STR_TO_DATE(um_reg.meta_value, '%%d/%%m/%%Y')
+                            ELSE DATE(t.created_at)
+                        END
+                    ) <= %s
+                    AND (
+                        t.expires_at IS NULL 
+                        OR t.expires_at = '0000-00-00 00:00:00'
+                        OR DATE(t.expires_at) >= %s
+                    )
+                    AND u.user_login != 'bwgdev'
+                    ORDER BY u.ID
+                ", array_merge($membership_ids, [$date_to, $date_from])));
+            } else {
+                $group_members = $wpdb->get_results($wpdb->prepare("
+                    SELECT DISTINCT u.ID
+                    FROM {$wpdb->users} u
+                    JOIN {$txn_table} t ON u.ID = t.user_id
+                    WHERE t.product_id IN ({$placeholders})
+                    AND t.status IN ('confirmed', 'complete')
+                    AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+                    AND u.user_login != 'bwgdev'
+                    ORDER BY u.ID
+                ", ...$membership_ids));
+            }
 
             $group_member_ids = array_column($group_members, 'ID');
 
@@ -2157,15 +2349,44 @@ function get_active_member_ids_consistent_with_total($date_from = null, $date_to
 
     // STEP 2: Also include Competitive Team members (ID: 1932) to match dashboard-students.php logic
     $competitive_team_id = 1932;
-    $competitive_members = $wpdb->get_results($wpdb->prepare("
-        SELECT DISTINCT u.ID
-        FROM {$wpdb->users} u
-        JOIN {$txn_table} t ON u.ID = t.user_id
-        WHERE t.product_id = %d
-        AND t.status IN ('confirmed', 'complete')
-        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-        AND u.user_login != 'bwgdev'
-    ", $competitive_team_id));
+    if ($date_from && $date_to) {
+        $competitive_members = $wpdb->get_results($wpdb->prepare("
+            SELECT DISTINCT u.ID
+            FROM {$wpdb->users} u
+            JOIN {$txn_table} t ON u.ID = t.user_id
+            LEFT JOIN {$wpdb->usermeta} um_reg ON u.ID = um_reg.user_id 
+                AND um_reg.meta_key IN ('mepr_registration_date', 'mepr_date_registered')
+            WHERE t.product_id = %d
+            AND t.status IN ('confirmed', 'complete')
+            AND (
+                CASE 
+                    WHEN um_reg.meta_value IS NOT NULL 
+                        AND um_reg.meta_value != '0000-00-00' 
+                        AND um_reg.meta_value != '0000-00-00 00:00:00'
+                        AND um_reg.meta_value != '1970-01-01'
+                        AND um_reg.meta_value != '1970-01-01 00:00:00'
+                    THEN STR_TO_DATE(um_reg.meta_value, '%%d/%%m/%%Y')
+                    ELSE DATE(t.created_at)
+                END
+            ) <= %s
+            AND (
+                t.expires_at IS NULL 
+                OR t.expires_at = '0000-00-00 00:00:00'
+                OR DATE(t.expires_at) >= %s
+            )
+            AND u.user_login != 'bwgdev'
+        ", $competitive_team_id, $date_to, $date_from));
+    } else {
+        $competitive_members = $wpdb->get_results($wpdb->prepare("
+            SELECT DISTINCT u.ID
+            FROM {$wpdb->users} u
+            JOIN {$txn_table} t ON u.ID = t.user_id
+            WHERE t.product_id = %d
+            AND t.status IN ('confirmed', 'complete')
+            AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+            AND u.user_login != 'bwgdev'
+        ", $competitive_team_id));
+    }
 
     foreach ($competitive_members as $competitive_member) {
         $total_active_members[$competitive_member->ID] = true;
