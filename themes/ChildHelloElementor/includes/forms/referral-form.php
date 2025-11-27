@@ -131,8 +131,8 @@ if (!function_exists('wcb_referral_form_shortcode')) {
                     </div>
                     
                     <div class="form-row">
-                        <label for="contact_email">Contact Email Address <span class="required">*</span></label>
-                        <input type="email" id="contact_email" name="contact_email" required>
+                        <label for="contact_email">Contact Email Address</label>
+                        <input type="email" id="contact_email" name="contact_email">
                     </div>
                 </div>
                 
@@ -531,8 +531,8 @@ if (!function_exists('wcb_handle_referral_submission')) {
          error_log('WCB: wcb_handle_referral_submission called at ' . date('H:i:s.u'));
 
          
-         // Validate required fields
-         $required_fields = ['first_name', 'last_name', 'date_of_birth', 'ethnicity', 'gender', 'contact_phone', 'contact_email', 'parent_name', 'parent_phone', 'address', 'suburb', 'referral_date'];
+         // Validate required fields (contact_email is optional since kids may not have email)
+         $required_fields = ['first_name', 'last_name', 'date_of_birth', 'ethnicity', 'gender', 'contact_phone', 'parent_name', 'parent_phone', 'address', 'suburb', 'referral_date'];
         
         foreach ($required_fields as $field) {
             if (empty($_POST[$field])) {
@@ -540,8 +540,8 @@ if (!function_exists('wcb_handle_referral_submission')) {
             }
         }
         
-        // Validate email format
-        if (!filter_var($_POST['contact_email'], FILTER_VALIDATE_EMAIL)) {
+        // Validate email format only if provided
+        if (!empty($_POST['contact_email']) && !filter_var($_POST['contact_email'], FILTER_VALIDATE_EMAIL)) {
             return ['success' => false, 'message' => 'Please enter a valid email address'];
         }
         

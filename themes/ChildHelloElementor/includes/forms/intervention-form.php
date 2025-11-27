@@ -293,33 +293,74 @@ function wcb_handle_intervention_submission() {
         return ['success' => false, 'message' => 'Please fill in all required fields'];
     }
     
-    // Validate student exists
-    $student_id = intval($_POST['student_involved']);
-    $student = get_user_by('ID', $student_id);
-    if (!$student) {
-        return ['success' => false, 'message' => 'Invalid student selected'];
+    // Get student info - handle both user IDs and referral IDs
+    $student_involved = sanitize_text_field($_POST['student_involved']);
+    $student_display_name = '';
+    $is_referral = false;
+    $referral_id = null;
+    $user_id = null;
+    
+    if (strpos($student_involved, 'referral_') === 0) {
+        // This is a referral participant (not a WP user)
+        $is_referral = true;
+        $referral_id = intval(str_replace('referral_', '', $student_involved));
+        
+        // Validate referral exists and is processed
+        $referral = get_post($referral_id);
+        if (!$referral || $referral->post_type !== 'referral') {
+            return ['success' => false, 'message' => 'Invalid referral selected'];
+        }
+        
+        $referral_status = get_field('referral_status', $referral_id) ?: get_post_meta($referral_id, 'referral_status', true);
+        if ($referral_status !== 'processed') {
+            return ['success' => false, 'message' => 'This referral has not been processed yet'];
+        }
+        
+        // Get display name from referral
+        $first_name = get_field('first_name', $referral_id) ?: get_post_meta($referral_id, 'first_name', true);
+        $last_name = get_field('last_name', $referral_id) ?: get_post_meta($referral_id, 'last_name', true);
+        $student_display_name = trim($first_name . ' ' . $last_name);
+        
+    } else {
+        // This is a regular WP user (MemberPress member)
+        $user_id = intval($student_involved);
+        $student = get_user_by('ID', $user_id);
+        if (!$student) {
+            return ['success' => false, 'message' => 'Invalid student selected'];
+        }
+        $student_display_name = $student->display_name;
     }
     
     // Create session title
     $date = sanitize_text_field($_POST['intervention_date_']);
-    $session_title = 'Mentoring Session - ' . $student->display_name . ' - ' . date('M j, Y', strtotime($date));
+    $session_title = 'Mentoring Session - ' . $student_display_name . ' - ' . date('M j, Y', strtotime($date));
+    
+    // Prepare meta input
+    $meta_input = [
+        'staff_members_who_attended' => array_map('sanitize_text_field', $_POST['staff_members_who_attended']),
+        'intervention_date_' => $_POST['intervention_date_'],
+        'duration' => $_POST['duration'],
+        'meeting_location' => sanitize_text_field($_POST['meeting_location']),
+        'student_involved' => $student_involved, // Store as-is (either user ID or referral_123)
+        'student_display_name' => $student_display_name, // Store display name for easy reference
+        'is_referral_participant' => $is_referral ? 'yes' : 'no',
+        'other_attendees' => sanitize_textarea_field($_POST['other_attendees']),
+        'debrief_event' => sanitize_textarea_field($_POST['debrief_event']),
+        'selected_membership' => 1738 // Link to WCB Mentoring membership
+    ];
+    
+    // If it's a referral, also store the referral_id for easy linking
+    if ($is_referral && $referral_id) {
+        $meta_input['referral_participant_id'] = $referral_id;
+    }
     
     // Create new session post
     $post_data = [
         'post_title' => $session_title,
         'post_type' => 'session_log',
         'post_status' => 'publish',
-        'post_author' => get_current_user_id() ?: 1, // Use current user or fallback to admin (ID 1)
-        'meta_input' => [
-            'staff_members_who_attended' => array_map('sanitize_text_field', $_POST['staff_members_who_attended']), // Array of staff names
-            'intervention_date_' => $_POST['intervention_date_'],
-            'duration' => $_POST['duration'],
-            'meeting_location' => sanitize_text_field($_POST['meeting_location']),
-            'student_involved' => intval($_POST['student_involved']),
-            'other_attendees' => sanitize_textarea_field($_POST['other_attendees']),
-            'debrief_event' => sanitize_textarea_field($_POST['debrief_event']),
-            'selected_membership' => 1738 // Link to WCB Mentoring membership
-        ]
+        'post_author' => get_current_user_id() ?: 1,
+        'meta_input' => $meta_input
     ];
     
     $post_id = wp_insert_post($post_data);
@@ -335,31 +376,217 @@ function wcb_handle_intervention_submission() {
 }
 
 // Function to get students who are part of WBC Mentoring program
+// Also includes referrals with status "processed" (they don't need a MemberPress membership)
 function wcb_get_mentoring_program_members() {
     global $wpdb;
     $txn_table = $wpdb->prefix . 'mepr_transactions';
+    
+    $all_members = [];
 
-    // Check if MemberPress transactions table exists
+    // PART 1: Get MemberPress members with active WBC Mentoring transactions
     $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$txn_table'") == $txn_table;
-    if (!$table_exists) {
-        return [];
+    if ($table_exists) {
+        // WBC Mentoring program ID
+        $mentoring_program_id = 1738;
+
+        // Get members who have active transactions for WBC Mentoring program
+        $mentoring_members = $wpdb->get_results($wpdb->prepare("
+            SELECT DISTINCT u.ID, u.display_name, u.user_email
+            FROM {$wpdb->users} u
+            JOIN {$txn_table} t ON u.ID = t.user_id
+            WHERE t.product_id = %d
+            AND t.status IN ('confirmed', 'complete')
+            AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+            AND u.user_login != 'bwgdev'
+            ORDER BY u.display_name
+        ", $mentoring_program_id));
+        
+        foreach ($mentoring_members as $member) {
+            $all_members[] = (object) [
+                'ID' => $member->ID,
+                'display_name' => $member->display_name,
+                'user_email' => $member->user_email,
+                'type' => 'member'
+            ];
+        }
     }
+    
+    // PART 2: Get referrals with status "processed" 
+    // These are young people referred to the mentoring program who don't have a MemberPress membership
+    
+    // Build list of existing member emails to check for duplicates
+    $existing_emails = [];
+    foreach ($all_members as $member) {
+        if (!empty($member->user_email)) {
+            $existing_emails[] = strtolower($member->user_email);
+        }
+    }
+    
+    // Query for processed referrals - check both lowercase and capitalized
+    $processed_referrals = get_posts([
+        'post_type' => 'referral',
+        'post_status' => 'publish',
+        'posts_per_page' => -1,
+        'meta_query' => [
+            'relation' => 'OR',
+            [
+                'key' => 'referral_status',
+                'value' => 'processed',
+                'compare' => '='
+            ],
+            [
+                'key' => 'referral_status',
+                'value' => 'Processed',
+                'compare' => '='
+            ]
+        ]
+    ]);
+    
+    $referrals_added = 0;
+    $referrals_skipped = 0;
+    
+    foreach ($processed_referrals as $referral) {
+        $first_name = function_exists('get_field') ? get_field('first_name', $referral->ID) : null;
+        $first_name = $first_name ?: get_post_meta($referral->ID, 'first_name', true);
+        
+        $last_name = function_exists('get_field') ? get_field('last_name', $referral->ID) : null;
+        $last_name = $last_name ?: get_post_meta($referral->ID, 'last_name', true);
+        
+        $contact_email = function_exists('get_field') ? get_field('contact_email', $referral->ID) : null;
+        $contact_email = $contact_email ?: get_post_meta($referral->ID, 'contact_email', true);
+        
+        // Skip if email matches an existing member (duplicate check)
+        if (!empty($contact_email) && in_array(strtolower($contact_email), $existing_emails)) {
+            $referrals_skipped++;
+            continue;
+        }
+        
+        $display_name = trim($first_name . ' ' . $last_name);
+        
+        if (!empty($display_name)) {
+            $all_members[] = (object) [
+                'ID' => 'referral_' . $referral->ID,  // Prefix to distinguish from user IDs
+                'display_name' => $display_name . ' (Referral)',
+                'user_email' => $contact_email ?: '',
+                'type' => 'referral',
+                'referral_id' => $referral->ID
+            ];
+            $referrals_added++;
+        }
+    }
+    
+    wcb_debug_log("wcb_get_mentoring_program_members: Added {$referrals_added} referrals, skipped {$referrals_skipped} duplicates");
+    
+    // Sort all members by display name
+    usort($all_members, function($a, $b) {
+        return strcasecmp($a->display_name, $b->display_name);
+    });
 
-    // WBC Mentoring program ID
-    $mentoring_program_id = 1738;
+    return $all_members;
+}
 
-    // Get members who have active transactions for WBC Mentoring program
-    // Use EXACT same logic as active-members-test.php
-    $mentoring_members = $wpdb->get_results($wpdb->prepare("
-        SELECT DISTINCT u.ID, u.display_name, u.user_email
-        FROM {$wpdb->users} u
-        JOIN {$txn_table} t ON u.ID = t.user_id
-        WHERE t.product_id = %d
-        AND t.status IN ('confirmed', 'complete')
-        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-        AND u.user_login != 'bwgdev'
-        ORDER BY u.display_name
-    ", $mentoring_program_id));
+// Helper function to get referral details by ID
+function wcb_get_referral_participant($referral_id) {
+    $referral = get_post($referral_id);
+    if (!$referral || $referral->post_type !== 'referral') {
+        return null;
+    }
+    
+    $first_name = get_field('first_name', $referral_id) ?: get_post_meta($referral_id, 'first_name', true);
+    $last_name = get_field('last_name', $referral_id) ?: get_post_meta($referral_id, 'last_name', true);
+    
+    return (object) [
+        'ID' => 'referral_' . $referral_id,
+        'display_name' => trim($first_name . ' ' . $last_name),
+        'referral_id' => $referral_id
+    ];
+}
 
-    return $mentoring_members;
+/**
+ * Helper function to get student info from a mentoring session
+ * Handles both regular users (by ID) and referral participants (referral_123 format)
+ * 
+ * @param int $session_id The session post ID
+ * @return array|null Array with 'name', 'email', 'is_referral', 'id' or null if not found
+ */
+function wcb_get_mentoring_student_info($session_id) {
+    // First try to get the stored display name (fastest)
+    $stored_name = get_field('student_display_name', $session_id) ?: get_post_meta($session_id, 'student_display_name', true);
+    $is_referral = get_field('is_referral_participant', $session_id) ?: get_post_meta($session_id, 'is_referral_participant', true);
+    
+    // Get the student_involved field
+    $student_involved = get_field('student_involved', $session_id);
+    if (empty($student_involved)) {
+        $student_involved = get_post_meta($session_id, 'student_involved', true);
+    }
+    
+    if (empty($student_involved)) {
+        return null;
+    }
+    
+    // Check if it's a referral participant (format: referral_123)
+    if (is_string($student_involved) && strpos($student_involved, 'referral_') === 0) {
+        $referral_id = intval(str_replace('referral_', '', $student_involved));
+        
+        // If we have a stored name, use it
+        if (!empty($stored_name)) {
+            return [
+                'name' => $stored_name,
+                'email' => '',
+                'is_referral' => true,
+                'id' => 'referral_' . $referral_id,
+                'referral_id' => $referral_id
+            ];
+        }
+        
+        // Otherwise look up from the referral post
+        $referral = get_post($referral_id);
+        if ($referral && $referral->post_type === 'referral') {
+            $first_name = get_field('first_name', $referral_id) ?: get_post_meta($referral_id, 'first_name', true);
+            $last_name = get_field('last_name', $referral_id) ?: get_post_meta($referral_id, 'last_name', true);
+            $contact_email = get_field('contact_email', $referral_id) ?: get_post_meta($referral_id, 'contact_email', true);
+            
+            return [
+                'name' => trim($first_name . ' ' . $last_name) ?: 'Unknown Referral',
+                'email' => $contact_email ?: '',
+                'is_referral' => true,
+                'id' => 'referral_' . $referral_id,
+                'referral_id' => $referral_id
+            ];
+        }
+        
+        return [
+            'name' => 'Unknown Referral',
+            'email' => '',
+            'is_referral' => true,
+            'id' => 'referral_' . $referral_id,
+            'referral_id' => $referral_id
+        ];
+    }
+    
+    // It's a regular user ID
+    $user_id = intval($student_involved);
+    $user = get_user_by('ID', $user_id);
+    
+    if ($user) {
+        return [
+            'name' => $user->display_name,
+            'email' => $user->user_email,
+            'is_referral' => false,
+            'id' => $user_id,
+            'user_id' => $user_id
+        ];
+    }
+    
+    // If we have stored name but couldn't find user, still return it
+    if (!empty($stored_name)) {
+        return [
+            'name' => $stored_name,
+            'email' => '',
+            'is_referral' => ($is_referral === 'yes'),
+            'id' => $user_id
+        ];
+    }
+    
+    return null;
 }

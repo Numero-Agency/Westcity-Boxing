@@ -203,6 +203,262 @@ function dashboard_stats_shortcode() {
     </div>
     </div>
     
+    <!-- DEBUG SECTION: Active Members & Expired Members Tables -->
+    <?php 
+    $debug_active_members = wcb_get_debug_active_members($date_from, $date_to);
+    $debug_expired_members = wcb_get_debug_expired_members($date_from, $date_to);
+    ?>
+    <div class="dashboard-debug-section">
+        <div class="debug-toggle-header" onclick="toggleDebugSection()">
+            <h3>
+                <span class="dashicons dashicons-admin-tools"></span> 
+                Debug: Member Data Visibility
+                <span class="debug-toggle-icon">+</span>
+            </h3>
+            <small>Click to expand/collapse - Shows detailed member data for verification</small>
+        </div>
+        
+        <div class="debug-content" id="debug-content" style="display: none;">
+            <!-- Active Members Table -->
+            <div class="debug-table-section">
+                <h4>
+                    <span class="dashicons dashicons-yes-alt"></span> 
+                    Active Members During Period (<?php echo count($debug_active_members); ?>)
+                </h4>
+                <p class="debug-description">
+                    Members who joined on/before <strong><?php echo date('M j, Y', strtotime($date_to)); ?></strong> 
+                    AND whose subscription is still active or expired on/after <strong><?php echo date('M j, Y', strtotime($date_from)); ?></strong>
+                </p>
+                
+                <?php if (!empty($debug_active_members)): ?>
+                <div class="debug-table-wrapper">
+                    <table class="debug-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Program/Group</th>
+                                <th>Membership</th>
+                                <th>Registration Date</th>
+                                <th>First Transaction</th>
+                                <th>Expires</th>
+                                <th>Gateway</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($debug_active_members as $member): ?>
+                            <tr>
+                                <td>
+                                    <a href="<?php echo admin_url('user-edit.php?user_id=' . $member['user_id']); ?>" target="_blank">
+                                        <?php echo esc_html($member['name']); ?>
+                                    </a>
+                                </td>
+                                <td><?php echo esc_html($member['email']); ?></td>
+                                <td><?php echo esc_html($member['group']); ?></td>
+                                <td><?php echo esc_html($member['membership']); ?></td>
+                                <td>
+                                    <?php if ($member['registration_date']): ?>
+                                        <?php echo esc_html($member['registration_date']); ?>
+                                    <?php else: ?>
+                                        <span class="no-data-badge">Not Set</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td><?php echo esc_html($member['first_txn_date'] ?: 'N/A'); ?></td>
+                                <td>
+                                    <?php if ($member['expires_at'] === 'Never'): ?>
+                                        <span class="never-expires-badge">Never</span>
+                                    <?php else: ?>
+                                        <?php echo esc_html($member['expires_at']); ?>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <span class="gateway-badge gateway-<?php echo strtolower($member['gateway']); ?>">
+                                        <?php echo esc_html($member['gateway']); ?>
+                                    </span>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+                <?php else: ?>
+                <div class="no-data">No active members found for this period.</div>
+                <?php endif; ?>
+            </div>
+            
+            <!-- Expired Members Table -->
+            <?php 
+            // Pre-calculate counts for the filter buttons
+            $expired_renewed_count = count(array_filter($debug_expired_members, function($m) { return $m['has_renewed'] === 'Yes'; }));
+            $expired_not_renewed_count = count($debug_expired_members) - $expired_renewed_count;
+            ?>
+            <div class="debug-table-section">
+                <h4>
+                    <span class="dashicons dashicons-warning"></span> 
+                    Members Expired During Period (<span id="expired-visible-count"><?php echo count($debug_expired_members); ?></span>)
+                </h4>
+                <p class="debug-description">
+                    Members whose subscription expired between <strong><?php echo date('M j, Y', strtotime($date_from)); ?></strong> 
+                    and <strong><?php echo date('M j, Y', strtotime($date_to)); ?></strong>. 
+                    Use the filter below to view specific groups.
+                </p>
+                
+                <?php if (!empty($debug_expired_members)): ?>
+                <!-- Filter Buttons -->
+                <div class="expired-filter-buttons">
+                    <button type="button" class="filter-btn active" data-filter="all" onclick="filterExpiredMembers('all')">
+                        All <span class="filter-count">(<?php echo count($debug_expired_members); ?>)</span>
+                    </button>
+                    <button type="button" class="filter-btn filter-not-renewed" data-filter="not-renewed" onclick="filterExpiredMembers('not-renewed')">
+                        Not Renewed <span class="filter-count">(<?php echo $expired_not_renewed_count; ?>)</span>
+                    </button>
+                    <button type="button" class="filter-btn filter-renewed" data-filter="renewed" onclick="filterExpiredMembers('renewed')">
+                        Renewed <span class="filter-count">(<?php echo $expired_renewed_count; ?>)</span>
+                    </button>
+                </div>
+                
+                <div class="debug-table-wrapper">
+                    <table class="debug-table" id="expired-members-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Program/Group</th>
+                                <th>Membership</th>
+                                <th>Registration Date</th>
+                                <th>Txn Expired On</th>
+                                <th>Current Expires</th>
+                                <th>Gateway</th>
+                                <th>Renewed?</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($debug_expired_members as $member): ?>
+                            <tr class="<?php echo $member['has_renewed'] === 'Yes' ? 'renewed-row' : 'not-renewed-row'; ?>" data-renewed="<?php echo $member['has_renewed'] === 'Yes' ? 'yes' : 'no'; ?>">
+                                <td>
+                                    <a href="<?php echo admin_url('user-edit.php?user_id=' . $member['user_id']); ?>" target="_blank">
+                                        <?php echo esc_html($member['name']); ?>
+                                    </a>
+                                </td>
+                                <td><?php echo esc_html($member['email']); ?></td>
+                                <td><?php echo esc_html($member['group']); ?></td>
+                                <td><?php echo esc_html($member['membership']); ?></td>
+                                <td>
+                                    <?php if ($member['registration_date']): ?>
+                                        <?php echo esc_html($member['registration_date']); ?>
+                                    <?php else: ?>
+                                        <span class="no-data-badge">Not Set</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="expired-date"><?php echo esc_html($member['expired_txn_date']); ?></td>
+                                <td>
+                                    <?php if ($member['has_renewed'] === 'Yes'): ?>
+                                        <span class="current-expires-renewed"><?php echo esc_html($member['current_expires']); ?></span>
+                                    <?php else: ?>
+                                        <span class="current-expires-none">Expired</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <span class="gateway-badge gateway-<?php echo strtolower($member['gateway']); ?>">
+                                        <?php echo esc_html($member['gateway']); ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <?php if ($member['has_renewed'] === 'Yes'): ?>
+                                        <span class="renewed-badge">Yes</span>
+                                    <?php else: ?>
+                                        <span class="not-renewed-badge">No</span>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Summary Stats -->
+                <div class="debug-summary">
+                    <?php 
+                    $renewed_count = count(array_filter($debug_expired_members, function($m) { return $m['has_renewed'] === 'Yes'; }));
+                    $not_renewed_count = count($debug_expired_members) - $renewed_count;
+                    $manual_count = count(array_filter($debug_expired_members, function($m) { return $m['gateway'] === 'Manual'; }));
+                    $stripe_count = count(array_filter($debug_expired_members, function($m) { return $m['gateway'] === 'Stripe'; }));
+                    ?>
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <span class="summary-number"><?php echo $renewed_count; ?></span>
+                            <span class="summary-label">Renewed</span>
+                        </div>
+                        <div class="summary-item warning">
+                            <span class="summary-number"><?php echo $not_renewed_count; ?></span>
+                            <span class="summary-label">Not Renewed</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-number"><?php echo $manual_count; ?></span>
+                            <span class="summary-label">Manual Payments</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-number"><?php echo $stripe_count; ?></span>
+                            <span class="summary-label">Stripe Payments</span>
+                        </div>
+                    </div>
+                </div>
+                <?php else: ?>
+                <div class="no-data">No expired members found during this period.</div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+    function toggleDebugSection() {
+        var content = document.getElementById('debug-content');
+        var icon = document.querySelector('.debug-toggle-icon');
+        if (content.style.display === 'none') {
+            content.style.display = 'block';
+            icon.textContent = '−';
+        } else {
+            content.style.display = 'none';
+            icon.textContent = '+';
+        }
+    }
+    
+    function filterExpiredMembers(filter) {
+        var table = document.getElementById('expired-members-table');
+        var rows = table.querySelectorAll('tbody tr');
+        var visibleCount = 0;
+        
+        // Update active button state
+        var buttons = document.querySelectorAll('.expired-filter-buttons .filter-btn');
+        buttons.forEach(function(btn) {
+            btn.classList.remove('active');
+            if (btn.getAttribute('data-filter') === filter) {
+                btn.classList.add('active');
+            }
+        });
+        
+        // Filter rows
+        rows.forEach(function(row) {
+            var renewed = row.getAttribute('data-renewed');
+            var show = false;
+            
+            if (filter === 'all') {
+                show = true;
+            } else if (filter === 'not-renewed' && renewed === 'no') {
+                show = true;
+            } else if (filter === 'renewed' && renewed === 'yes') {
+                show = true;
+            }
+            
+            row.style.display = show ? '' : 'none';
+            if (show) visibleCount++;
+        });
+        
+        // Update visible count in header
+        document.getElementById('expired-visible-count').textContent = visibleCount;
+    }
+    </script>
+    
     <!-- Ethnicity Breakdown Popup -->
     <div id="ethnicity-popup" class="stats-popup" style="display: none;">
         <div class="popup-overlay"></div>
@@ -1941,6 +2197,344 @@ function dashboard_stats_shortcode() {
 
         .btn-text {
             display: block;
+        }
+    }
+    
+    /* Debug Section Styles */
+    .dashboard-debug-section {
+        margin-top: 30px;
+        border: 2px dashed #ccc;
+        background: #fafafa;
+    }
+    
+    .debug-toggle-header {
+        background: #2c3e50;
+        color: white;
+        padding: 16px 20px;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        transition: background 0.2s ease;
+    }
+    
+    .debug-toggle-header:hover {
+        background: #34495e;
+    }
+    
+    .debug-toggle-header h3 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .debug-toggle-header h3 .dashicons {
+        font-size: 20px;
+    }
+    
+    .debug-toggle-header small {
+        color: #bdc3c7;
+        font-size: 12px;
+    }
+    
+    .debug-toggle-icon {
+        font-size: 24px;
+        font-weight: bold;
+        margin-left: 10px;
+    }
+    
+    .debug-content {
+        padding: 20px;
+    }
+    
+    .debug-table-section {
+        margin-bottom: 30px;
+        background: white;
+        border: 1px solid #e5e5e5;
+        padding: 20px;
+    }
+    
+    .debug-table-section h4 {
+        margin: 0 0 10px 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #2c3e50;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .debug-table-section h4 .dashicons {
+        font-size: 18px;
+    }
+    
+    .debug-table-section h4 .dashicons-yes-alt {
+        color: #27ae60;
+    }
+    
+    .debug-table-section h4 .dashicons-warning {
+        color: #e74c3c;
+    }
+    
+    /* Expired Members Filter Buttons */
+    .expired-filter-buttons {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .expired-filter-buttons .filter-btn {
+        padding: 8px 16px;
+        border: 2px solid #e5e5e5;
+        background: white;
+        color: #666;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .expired-filter-buttons .filter-btn:hover {
+        border-color: #999;
+        background: #f8f9fa;
+    }
+    
+    .expired-filter-buttons .filter-btn.active {
+        border-color: #2c3e50;
+        background: #2c3e50;
+        color: white;
+    }
+    
+    .expired-filter-buttons .filter-btn.filter-not-renewed:hover,
+    .expired-filter-buttons .filter-btn.filter-not-renewed.active {
+        border-color: #e74c3c;
+        background: #e74c3c;
+        color: white;
+    }
+    
+    .expired-filter-buttons .filter-btn.filter-renewed:hover,
+    .expired-filter-buttons .filter-btn.filter-renewed.active {
+        border-color: #27ae60;
+        background: #27ae60;
+        color: white;
+    }
+    
+    .expired-filter-buttons .filter-count {
+        opacity: 0.8;
+        font-weight: 500;
+    }
+    
+    .debug-description {
+        margin: 0 0 15px 0;
+        padding: 10px 15px;
+        background: #f8f9fa;
+        border-left: 3px solid #3498db;
+        font-size: 13px;
+        color: #555;
+    }
+    
+    .debug-table-wrapper {
+        overflow-x: auto;
+        margin-bottom: 15px;
+    }
+    
+    .debug-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+    
+    .debug-table th {
+        background: #2c3e50;
+        color: white;
+        padding: 12px 10px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+    }
+    
+    .debug-table td {
+        padding: 10px;
+        border-bottom: 1px solid #e5e5e5;
+        vertical-align: middle;
+    }
+    
+    .debug-table tbody tr:hover {
+        background: #f8f9fa;
+    }
+    
+    .debug-table a {
+        color: #3498db;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    
+    .debug-table a:hover {
+        text-decoration: underline;
+    }
+    
+    .gateway-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .gateway-badge.gateway-manual {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffc107;
+    }
+    
+    .gateway-badge.gateway-stripe {
+        background: #e8f4fd;
+        color: #635bff;
+        border: 1px solid #635bff;
+    }
+    
+    .gateway-badge.gateway-unknown {
+        background: #f8f9fa;
+        color: #6c757d;
+        border: 1px solid #dee2e6;
+    }
+    
+    .no-data-badge {
+        display: inline-block;
+        padding: 2px 6px;
+        background: #f8d7da;
+        color: #721c24;
+        border-radius: 4px;
+        font-size: 11px;
+    }
+    
+    .never-expires-badge {
+        display: inline-block;
+        padding: 2px 6px;
+        background: #d4edda;
+        color: #155724;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 500;
+    }
+    
+    .renewed-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        background: #d4edda;
+        color: #155724;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+    
+    .not-renewed-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        background: #f8d7da;
+        color: #721c24;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+    
+    .renewed-row {
+        background: #f8fff8;
+    }
+    
+    .not-renewed-row {
+        background: #fff8f8;
+    }
+    
+    .expired-date {
+        color: #e74c3c;
+        font-weight: 500;
+    }
+    
+    .current-expires-renewed {
+        color: #27ae60;
+        font-weight: 500;
+    }
+    
+    .current-expires-none {
+        color: #e74c3c;
+        font-weight: 500;
+        font-style: italic;
+    }
+    
+    .debug-summary {
+        margin-top: 20px;
+        padding: 15px;
+        background: #f8f9fa;
+        border: 1px solid #e5e5e5;
+        border-left: 4px solid #2c3e50;
+    }
+    
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 15px;
+    }
+    
+    .summary-item {
+        text-align: center;
+        padding: 10px;
+        background: white;
+        border: 1px solid #e5e5e5;
+        border-radius: 6px;
+    }
+    
+    .summary-item.warning {
+        background: #fff8f8;
+        border-color: #f5c6cb;
+    }
+    
+    .summary-number {
+        display: block;
+        font-size: 24px;
+        font-weight: 700;
+        color: #2c3e50;
+    }
+    
+    .summary-item.warning .summary-number {
+        color: #e74c3c;
+    }
+    
+    .summary-label {
+        display: block;
+        font-size: 11px;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 4px;
+    }
+    
+    @media (max-width: 768px) {
+        .debug-table {
+            font-size: 12px;
+        }
+        
+        .debug-table th,
+        .debug-table td {
+            padding: 8px 6px;
+        }
+        
+        .summary-grid {
+            grid-template-columns: repeat(2, 1fr);
         }
     }
     </style>
@@ -3940,6 +4534,409 @@ function get_schools_data() {
     }
 
     return $schools_data;
+}
+
+// Helper function to convert UTC datetime to WordPress local timezone
+function wcb_utc_to_local_date($utc_datetime) {
+    if (empty($utc_datetime) || $utc_datetime === '0000-00-00 00:00:00') {
+        return null;
+    }
+    
+    try {
+        // Create DateTime object in UTC
+        $utc_tz = new DateTimeZone('UTC');
+        $local_tz = wp_timezone();
+        
+        $date = new DateTime($utc_datetime, $utc_tz);
+        $date->setTimezone($local_tz);
+        
+        return $date->format('Y-m-d');
+    } catch (Exception $e) {
+        // Fallback to simple date extraction if timezone conversion fails
+        return date('Y-m-d', strtotime($utc_datetime));
+    }
+}
+
+// DEBUG: Get detailed active members for debug table
+// FIXED: Now gets the LATEST transaction with MAX expiry date for each user
+function wcb_get_debug_active_members($date_from, $date_to) {
+    global $wpdb;
+    
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$txn_table'") == $txn_table;
+    
+    if (!$table_exists) {
+        return [];
+    }
+    
+    $groups = $wpdb->get_results("SELECT ID, post_title FROM {$wpdb->posts} WHERE post_type = 'memberpressgroup' AND post_status IN ('publish', 'private') ORDER BY post_title");
+    
+    $defined_groups = [
+        'Mini Cadet Boys (9-11 Years) Group 1',
+        'Cadet Boys Group 1',
+        'Cadet Boys Group 2',
+        'Youth Boys Group 1',
+        'Youth Boys Group 2',
+        'Mini Cadets Girls Group 1',
+        'Youth Girls Group 1'
+    ];
+    
+    $all_membership_ids = [];
+    $membership_to_group = [];
+    
+    foreach ($defined_groups as $group_name) {
+        $group = null;
+        foreach ($groups as $g) {
+            if (strcasecmp($g->post_title, $group_name) === 0) {
+                $group = $g;
+                break;
+            }
+        }
+        
+        if (!$group) continue;
+        
+        $group_memberships = wcb_get_group_memberships($group->ID);
+        if (!empty($group_memberships)) {
+            foreach ($group_memberships as $m) {
+                $all_membership_ids[] = $m->ID;
+                $membership_to_group[$m->ID] = $group_name;
+            }
+        }
+    }
+    
+    $competitive_team_id = 1932;
+    $all_membership_ids[] = $competitive_team_id;
+    $membership_to_group[$competitive_team_id] = 'Competitive Team';
+    
+    if (empty($all_membership_ids)) {
+        return [];
+    }
+    
+    $placeholders = implode(',', array_fill(0, count($all_membership_ids), '%d'));
+    
+    // STEP 1: Get all active user IDs first (same logic as main count)
+    $active_users_query = $wpdb->prepare("
+        SELECT DISTINCT u.ID as user_id
+        FROM {$wpdb->users} u
+        JOIN {$txn_table} t ON u.ID = t.user_id
+        LEFT JOIN {$wpdb->usermeta} um_reg ON u.ID = um_reg.user_id 
+            AND um_reg.meta_key IN ('mepr_registration_date', 'mepr_date_registered')
+        WHERE t.product_id IN ({$placeholders})
+        AND t.status IN ('confirmed', 'complete')
+        AND (
+            CASE 
+                WHEN um_reg.meta_value IS NOT NULL 
+                    AND um_reg.meta_value != '0000-00-00' 
+                    AND um_reg.meta_value != '0000-00-00 00:00:00'
+                    AND um_reg.meta_value != '1970-01-01'
+                    AND um_reg.meta_value != '1970-01-01 00:00:00'
+                THEN STR_TO_DATE(um_reg.meta_value, '%%d/%%m/%%Y')
+                ELSE DATE(t.created_at)
+            END
+        ) <= %s
+        AND (
+            t.expires_at IS NULL 
+            OR t.expires_at = '0000-00-00 00:00:00'
+            OR DATE(t.expires_at) >= %s
+        )
+        AND u.user_login != 'bwgdev'
+    ", array_merge($all_membership_ids, [$date_to, $date_from]));
+    
+    $active_user_ids = $wpdb->get_col($active_users_query);
+    
+    if (empty($active_user_ids)) {
+        return [];
+    }
+    
+    $members = [];
+    
+    // STEP 2: For each active user, get their details with LATEST transaction info
+    foreach ($active_user_ids as $user_id) {
+        $user = get_userdata($user_id);
+        if (!$user) continue;
+        
+        // Get registration date
+        $registration_date = get_user_meta($user_id, 'mepr_registration_date', true);
+        $reg_date = null;
+        if (!empty($registration_date) && 
+            $registration_date !== '0000-00-00' && 
+            $registration_date !== '1970-01-01') {
+            if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $registration_date, $matches)) {
+                $reg_date = $matches[3] . '-' . str_pad($matches[2], 2, '0', STR_PAD_LEFT) . '-' . str_pad($matches[1], 2, '0', STR_PAD_LEFT);
+            } else {
+                $reg_date = $registration_date;
+            }
+        }
+        
+        // Get the FIRST transaction date (earliest)
+        $first_txn = $wpdb->get_row($wpdb->prepare("
+            SELECT created_at
+            FROM {$txn_table}
+            WHERE user_id = %d
+            AND product_id IN ({$placeholders})
+            AND status IN ('confirmed', 'complete')
+            ORDER BY created_at ASC
+            LIMIT 1
+        ", array_merge([$user_id], $all_membership_ids)));
+        
+        // Get the LATEST transaction with MAX expiry date
+        $latest_txn = $wpdb->get_row($wpdb->prepare("
+            SELECT t.*, p.post_title as membership_name
+            FROM {$txn_table} t
+            JOIN {$wpdb->posts} p ON t.product_id = p.ID
+            WHERE t.user_id = %d
+            AND t.product_id IN ({$placeholders})
+            AND t.status IN ('confirmed', 'complete')
+            ORDER BY 
+                CASE WHEN t.expires_at IS NULL OR t.expires_at = '0000-00-00 00:00:00' THEN '9999-12-31' ELSE t.expires_at END DESC,
+                t.created_at DESC
+            LIMIT 1
+        ", array_merge([$user_id], $all_membership_ids)));
+        
+        if (!$latest_txn) continue;
+        
+        $gateway_label = 'Unknown';
+        if ($latest_txn->gateway === 'manual') {
+            $gateway_label = 'Manual';
+        } elseif ($latest_txn->gateway === 'stripe' || strpos($latest_txn->gateway, 'stripe') !== false) {
+            $gateway_label = 'Stripe';
+        } elseif (!empty($latest_txn->gateway)) {
+            $gateway_label = ucfirst($latest_txn->gateway);
+        }
+        
+        $group_name = isset($membership_to_group[$latest_txn->product_id]) ? $membership_to_group[$latest_txn->product_id] : 'Unknown';
+        
+        // Convert expires_at from UTC to local timezone
+        $expires_display = 'Never';
+        if ($latest_txn->expires_at && $latest_txn->expires_at !== '0000-00-00 00:00:00') {
+            $expires_display = wcb_utc_to_local_date($latest_txn->expires_at);
+        }
+        
+        // Convert first_txn_date from UTC to local timezone
+        $first_txn_local = $first_txn ? wcb_utc_to_local_date($first_txn->created_at) : null;
+        
+        $members[] = [
+            'user_id' => $user_id,
+            'name' => $user->display_name,
+            'email' => $user->user_email,
+            'membership' => $latest_txn->membership_name,
+            'group' => $group_name,
+            'registration_date' => $reg_date,
+            'first_txn_date' => $first_txn_local,
+            'expires_at' => $expires_display,
+            'gateway' => $gateway_label,
+            'txn_status' => $latest_txn->status
+        ];
+    }
+    
+    // Sort by name
+    usort($members, function($a, $b) {
+        return strcasecmp($a['name'], $b['name']);
+    });
+    
+    return $members;
+}
+
+// DEBUG: Get members who expired during the selected period
+// FIXED: Now correctly identifies users whose LATEST transaction expired during the period
+// and checks if they have a NEWER transaction that extends beyond the period
+function wcb_get_debug_expired_members($date_from, $date_to) {
+    global $wpdb;
+    
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$txn_table'") == $txn_table;
+    
+    if (!$table_exists) {
+        return [];
+    }
+    
+    $groups = $wpdb->get_results("SELECT ID, post_title FROM {$wpdb->posts} WHERE post_type = 'memberpressgroup' AND post_status IN ('publish', 'private') ORDER BY post_title");
+    
+    $defined_groups = [
+        'Mini Cadet Boys (9-11 Years) Group 1',
+        'Cadet Boys Group 1',
+        'Cadet Boys Group 2',
+        'Youth Boys Group 1',
+        'Youth Boys Group 2',
+        'Mini Cadets Girls Group 1',
+        'Youth Girls Group 1'
+    ];
+    
+    $all_membership_ids = [];
+    $membership_to_group = [];
+    
+    foreach ($defined_groups as $group_name) {
+        $group = null;
+        foreach ($groups as $g) {
+            if (strcasecmp($g->post_title, $group_name) === 0) {
+                $group = $g;
+                break;
+            }
+        }
+        
+        if (!$group) continue;
+        
+        $group_memberships = wcb_get_group_memberships($group->ID);
+        if (!empty($group_memberships)) {
+            foreach ($group_memberships as $m) {
+                $all_membership_ids[] = $m->ID;
+                $membership_to_group[$m->ID] = $group_name;
+            }
+        }
+    }
+    
+    $competitive_team_id = 1932;
+    $all_membership_ids[] = $competitive_team_id;
+    $membership_to_group[$competitive_team_id] = 'Competitive Team';
+    
+    if (empty($all_membership_ids)) {
+        return [];
+    }
+    
+    $placeholders = implode(',', array_fill(0, count($all_membership_ids), '%d'));
+    
+    // Get WordPress timezone offset for SQL conversion
+    // NZ timezone is typically +12 or +13 (with daylight saving)
+    $wp_tz = wp_timezone();
+    $now = new DateTime('now', $wp_tz);
+    $tz_offset_seconds = $wp_tz->getOffset($now);
+    $tz_offset_hours = $tz_offset_seconds / 3600;
+    $tz_offset_string = sprintf('%+03d:00', $tz_offset_hours);
+    
+    // STEP 1: Get all users who have ANY transaction that expired during the period
+    // Convert UTC expires_at to local timezone before comparing with local date filter
+    $users_with_expirations = $wpdb->get_col($wpdb->prepare("
+        SELECT DISTINCT user_id
+        FROM {$txn_table}
+        WHERE product_id IN ({$placeholders})
+        AND status IN ('confirmed', 'complete')
+        AND expires_at IS NOT NULL 
+        AND expires_at != '0000-00-00 00:00:00'
+        AND DATE(CONVERT_TZ(expires_at, '+00:00', %s)) >= %s
+        AND DATE(CONVERT_TZ(expires_at, '+00:00', %s)) <= %s
+    ", array_merge($all_membership_ids, [$tz_offset_string, $date_from, $tz_offset_string, $date_to])));
+    
+    if (empty($users_with_expirations)) {
+        return [];
+    }
+    
+    $members = [];
+    
+    // STEP 2: For each user, get their transaction details
+    foreach ($users_with_expirations as $user_id) {
+        // Skip dev user
+        $user = get_userdata($user_id);
+        if (!$user || $user->user_login === 'bwgdev') continue;
+        
+        // Get the transaction that expired during the period (the one that triggered inclusion)
+        // Use timezone conversion for accurate date comparison
+        $expired_txn = $wpdb->get_row($wpdb->prepare("
+            SELECT t.*, p.post_title as membership_name
+            FROM {$txn_table} t
+            JOIN {$wpdb->posts} p ON t.product_id = p.ID
+            WHERE t.user_id = %d
+            AND t.product_id IN ({$placeholders})
+            AND t.status IN ('confirmed', 'complete')
+            AND t.expires_at IS NOT NULL 
+            AND t.expires_at != '0000-00-00 00:00:00'
+            AND DATE(CONVERT_TZ(t.expires_at, '+00:00', %s)) >= %s
+            AND DATE(CONVERT_TZ(t.expires_at, '+00:00', %s)) <= %s
+            ORDER BY t.expires_at DESC
+            LIMIT 1
+        ", array_merge([$user_id], $all_membership_ids, [$tz_offset_string, $date_from, $tz_offset_string, $date_to])));
+        
+        if (!$expired_txn) continue;
+        
+        // Get registration date
+        $registration_date = get_user_meta($user_id, 'mepr_registration_date', true);
+        $reg_date = null;
+        if (!empty($registration_date) && 
+            $registration_date !== '0000-00-00' && 
+            $registration_date !== '1970-01-01') {
+            if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $registration_date, $matches)) {
+                $reg_date = $matches[3] . '-' . str_pad($matches[2], 2, '0', STR_PAD_LEFT) . '-' . str_pad($matches[1], 2, '0', STR_PAD_LEFT);
+            } else {
+                $reg_date = $registration_date;
+            }
+        }
+        
+        // Check if user has RENEWED - has a transaction with expiry AFTER the expired one
+        // This checks for a transaction created AFTER or with expiry date AFTER the expired transaction's expiry
+        $has_renewed = $wpdb->get_var($wpdb->prepare("
+            SELECT COUNT(*) FROM {$txn_table}
+            WHERE user_id = %d
+            AND product_id IN ({$placeholders})
+            AND status IN ('confirmed', 'complete')
+            AND (
+                -- Has a transaction with later expiry
+                (expires_at IS NOT NULL AND expires_at != '0000-00-00 00:00:00' AND expires_at > %s)
+                OR
+                -- Or has a never-expiring transaction
+                (expires_at IS NULL OR expires_at = '0000-00-00 00:00:00')
+            )
+        ", array_merge([$user_id], $all_membership_ids, [$expired_txn->expires_at])));
+        
+        // Get the LATEST transaction to show current status
+        $latest_txn = $wpdb->get_row($wpdb->prepare("
+            SELECT t.*, p.post_title as membership_name
+            FROM {$txn_table} t
+            JOIN {$wpdb->posts} p ON t.product_id = p.ID
+            WHERE t.user_id = %d
+            AND t.product_id IN ({$placeholders})
+            AND t.status IN ('confirmed', 'complete')
+            ORDER BY 
+                CASE WHEN t.expires_at IS NULL OR t.expires_at = '0000-00-00 00:00:00' THEN '9999-12-31' ELSE t.expires_at END DESC,
+                t.created_at DESC
+            LIMIT 1
+        ", array_merge([$user_id], $all_membership_ids)));
+        
+        $gateway_label = 'Unknown';
+        if ($expired_txn->gateway === 'manual') {
+            $gateway_label = 'Manual';
+        } elseif ($expired_txn->gateway === 'stripe' || strpos($expired_txn->gateway, 'stripe') !== false) {
+            $gateway_label = 'Stripe';
+        } elseif (!empty($expired_txn->gateway)) {
+            $gateway_label = ucfirst($expired_txn->gateway);
+        }
+        
+        $group_name = isset($membership_to_group[$expired_txn->product_id]) ? $membership_to_group[$expired_txn->product_id] : 'Unknown';
+        
+        // Determine current status - convert UTC to local timezone
+        $current_expires = 'Expired';
+        if ($latest_txn && $has_renewed > 0) {
+            if (!$latest_txn->expires_at || $latest_txn->expires_at === '0000-00-00 00:00:00') {
+                $current_expires = 'Never (renewed)';
+            } else {
+                $current_expires = wcb_utc_to_local_date($latest_txn->expires_at);
+            }
+        }
+        
+        // Convert expired_txn_date from UTC to local timezone
+        $expired_txn_local = wcb_utc_to_local_date($expired_txn->expires_at);
+        
+        $members[] = [
+            'user_id' => $user_id,
+            'name' => $user->display_name,
+            'email' => $user->user_email,
+            'membership' => $expired_txn->membership_name,
+            'group' => $group_name,
+            'registration_date' => $reg_date,
+            'expired_txn_date' => $expired_txn_local,
+            'current_expires' => $current_expires,
+            'gateway' => $gateway_label,
+            'txn_status' => $expired_txn->status,
+            'has_renewed' => $has_renewed > 0 ? 'Yes' : 'No'
+        ];
+    }
+    
+    // Sort by expired date (most recent first), then by name
+    usort($members, function($a, $b) {
+        $date_cmp = strcmp($b['expired_txn_date'], $a['expired_txn_date']);
+        if ($date_cmp !== 0) return $date_cmp;
+        return strcasecmp($a['name'], $b['name']);
+    });
+    
+    return $members;
 }
 
 // Register the shortcode

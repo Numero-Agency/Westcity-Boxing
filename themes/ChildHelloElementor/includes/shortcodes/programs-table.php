@@ -956,6 +956,49 @@ function wcb_run_mentoring_sessions_fix_once() {
 }
 add_action('admin_init', 'wcb_run_mentoring_sessions_fix_once');
 
+// Helper function to properly format session dates
+// Handles various date formats: ISO (YYYY-MM-DD), datetime-local (YYYY-MM-DDTHH:MM), d/m/Y, etc.
+function wcb_format_session_date($date_string) {
+    if (empty($date_string)) {
+        return 'Unknown';
+    }
+    
+    // Try parsing with DateTime for better control
+    $timestamp = null;
+    
+    // Check for ISO format with time (datetime-local): 2025-08-12T10:00
+    if (preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/', $date_string)) {
+        $dt = DateTime::createFromFormat('Y-m-d\TH:i', substr($date_string, 0, 16));
+        if ($dt) {
+            $timestamp = $dt->getTimestamp();
+        }
+    }
+    // Check for ISO format: 2025-08-12
+    elseif (preg_match('/^\d{4}-\d{2}-\d{2}$/', $date_string)) {
+        $dt = DateTime::createFromFormat('Y-m-d', $date_string);
+        if ($dt) {
+            $timestamp = $dt->getTimestamp();
+        }
+    }
+    // Check for d/m/Y format (NZ/UK): 12/08/2025
+    elseif (preg_match('/^\d{1,2}\/\d{1,2}\/\d{4}$/', $date_string)) {
+        $dt = DateTime::createFromFormat('d/m/Y', $date_string);
+        if ($dt) {
+            $timestamp = $dt->getTimestamp();
+        }
+    }
+    // Fallback to strtotime (handles many formats but can be ambiguous)
+    else {
+        $timestamp = strtotime($date_string);
+    }
+    
+    if ($timestamp && $timestamp > 0) {
+        return date('M j, Y', $timestamp);
+    }
+    
+    return 'Unknown';
+}
+
 // Helper function to get sign-up URL for a program
 function wcb_get_program_signup_url($program_title) {
     // Map program names to their sign-up URL paths (relative)
@@ -1122,7 +1165,7 @@ function wcb_ajax_load_programs_table() {
             $rows_html .= '<td><div class="program-name">' . $program_name_display . '</div></td>';
             $rows_html .= '<td><span class="member-count">' . esc_html($member_count) . '</span></td>';
             $rows_html .= '<td><span class="session-count">' . esc_html($session_count) . '</span></td>';
-            $rows_html .= '<td>' . ($recent_session ? esc_html(date('M j, Y', strtotime($recent_session))) : 'No sessions') . '</td>';
+            $rows_html .= '<td>' . ($recent_session ? esc_html(wcb_format_session_date($recent_session)) : 'No sessions') . '</td>';
             $rows_html .= '<td><span class="status-badge ' . esc_attr($status_class) . '">' . esc_html($status) . '</span></td>';
             $rows_html .= '<td><button class="program-view-btn" data-program-id="' . esc_attr($program_id) . '" data-program-type="' . esc_attr($program_type) . '">View Details</button></td>';
             $rows_html .= '</tr>';
@@ -1264,7 +1307,7 @@ function wcb_ajax_load_program_details() {
                     <span><span class="dashicons dashicons-groups"></span> <?php echo esc_html($member_count); ?> <?php echo $is_school ? 'Students' : 'Members'; ?></span>
                     <span><span class="dashicons dashicons-chart-bar"></span> <?php echo esc_html($session_count); ?> Total Sessions</span>
                     <?php if ($recent_session): ?>
-                    <span><span class="dashicons dashicons-calendar-alt"></span> Last session: <?php echo date('M j, Y', strtotime($recent_session)); ?></span>
+                    <span><span class="dashicons dashicons-calendar-alt"></span> Last session: <?php echo wcb_format_session_date($recent_session); ?></span>
                     <?php endif; ?>
                     <?php if ($is_school): ?>
                     <span><span class="dashicons dashicons-admin-site"></span> School Program</span>
@@ -1326,6 +1369,7 @@ function wcb_ajax_load_program_details() {
                             <th>Name</th>
                             <?php if ($is_school): ?>
                                 <th>Date of Birth</th>
+                                <th>Gender</th>
                                 <th>Ethnicity</th>
                             <?php else: ?>
                                 <th>Email</th>
@@ -1356,6 +1400,7 @@ function wcb_ajax_load_program_details() {
                                         echo '<em>Not provided</em>';
                                     }
                                 ?></td>
+                                <td><?php echo !empty($member['gender']) ? esc_html($member['gender']) : '<em>Not specified</em>'; ?></td>
                                 <td><?php echo !empty($member['ethnicity']) ? esc_html($member['ethnicity']) : '<em>Not specified</em>'; ?></td>
                             <?php else: ?>
                                 <td><?php echo esc_html($member['email']); ?></td>
@@ -1520,12 +1565,13 @@ function wcb_add_mentoring_fix_admin_notice() {
 add_action('admin_notices', 'wcb_add_mentoring_fix_admin_notice');
 
 // Helper function to get member count for a program
+// For WCB Mentoring (ID 1738), also includes processed referrals (excluding duplicates)
 function wcb_get_program_member_count($program_id) {
     global $wpdb;
 
     // Use EXACT same query logic as active-members-test.php
     $results = $wpdb->get_results($wpdb->prepare("
-        SELECT DISTINCT u.ID
+        SELECT DISTINCT u.ID, u.user_email
         FROM {$wpdb->users} u
         JOIN {$wpdb->prefix}mepr_transactions t ON u.ID = t.user_id
         WHERE t.product_id = %d
@@ -1534,91 +1580,165 @@ function wcb_get_program_member_count($program_id) {
         AND u.user_login != 'bwgdev'
     ", $program_id));
 
-    return count($results);
+    $member_count = count($results);
+    
+    // For WCB Mentoring (ID 1738), also count processed referrals (excluding duplicates)
+    if ($program_id == 1738) {
+        // Get existing member emails to check for duplicates
+        $existing_emails = [];
+        foreach ($results as $member) {
+            if (!empty($member->user_email)) {
+                $existing_emails[] = strtolower($member->user_email);
+            }
+        }
+        
+        $processed_referrals = get_posts([
+            'post_type' => 'referral',
+            'post_status' => 'publish',
+            'posts_per_page' => -1,
+            'meta_query' => [
+                'relation' => 'OR',
+                [
+                    'key' => 'referral_status',
+                    'value' => 'processed',
+                    'compare' => '='
+                ],
+                [
+                    'key' => 'referral_status',
+                    'value' => 'Processed',
+                    'compare' => '='
+                ]
+            ]
+        ]);
+        
+        // Only count referrals that don't match existing members by email
+        foreach ($processed_referrals as $referral) {
+            $contact_email = function_exists('get_field') ? get_field('contact_email', $referral->ID) : null;
+            $contact_email = $contact_email ?: get_post_meta($referral->ID, 'contact_email', true);
+            
+            // Skip if email matches an existing member
+            if (!empty($contact_email) && in_array(strtolower($contact_email), $existing_emails)) {
+                continue;
+            }
+            
+            $member_count++;
+        }
+    }
+
+    return $member_count;
 }
 
 // Override: Helper function to get session count for a group using proven logic
+// Checks both old format (selected_membership) and new format (selected_group)
 function wcb_get_group_session_count($group_id) {
     global $wpdb;
 
     // Use the EXACT same logic as active-members-test.php to get group memberships
     $group_memberships = wcb_get_group_memberships($group_id);
-
-    if (empty($group_memberships)) {
-        return 0;
-    }
-
-    $membership_ids = array_map(function($m) { return $m->ID; }, $group_memberships);
-
-    // Count sessions for any membership in this group
-    $placeholders = implode(',', array_fill(0, count($membership_ids), '%d'));
-    $query = "
+    
+    // Count sessions using NEW format (selected_group = group_id directly)
+    $new_format_count = (int) $wpdb->get_var($wpdb->prepare("
         SELECT COUNT(*)
         FROM {$wpdb->posts} s
         JOIN {$wpdb->postmeta} sm ON s.ID = sm.post_id
         WHERE s.post_type = 'session_log'
         AND s.post_status = 'publish'
-        AND sm.meta_key = 'selected_membership'
-        AND sm.meta_value IN ({$placeholders})
-    ";
+        AND sm.meta_key = 'selected_group'
+        AND sm.meta_value = %d
+    ", $group_id));
 
-    return (int) $wpdb->get_var($wpdb->prepare($query, ...$membership_ids));
+    // Count sessions using OLD format (selected_membership IN group's memberships)
+    $old_format_count = 0;
+    if (!empty($group_memberships)) {
+        $membership_ids = array_map(function($m) { return $m->ID; }, $group_memberships);
+        $placeholders = implode(',', array_fill(0, count($membership_ids), '%d'));
+        
+        $old_format_count = (int) $wpdb->get_var($wpdb->prepare("
+            SELECT COUNT(*)
+            FROM {$wpdb->posts} s
+            JOIN {$wpdb->postmeta} sm ON s.ID = sm.post_id
+            WHERE s.post_type = 'session_log'
+            AND s.post_status = 'publish'
+            AND sm.meta_key = 'selected_membership'
+            AND sm.meta_value IN ({$placeholders})
+        ", ...$membership_ids));
+    }
+
+    return $new_format_count + $old_format_count;
 }
 
 // Override: Helper function to get most recent session date for a group using proven logic
+// Checks both old format (selected_membership) and new format (selected_group)
 function wcb_get_group_recent_session($group_id) {
     global $wpdb;
 
     // Use the EXACT same logic as active-members-test.php to get group memberships
     $group_memberships = wcb_get_group_memberships($group_id);
-
-    if (empty($group_memberships)) {
-        return null;
-    }
-
-    $membership_ids = array_map(function($m) { return $m->ID; }, $group_memberships);
-
-    // Find the most recent session for any membership in this group
-    $placeholders = implode(',', array_fill(0, count($membership_ids), '%d'));
-
+    $membership_ids = !empty($group_memberships) ? array_map(function($m) { return $m->ID; }, $group_memberships) : [];
+    
     // Check if any membership is WCB Mentoring (ID: 1738) for special handling
     $is_wcb_mentoring = in_array(1738, $membership_ids);
-
-    if ($is_wcb_mentoring) {
-        // For WCB Mentoring, order by intervention_date_
-        $query = "
-            SELECT sm2.meta_value as session_date
-            FROM {$wpdb->posts} s
-            JOIN {$wpdb->postmeta} sm ON s.ID = sm.post_id
-            JOIN {$wpdb->postmeta} sm2 ON s.ID = sm2.post_id
-            WHERE s.post_type = 'session_log'
-            AND s.post_status = 'publish'
-            AND sm.meta_key = 'selected_membership'
-            AND sm.meta_value IN ({$placeholders})
-            AND sm2.meta_key = 'intervention_date_'
-            AND sm2.meta_value != ''
-            ORDER BY sm2.meta_value DESC
-            LIMIT 1
-        ";
-    } else {
-        // For regular programs, order by session_date
-        $query = "
-            SELECT sm2.meta_value as session_date
-            FROM {$wpdb->posts} s
-            JOIN {$wpdb->postmeta} sm ON s.ID = sm.post_id
-            JOIN {$wpdb->postmeta} sm2 ON s.ID = sm2.post_id
-            WHERE s.post_type = 'session_log'
-            AND s.post_status = 'publish'
-            AND sm.meta_key = 'selected_membership'
-            AND sm.meta_value IN ({$placeholders})
-            AND sm2.meta_key = 'session_date'
-            AND sm2.meta_value != ''
-            ORDER BY sm2.meta_value DESC
-            LIMIT 1
-        ";
+    $date_field = $is_wcb_mentoring ? 'intervention_date_' : 'session_date';
+    
+    $recent_dates = [];
+    
+    // Get most recent from NEW format (selected_group = group_id)
+    $new_format_date = $wpdb->get_var($wpdb->prepare("
+        SELECT sm2.meta_value as session_date
+        FROM {$wpdb->posts} s
+        JOIN {$wpdb->postmeta} sm ON s.ID = sm.post_id
+        JOIN {$wpdb->postmeta} sm2 ON s.ID = sm2.post_id
+        WHERE s.post_type = 'session_log'
+        AND s.post_status = 'publish'
+        AND sm.meta_key = 'selected_group'
+        AND sm.meta_value = %d
+        AND sm2.meta_key = %s
+        AND sm2.meta_value != ''
+        ORDER BY sm2.meta_value DESC
+        LIMIT 1
+    ", $group_id, $date_field));
+    
+    if ($new_format_date) {
+        $recent_dates[] = $new_format_date;
     }
-
-    return $wpdb->get_var($wpdb->prepare($query, ...$membership_ids));
+    
+    // Get most recent from OLD format (selected_membership IN group's memberships)
+    if (!empty($membership_ids)) {
+        $placeholders = implode(',', array_fill(0, count($membership_ids), '%d'));
+        
+        $old_format_query = "
+            SELECT sm2.meta_value as session_date
+            FROM {$wpdb->posts} s
+            JOIN {$wpdb->postmeta} sm ON s.ID = sm.post_id
+            JOIN {$wpdb->postmeta} sm2 ON s.ID = sm2.post_id
+            WHERE s.post_type = 'session_log'
+            AND s.post_status = 'publish'
+            AND sm.meta_key = 'selected_membership'
+            AND sm.meta_value IN ({$placeholders})
+            AND sm2.meta_key = %s
+            AND sm2.meta_value != ''
+            ORDER BY sm2.meta_value DESC
+            LIMIT 1
+        ";
+        
+        $old_format_date = $wpdb->get_var($wpdb->prepare($old_format_query, ...array_merge($membership_ids, [$date_field])));
+        
+        if ($old_format_date) {
+            $recent_dates[] = $old_format_date;
+        }
+    }
+    
+    // Return the most recent date from either format
+    if (empty($recent_dates)) {
+        return null;
+    }
+    
+    // Sort dates descending and return the most recent
+    usort($recent_dates, function($a, $b) {
+        return strtotime($b) - strtotime($a);
+    });
+    
+    return $recent_dates[0];
 }
 
 // Override: Helper function to get group members using proven logic from active-members-test.php
@@ -1670,54 +1790,68 @@ function wcb_get_group_members($group_id) {
 }
 
 // Override: Helper function to get group sessions using proven logic
+// Checks both old format (selected_membership) and new format (selected_group)
 function wcb_get_group_sessions($group_id, $limit = 10) {
     global $wpdb;
 
     // Use the EXACT same logic as active-members-test.php to get group memberships
     $group_memberships = wcb_get_group_memberships($group_id);
-
-    if (empty($group_memberships)) {
-        return [];
-    }
-
-    $membership_ids = array_map(function($m) { return $m->ID; }, $group_memberships);
+    $membership_ids = !empty($group_memberships) ? array_map(function($m) { return $m->ID; }, $group_memberships) : [];
 
     // Check if any membership is WCB Mentoring (ID: 1738) for special handling
     $is_wcb_mentoring = in_array(1738, $membership_ids);
+    $date_field = $is_wcb_mentoring ? 'intervention_date_' : 'session_date';
 
-    $placeholders = implode(',', array_fill(0, count($membership_ids), '%d'));
+    // Get sessions from NEW format (selected_group = group_id)
+    $new_format_sessions = $wpdb->get_results($wpdb->prepare("
+        SELECT s.ID, s.post_title, s.post_date
+        FROM {$wpdb->posts} s
+        JOIN {$wpdb->postmeta} sm ON s.ID = sm.post_id
+        LEFT JOIN {$wpdb->postmeta} sm2 ON s.ID = sm2.post_id AND sm2.meta_key = %s
+        WHERE s.post_type = 'session_log'
+        AND s.post_status = 'publish'
+        AND sm.meta_key = 'selected_group'
+        AND sm.meta_value = %d
+        ORDER BY COALESCE(sm2.meta_value, s.post_date) DESC
+    ", $date_field, $group_id));
 
-    if ($is_wcb_mentoring) {
-        // For WCB Mentoring, order by intervention_date_
-        $query = "
-            SELECT s.ID, s.post_title
+    // Get sessions from OLD format (selected_membership IN group's memberships)
+    $old_format_sessions = [];
+    if (!empty($membership_ids)) {
+        $placeholders = implode(',', array_fill(0, count($membership_ids), '%d'));
+        
+        $old_format_sessions = $wpdb->get_results($wpdb->prepare("
+            SELECT s.ID, s.post_title, s.post_date
             FROM {$wpdb->posts} s
             JOIN {$wpdb->postmeta} sm ON s.ID = sm.post_id
-            LEFT JOIN {$wpdb->postmeta} sm2 ON s.ID = sm2.post_id AND sm2.meta_key = 'intervention_date_'
+            LEFT JOIN {$wpdb->postmeta} sm2 ON s.ID = sm2.post_id AND sm2.meta_key = %s
             WHERE s.post_type = 'session_log'
             AND s.post_status = 'publish'
             AND sm.meta_key = 'selected_membership'
             AND sm.meta_value IN ({$placeholders})
             ORDER BY COALESCE(sm2.meta_value, s.post_date) DESC
-            LIMIT %d
-        ";
-        $session_posts = $wpdb->get_results($wpdb->prepare($query, ...array_merge($membership_ids, [$limit])));
-    } else {
-        // For regular programs, order by session_date
-        $query = "
-            SELECT s.ID, s.post_title
-            FROM {$wpdb->posts} s
-            JOIN {$wpdb->postmeta} sm ON s.ID = sm.post_id
-            LEFT JOIN {$wpdb->postmeta} sm2 ON s.ID = sm2.post_id AND sm2.meta_key = 'session_date'
-            WHERE s.post_type = 'session_log'
-            AND s.post_status = 'publish'
-            AND sm.meta_key = 'selected_membership'
-            AND sm.meta_value IN ({$placeholders})
-            ORDER BY COALESCE(sm2.meta_value, s.post_date) DESC
-            LIMIT %d
-        ";
-        $session_posts = $wpdb->get_results($wpdb->prepare($query, ...array_merge($membership_ids, [$limit])));
+        ", $date_field, ...$membership_ids));
     }
+
+    // Combine and deduplicate sessions by ID
+    $session_ids_seen = [];
+    $all_sessions = [];
+    
+    foreach (array_merge($new_format_sessions, $old_format_sessions) as $session) {
+        if (!in_array($session->ID, $session_ids_seen)) {
+            $session_ids_seen[] = $session->ID;
+            $all_sessions[] = $session;
+        }
+    }
+    
+    // Sort all sessions by date (descending) and limit
+    usort($all_sessions, function($a, $b) use ($date_field) {
+        $date_a = get_field($date_field, $a->ID) ?: $a->post_date;
+        $date_b = get_field($date_field, $b->ID) ?: $b->post_date;
+        return strtotime($date_b) - strtotime($date_a);
+    });
+    
+    $session_posts = array_slice($all_sessions, 0, $limit);
 
     $sessions = [];
     foreach ($session_posts as $session_post) {
@@ -1732,22 +1866,22 @@ function wcb_get_group_sessions($group_id, $limit = 10) {
         if ($session_type_slug === 'mentoring' || $is_wcb_mentoring) {
             // For mentoring sessions, use intervention date and student info
             $intervention_date = get_field('intervention_date_', $session_id);
-            $student_involved = get_field('student_involved', $session_id);
             $debrief_notes = get_field('debrief_event', $session_id);
 
             if ($intervention_date) {
-                $date_display = date('M j, Y', strtotime($intervention_date));
+                $date_display = wcb_format_session_date($intervention_date);
             } else {
                 // Fallback to post date if no intervention date
                 $date_display = date('M j, Y', strtotime($session_post->post_date));
             }
 
-            // Get student name for mentoring session
+            // Get student name for mentoring session - supports both users and referrals
             $student_name = 'Unknown Student';
-            if ($student_involved) {
-                $user = get_user_by('ID', $student_involved);
-                if ($user) {
-                    $student_name = $user->display_name;
+            $mentoring_student = wcb_get_mentoring_student_info($session_id);
+            if ($mentoring_student) {
+                $student_name = $mentoring_student['name'];
+                if ($mentoring_student['is_referral']) {
+                    $student_name .= ' (Referral)';
                 }
             }
 
@@ -1759,7 +1893,7 @@ function wcb_get_group_sessions($group_id, $limit = 10) {
             $date = get_field('session_date', $session_id);
             $notes = get_field('session_notes', $session_id);
 
-            $date_display = $date ? date('M j, Y', strtotime($date)) : 'Unknown';
+            $date_display = $date ? wcb_format_session_date($date) : 'Unknown';
 
             // Get attendance count using the proper helper function
             $attendance_data = wcb_get_session_attendance($session_id);
@@ -1874,50 +2008,118 @@ function wcb_get_program_recent_session($program_id) {
 }
 
 // Helper function to get program members
+// For WCB Mentoring (ID 1738), also includes processed referrals (excluding duplicates)
 function wcb_get_program_members($program_id) {
     global $wpdb;
+    
+    $members = [];
+    $existing_emails = []; // Track member emails to avoid duplicates
     
     // Check if MemberPress transactions table exists
     $txn_table = $wpdb->prefix . 'mepr_transactions';
     $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$txn_table'") == $txn_table;
 
-    if (!$table_exists) {
-        wcb_debug_log("wcb_get_program_members: MemberPress transactions table not found");
-        return [];
+    if ($table_exists) {
+        // Use EXACT same query logic as active-members-test.php
+        $results = $wpdb->get_results($wpdb->prepare("
+            SELECT DISTINCT u.ID, u.display_name, u.user_email, t.created_at,
+                   CASE
+                       WHEN t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00'
+                       THEN 'Active'
+                       ELSE 'Expired'
+                   END as status
+            FROM {$wpdb->users} u
+            JOIN {$txn_table} t ON u.ID = t.user_id
+            WHERE t.product_id = %d
+            AND t.status IN ('confirmed', 'complete')
+            AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+            AND u.user_login != 'bwgdev'
+            ORDER BY u.display_name
+        ", $program_id));
+        
+        foreach ($results as $result) {
+            $members[] = [
+                'name' => $result->display_name,
+                'email' => $result->user_email,
+                'join_date' => date('M j, Y', strtotime($result->created_at)),
+                'status' => $result->status,
+                'type' => 'member'
+            ];
+            
+            // Track existing member emails
+            if (!empty($result->user_email)) {
+                $existing_emails[] = strtolower($result->user_email);
+            }
+        }
     }
     
-    // DEBUG: Log what we're looking for
-    wcb_debug_log("wcb_get_program_members: Looking for members of program ID: {$program_id}");
-    
-    // Use EXACT same query logic as active-members-test.php
-    $results = $wpdb->get_results($wpdb->prepare("
-        SELECT DISTINCT u.ID, u.display_name, u.user_email, t.created_at,
-               CASE
-                   WHEN t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00'
-                   THEN 'Active'
-                   ELSE 'Expired'
-               END as status
-        FROM {$wpdb->users} u
-        JOIN {$txn_table} t ON u.ID = t.user_id
-        WHERE t.product_id = %d
-        AND t.status IN ('confirmed', 'complete')
-        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-        AND u.user_login != 'bwgdev'
-        ORDER BY u.display_name
-    ", $program_id));
-    
-    // DEBUG: Log results
-    wcb_debug_log("wcb_get_program_members: Found " . count($results) . " members for program ID: {$program_id}");
-    
-    $members = [];
-    foreach ($results as $result) {
-        $members[] = [
-            'name' => $result->display_name,
-            'email' => $result->user_email,
-            'join_date' => date('M j, Y', strtotime($result->created_at)),
-            'status' => $result->status
-        ];
+    // For WCB Mentoring (ID 1738), also include processed referrals (excluding duplicates)
+    if ($program_id == 1738) {
+        $processed_referrals = get_posts([
+            'post_type' => 'referral',
+            'post_status' => 'publish',
+            'posts_per_page' => -1,
+            'meta_query' => [
+                'relation' => 'OR',
+                [
+                    'key' => 'referral_status',
+                    'value' => 'processed',
+                    'compare' => '='
+                ],
+                [
+                    'key' => 'referral_status',
+                    'value' => 'Processed',
+                    'compare' => '='
+                ]
+            ]
+        ]);
+        
+        $referrals_added = 0;
+        $referrals_skipped = 0;
+        
+        foreach ($processed_referrals as $referral) {
+            $first_name = function_exists('get_field') ? get_field('first_name', $referral->ID) : null;
+            $first_name = $first_name ?: get_post_meta($referral->ID, 'first_name', true);
+            
+            $last_name = function_exists('get_field') ? get_field('last_name', $referral->ID) : null;
+            $last_name = $last_name ?: get_post_meta($referral->ID, 'last_name', true);
+            
+            $contact_email = function_exists('get_field') ? get_field('contact_email', $referral->ID) : null;
+            $contact_email = $contact_email ?: get_post_meta($referral->ID, 'contact_email', true);
+            
+            // Skip if email matches an existing member (duplicate check)
+            if (!empty($contact_email) && in_array(strtolower($contact_email), $existing_emails)) {
+                $referrals_skipped++;
+                continue;
+            }
+            
+            $display_name = trim($first_name . ' ' . $last_name);
+            
+            if (!empty($display_name)) {
+                // Use post_modified as the "join date" since that's when status was changed to processed
+                // This is more accurate than referral_date which is when the referral was submitted
+                $join_date = $referral->post_modified;
+                
+                $members[] = [
+                    'name' => $display_name . ' (Referral)',
+                    'email' => $contact_email ?: 'N/A',
+                    'join_date' => date('M j, Y', strtotime($join_date)),
+                    'status' => 'Referral',
+                    'type' => 'referral',
+                    'referral_id' => $referral->ID
+                ];
+                
+                $referrals_added++;
+            }
+        }
+        
+        wcb_debug_log("wcb_get_program_members: WCB Mentoring - Added {$referrals_added} referrals, skipped {$referrals_skipped} duplicates");
     }
+    
+    // Sort all members by name
+    usort($members, function($a, $b) {
+        return strcasecmp($a['name'], $b['name']);
+    });
     
     return $members;
 }
@@ -1978,22 +2180,22 @@ function wcb_get_program_sessions($program_id, $limit = 10) {
         if ($session_type_slug === 'mentoring' || $is_wcb_mentoring) {
             // For mentoring sessions, use intervention date and student info
             $intervention_date = get_field('intervention_date_', $session_id);
-            $student_involved = get_field('student_involved', $session_id);
             $debrief_notes = get_field('debrief_event', $session_id);
             
             if ($intervention_date) {
-                $date_display = date('M j, Y', strtotime($intervention_date));
+                $date_display = wcb_format_session_date($intervention_date);
             } else {
                 // Fallback to post date if no intervention date
                 $date_display = date('M j, Y', strtotime($session_post->post_date));
             }
             
-            // Get student name for mentoring session
+            // Get student name for mentoring session - supports both users and referrals
             $student_name = 'Unknown Student';
-            if ($student_involved) {
-                $user = get_user_by('ID', $student_involved);
-                if ($user) {
-                    $student_name = $user->display_name;
+            $mentoring_student = wcb_get_mentoring_student_info($session_id);
+            if ($mentoring_student) {
+                $student_name = $mentoring_student['name'];
+                if ($mentoring_student['is_referral']) {
+                    $student_name .= ' (Referral)';
                 }
             }
             
@@ -2005,7 +2207,7 @@ function wcb_get_program_sessions($program_id, $limit = 10) {
             $date = get_field('session_date', $session_id);
             $notes = get_field('session_notes', $session_id);
             
-            $date_display = $date ? date('M j, Y', strtotime($date)) : 'Unknown';
+            $date_display = $date ? wcb_format_session_date($date) : 'Unknown';
             
             // Get attendance count using the proper helper function
             $attendance_data = wcb_get_session_attendance($session_id);
@@ -2126,6 +2328,7 @@ function wcb_get_school_students($school_id) {
                 'date_of_birth' => $dob,
                 'age' => $age,
                 'ethnicity' => isset($student['student_ethnicity']) ? $student['student_ethnicity'] : 'Not specified',
+                'gender' => isset($student['student_gender']) ? $student['student_gender'] : 'Not specified',
                 'join_date' => 'N/A', // Schools don't have join dates like memberships
                 'status' => 'Enrolled',
                 'email' => '' // Schools students don't have emails in this context

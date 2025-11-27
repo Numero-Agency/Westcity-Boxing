@@ -220,12 +220,16 @@ function all_sessions_list_shortcode() {
                             $total_excused = 0;
                             $total_students = 1;
                             
-                            // Get student info for intervention
-                            $student_id = intval($student_involved);
+                            // Get student info for intervention - supports both users and referrals
                             $student_info = '';
-                            if ($student_id) {
-                                $student = get_user_by('ID', $student_id);
-                                $student_info = $student ? $student->display_name : 'Unknown Student';
+                            $mentoring_student = wcb_get_mentoring_student_info($session_id);
+                            if ($mentoring_student) {
+                                $student_info = $mentoring_student['name'];
+                                if ($mentoring_student['is_referral']) {
+                                    $student_info .= ' (Referral)';
+                                }
+                            } else {
+                                $student_info = 'Unknown Student';
                             }
                         } elseif($associated_student) {
                             // 1-on-1 session (non-intervention)

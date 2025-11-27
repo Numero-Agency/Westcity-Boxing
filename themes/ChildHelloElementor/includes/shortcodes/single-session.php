@@ -95,8 +95,20 @@ function single_session_shortcode($atts) {
         // For mentoring sessions, class name is "WCB Mentoring"
         $class_name = 'WCB Mentoring';
         
-        // Get student info
-        $student = $student_involved ? get_user_by('ID', $student_involved) : null;
+        // Get student info - supports both users and referrals
+        $student = null;
+        $student_is_referral = false;
+        $mentoring_student_info = wcb_get_mentoring_student_info($session_id);
+        
+        if ($mentoring_student_info) {
+            $student_is_referral = $mentoring_student_info['is_referral'];
+            // Create a pseudo-user object for consistent handling
+            $student = (object) [
+                'ID' => $mentoring_student_info['id'],
+                'display_name' => $mentoring_student_info['name'],
+                'user_email' => $mentoring_student_info['email'] ?: ($student_is_referral ? 'Referral Participant' : '')
+            ];
+        }
         
         // Get staff members info - handle both old format (user IDs) and new format (text names)
         $staff_members = [];
@@ -343,7 +355,7 @@ function single_session_shortcode($atts) {
                         <!-- Student Card -->
                         <?php if ($student): ?>
                         <div class="attendee-section">
-                            <h4 class="column-header">Student</h4>
+                            <h4 class="column-header">Student<?php echo $student_is_referral ? ' (Referral)' : ''; ?></h4>
                             <div class="attendee-card student-card">
                                 <div class="attendee-avatar">
                                     <div class="avatar-placeholder">
@@ -353,7 +365,7 @@ function single_session_shortcode($atts) {
                                 <div class="attendee-info">
                                     <div class="attendee-name"><?php echo esc_html($student->display_name); ?></div>
                                     <div class="attendee-email"><?php echo esc_html($student->user_email); ?></div>
-                                    <div class="attendee-role">Student</div>
+                                    <div class="attendee-role"><?php echo $student_is_referral ? 'Referral Participant' : 'Student'; ?></div>
                                 </div>
                             </div>
                         </div>
