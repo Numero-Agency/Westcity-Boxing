@@ -1124,6 +1124,45 @@ function wcb_family_dashboard_shortcode($atts) {
                             // Bind the actual working event handlers
                             console.log('🔧 Binding working event handlers...');
 
+                            // Pause Subscription Handler
+                            var pauseBtns = $('.pause-subscription-btn');
+                            pauseBtns.off('click').on('click', function() {
+                                var childId = $(this).data('child-id');
+                                var childName = $(this).data('child-name');
+                                console.log('🟠 Pause subscription clicked!', childId, childName);
+
+                                if (confirm('Are you sure you want to pause ' + childName + '\'s subscription?\n\nThe subscription can be resumed at any time.')) {
+                                    var $btn = $(this);
+                                    var originalHtml = $btn.html();
+                                    $btn.prop('disabled', true).html('<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="animation: spin 1s linear infinite;"><path d="M12 4V2A10 10 0 0 0 2 12H4A8 8 0 0 1 12 4Z"/></svg> Pausing...');
+
+                                    $.ajax({
+                                        url: wcb_ajax.ajax_url,
+                                        type: 'POST',
+                                        data: {
+                                            action: 'wcb_pause_subscription',
+                                            child_id: childId,
+                                            nonce: wcb_ajax.nonce
+                                        },
+                                        success: function(response) {
+                                            console.log('Pause subscription response:', response);
+                                            if (response.success) {
+                                                alert(response.data.message);
+                                                $('#subscription-management-popup').fadeOut(300);
+                                                location.reload();
+                                            } else {
+                                                alert('Error: ' + response.data);
+                                                $btn.prop('disabled', false).html(originalHtml);
+                                            }
+                                        },
+                                        error: function() {
+                                            alert('Connection error. Please try again.');
+                                            $btn.prop('disabled', false).html(originalHtml);
+                                        }
+                                    });
+                                }
+                            });
+
                             // Cancel Subscription Handler
                             cancelBtns.off('click').on('click', function() {
                                 var childId = $(this).data('child-id');
@@ -1222,6 +1261,44 @@ function wcb_family_dashboard_shortcode($atts) {
         });
 
         // Handle subscription management actions (using event delegation for dynamically loaded content)
+        
+        // Handle Pause Subscription
+        $(document).on('click', '.pause-subscription-btn', function() {
+            var childId = $(this).data('child-id');
+            var childName = $(this).data('child-name');
+
+            if (confirm('Are you sure you want to pause ' + childName + '\'s subscription?\n\nThe subscription can be resumed at any time.')) {
+                var $btn = $(this);
+                var originalHtml = $btn.html();
+                $btn.prop('disabled', true).html('<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="animation: spin 1s linear infinite;"><path d="M12 4V2A10 10 0 0 0 2 12H4A8 8 0 0 1 12 4Z"/></svg> Pausing...');
+
+                $.ajax({
+                    url: wcb_ajax.ajax_url,
+                    type: 'POST',
+                    data: {
+                        action: 'wcb_pause_subscription',
+                        child_id: childId,
+                        nonce: wcb_ajax.nonce
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            alert(response.data.message);
+                            $('#subscription-management-popup').fadeOut(300);
+                            location.reload();
+                        } else {
+                            alert('Error: ' + response.data);
+                            $btn.prop('disabled', false).html(originalHtml);
+                        }
+                    },
+                    error: function() {
+                        alert('Connection error. Please try again.');
+                        $btn.prop('disabled', false).html(originalHtml);
+                    }
+                });
+            }
+        });
+
+        // Handle Cancel Subscription
         $(document).on('click', '.cancel-subscription-btn', function() {
             var childId = $(this).data('child-id');
             var childName = $(this).data('child-name');

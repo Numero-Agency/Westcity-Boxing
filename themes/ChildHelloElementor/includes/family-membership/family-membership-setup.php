@@ -448,11 +448,12 @@ function wcb_get_child_membership_status($child_user) {
 }
 
 /**
- * Link a child to a parent account (must be an active member)
+ * Link a child to a parent account (must be an active or paused member)
  */
 function wcb_link_child_to_parent($parent_user_id, $child_identifier) {
     global $wpdb;
     $txn_table = $wpdb->prefix . 'mepr_transactions';
+    $subscriptions_table = $wpdb->prefix . 'mepr_subscriptions';
     $wcb_mentoring_id = 1738;
     $competitive_team_id = 1932;
 
@@ -488,7 +489,15 @@ function wcb_link_child_to_parent($parent_user_id, $child_identifier) {
         AND u.user_login != 'bwgdev'
     ", $child_user->ID, $wcb_mentoring_id, $competitive_team_id));
 
-    if (!$is_active_member) {
+    // Also check if member has a paused (suspended) subscription - paused members can still be linked
+    $has_paused_subscription = $wpdb->get_var($wpdb->prepare("
+        SELECT COUNT(*)
+        FROM {$subscriptions_table}
+        WHERE user_id = %d
+        AND status = 'suspended'
+    ", $child_user->ID));
+
+    if (!$is_active_member && !$has_paused_subscription) {
         return ['success' => false, 'message' => $child_user->display_name . ' is not currently an active member.'];
     }
 

@@ -12,9 +12,15 @@ function dashboard_stats_shortcode() {
     $date_to = isset($_GET['date_to']) ? sanitize_text_field($_GET['date_to']) : $now->format('Y-m-d');
 
     // Use the proven logic from active-members-test.php for active members counting
-    // Only count members from the 7 defined program groups
-    $active_members_data = get_active_members_from_defined_groups($date_from, $date_to);
-    $total_students = $active_members_data['total_count'];
+    // Get total students breakdown FIRST (active + non-renewed) with payment method breakdown
+    // This calculates corrected counts: Active = currently active only (excludes non-renewed)
+    $total_students_breakdown = get_total_students_breakdown($date_from, $date_to);
+    
+    // Use the corrected active count (excludes non-renewed members)
+    $total_students = $total_students_breakdown['active_count'];
+    
+    // Get non-renewed members within date range (only from defined groups)
+    $non_renewed_members = get_non_renewed_members_from_defined_groups($date_from, $date_to);
 
     // Get sessions count filtered by date range
     $sessions_query = new WP_Query([
@@ -35,9 +41,6 @@ function dashboard_stats_shortcode() {
 
     // Get MemberPress groups breakdown using the proven logic
     $memberships_breakdown = get_active_groups_breakdown($date_from, $date_to);
-    
-    // Get non-renewed members within date range (only from defined groups)
-    $non_renewed_members = get_non_renewed_members_from_defined_groups($date_from, $date_to);
     
     // Get session types count using correct helper function and slugs
     $session_taxonomy = wcb_get_session_type_taxonomy();
@@ -141,11 +144,16 @@ function dashboard_stats_shortcode() {
         
         <div class="dashboard-stats">
             <!-- Row 1: Core Stats -->
-                    <div class="stat-card students">
-            <h3><?php echo $total_students; ?></h3>
-            <p><span class="dashicons dashicons-admin-users"></span> Active Students</p>
-            <small>Active during selected period</small>
-        </div>
+            <div class="stat-card total-students clickable-stat" data-popup="total-students">
+                <h3><?php echo $total_students_breakdown['total']; ?></h3>
+                <p><span class="dashicons dashicons-groups"></span> Total Students</p>
+                <small>Click to view breakdown</small>
+            </div>
+            <div class="stat-card students">
+                <h3><?php echo $total_students; ?></h3>
+                <p><span class="dashicons dashicons-admin-users"></span> Active Students</p>
+                <small>Active during selected period</small>
+            </div>
             <div class="stat-card sessions clickable-stat" data-popup="sessions">
                 <h3><?php echo $total_sessions; ?></h3>
                 <p><span class="dashicons dashicons-clipboard"></span> Total Sessions</p>
@@ -160,6 +168,11 @@ function dashboard_stats_shortcode() {
                 <h3><?php echo count($non_renewed_members); ?></h3>
                 <p><span class="dashicons dashicons-dismiss"></span> Non-Renewed Members</p>
                 <small>Expired in date range</small>
+            </div>
+            <div class="stat-card paused clickable-stat" data-popup="paused">
+                <h3><?php echo $total_students_breakdown['paused_count']; ?></h3>
+                <p><span class="dashicons dashicons-controls-pause"></span> Paused Members</p>
+                <small>Click to view members</small>
             </div>
         
         <!-- Row 2: Demographics -->
@@ -220,10 +233,17 @@ function dashboard_stats_shortcode() {
         
         <div class="debug-content" id="debug-content" style="display: none;">
             <!-- Active Members Table -->
+            <?php 
+            // Pre-calculate counts for filter buttons
+            $active_count = count(array_filter($debug_active_members, function($m) { return $m['member_status'] === 'active'; }));
+            $paused_count = count(array_filter($debug_active_members, function($m) { return $m['member_status'] === 'paused'; }));
+            $cancelled_count = count(array_filter($debug_active_members, function($m) { return $m['member_status'] === 'cancelled'; }));
+            $expired_count = count(array_filter($debug_active_members, function($m) { return $m['member_status'] === 'expired'; }));
+            ?>
             <div class="debug-table-section">
                 <h4>
                     <span class="dashicons dashicons-yes-alt"></span> 
-                    Active Members During Period (<?php echo count($debug_active_members); ?>)
+                    Active Members During Period (<span id="active-members-visible-count"><?php echo count($debug_active_members); ?></span>)
                 </h4>
                 <p class="debug-description">
                     Members who joined on/before <strong><?php echo date('M j, Y', strtotime($date_to)); ?></strong> 
@@ -231,14 +251,34 @@ function dashboard_stats_shortcode() {
                 </p>
                 
                 <?php if (!empty($debug_active_members)): ?>
+                <!-- Filter Buttons for Active Members -->
+                <div class="active-filter-buttons">
+                    <button type="button" class="filter-btn active" data-filter="all" onclick="filterActiveMembers('all')">
+                        All <span class="filter-count">(<?php echo count($debug_active_members); ?>)</span>
+                    </button>
+                    <button type="button" class="filter-btn filter-active-status" data-filter="active" onclick="filterActiveMembers('active')">
+                        Active <span class="filter-count">(<?php echo $active_count; ?>)</span>
+                    </button>
+                    <button type="button" class="filter-btn filter-paused-status" data-filter="paused" onclick="filterActiveMembers('paused')">
+                        Paused <span class="filter-count">(<?php echo $paused_count; ?>)</span>
+                    </button>
+                    <button type="button" class="filter-btn filter-cancelled-status" data-filter="cancelled" onclick="filterActiveMembers('cancelled')">
+                        Cancelled <span class="filter-count">(<?php echo $cancelled_count; ?>)</span>
+                    </button>
+                    <button type="button" class="filter-btn filter-expired-status" data-filter="expired" onclick="filterActiveMembers('expired')">
+                        Expired <span class="filter-count">(<?php echo $expired_count; ?>)</span>
+                    </button>
+                </div>
+                
                 <div class="debug-table-wrapper">
-                    <table class="debug-table">
+                    <table class="debug-table" id="active-members-table">
                         <thead>
                             <tr>
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Program/Group</th>
                                 <th>Membership</th>
+                                <th>Status</th>
                                 <th>Registration Date</th>
                                 <th>First Transaction</th>
                                 <th>Expires</th>
@@ -247,7 +287,18 @@ function dashboard_stats_shortcode() {
                         </thead>
                         <tbody>
                             <?php foreach ($debug_active_members as $member): ?>
-                            <tr>
+                            <?php 
+                            // Determine row class based on member status
+                            $row_class = '';
+                            if ($member['member_status'] === 'paused') {
+                                $row_class = 'member-paused-row';
+                            } elseif ($member['member_status'] === 'cancelled') {
+                                $row_class = 'member-cancelled-row';
+                            } elseif ($member['member_status'] === 'expired' || $member['is_expired']) {
+                                $row_class = 'member-expired-row';
+                            }
+                            ?>
+                            <tr class="<?php echo $row_class; ?>" data-status="<?php echo esc_attr($member['member_status']); ?>">
                                 <td>
                                     <a href="<?php echo admin_url('user-edit.php?user_id=' . $member['user_id']); ?>" target="_blank">
                                         <?php echo esc_html($member['name']); ?>
@@ -256,6 +307,17 @@ function dashboard_stats_shortcode() {
                                 <td><?php echo esc_html($member['email']); ?></td>
                                 <td><?php echo esc_html($member['group']); ?></td>
                                 <td><?php echo esc_html($member['membership']); ?></td>
+                                <td>
+                                    <?php if ($member['member_status'] === 'paused'): ?>
+                                        <span class="status-badge-small status-paused"><?php echo esc_html($member['status_label']); ?></span>
+                                    <?php elseif ($member['member_status'] === 'cancelled'): ?>
+                                        <span class="status-badge-small status-cancelled"><?php echo esc_html($member['status_label']); ?></span>
+                                    <?php elseif ($member['member_status'] === 'expired'): ?>
+                                        <span class="status-badge-small status-expired"><?php echo esc_html($member['status_label']); ?></span>
+                                    <?php else: ?>
+                                        <span class="status-badge-small status-active"><?php echo esc_html($member['status_label']); ?></span>
+                                    <?php endif; ?>
+                                </td>
                                 <td>
                                     <?php if ($member['registration_date']): ?>
                                         <?php echo esc_html($member['registration_date']); ?>
@@ -267,6 +329,8 @@ function dashboard_stats_shortcode() {
                                 <td>
                                     <?php if ($member['expires_at'] === 'Never'): ?>
                                         <span class="never-expires-badge">Never</span>
+                                    <?php elseif ($member['is_expired']): ?>
+                                        <span class="expired-date-badge"><?php echo esc_html($member['expires_at']); ?></span>
                                     <?php else: ?>
                                         <?php echo esc_html($member['expires_at']); ?>
                                     <?php endif; ?>
@@ -281,6 +345,28 @@ function dashboard_stats_shortcode() {
                         </tbody>
                     </table>
                 </div>
+                
+                <!-- Summary Stats for Active Members -->
+                <div class="debug-summary">
+                    <div class="summary-grid">
+                        <div class="summary-item success">
+                            <span class="summary-number"><?php echo $active_count; ?></span>
+                            <span class="summary-label">Active</span>
+                        </div>
+                        <div class="summary-item paused">
+                            <span class="summary-number"><?php echo $paused_count; ?></span>
+                            <span class="summary-label">Paused</span>
+                        </div>
+                        <div class="summary-item cancelled">
+                            <span class="summary-number"><?php echo $cancelled_count; ?></span>
+                            <span class="summary-label">Cancelled</span>
+                        </div>
+                        <div class="summary-item warning">
+                            <span class="summary-number"><?php echo $expired_count; ?></span>
+                            <span class="summary-label">Expired</span>
+                        </div>
+                    </div>
+                </div>
                 <?php else: ?>
                 <div class="no-data">No active members found for this period.</div>
                 <?php endif; ?>
@@ -290,7 +376,10 @@ function dashboard_stats_shortcode() {
             <?php 
             // Pre-calculate counts for the filter buttons
             $expired_renewed_count = count(array_filter($debug_expired_members, function($m) { return $m['has_renewed'] === 'Yes'; }));
-            $expired_not_renewed_count = count($debug_expired_members) - $expired_renewed_count;
+            $expired_not_renewed_count = count(array_filter($debug_expired_members, function($m) { return $m['has_renewed'] === 'No' && !$m['has_other_active']; }));
+            $expired_other_active_count = count(array_filter($debug_expired_members, function($m) { return $m['has_renewed'] === 'No' && $m['has_other_active']; }));
+            $expired_paused_count = count(array_filter($debug_expired_members, function($m) { return isset($m['is_paused']) && $m['is_paused']; }));
+            $expired_cancelled_count = count(array_filter($debug_expired_members, function($m) { return isset($m['is_cancelled']) && $m['is_cancelled']; }));
             ?>
             <div class="debug-table-section">
                 <h4>
@@ -300,7 +389,7 @@ function dashboard_stats_shortcode() {
                 <p class="debug-description">
                     Members whose subscription expired between <strong><?php echo date('M j, Y', strtotime($date_from)); ?></strong> 
                     and <strong><?php echo date('M j, Y', strtotime($date_to)); ?></strong>. 
-                    Use the filter below to view specific groups.
+                    <br><strong>Note:</strong> "Renewed?" only checks defined program groups. "Sub Status" shows if subscription is Paused/Cancelled.
                 </p>
                 
                 <?php if (!empty($debug_expired_members)): ?>
@@ -310,10 +399,19 @@ function dashboard_stats_shortcode() {
                         All <span class="filter-count">(<?php echo count($debug_expired_members); ?>)</span>
                     </button>
                     <button type="button" class="filter-btn filter-not-renewed" data-filter="not-renewed" onclick="filterExpiredMembers('not-renewed')">
-                        Not Renewed <span class="filter-count">(<?php echo $expired_not_renewed_count; ?>)</span>
+                        Not Renewed <span class="filter-count">(<?php echo count($debug_expired_members) - $expired_renewed_count; ?>)</span>
                     </button>
                     <button type="button" class="filter-btn filter-renewed" data-filter="renewed" onclick="filterExpiredMembers('renewed')">
                         Renewed <span class="filter-count">(<?php echo $expired_renewed_count; ?>)</span>
+                    </button>
+                    <button type="button" class="filter-btn filter-paused-status" data-filter="paused" onclick="filterExpiredMembers('paused')">
+                        Paused <span class="filter-count">(<?php echo $expired_paused_count; ?>)</span>
+                    </button>
+                    <button type="button" class="filter-btn filter-cancelled-status" data-filter="cancelled" onclick="filterExpiredMembers('cancelled')">
+                        Cancelled <span class="filter-count">(<?php echo $expired_cancelled_count; ?>)</span>
+                    </button>
+                    <button type="button" class="filter-btn filter-truly-churned" data-filter="truly-churned" onclick="filterExpiredMembers('truly-churned')">
+                        Truly Churned <span class="filter-count">(<?php echo $expired_not_renewed_count; ?>)</span>
                     </button>
                 </div>
                 
@@ -322,32 +420,56 @@ function dashboard_stats_shortcode() {
                         <thead>
                             <tr>
                                 <th>Name</th>
-                                <th>Email</th>
                                 <th>Program/Group</th>
                                 <th>Membership</th>
-                                <th>Registration Date</th>
+                                <th>Sub Status</th>
                                 <th>Txn Expired On</th>
                                 <th>Current Expires</th>
                                 <th>Gateway</th>
                                 <th>Renewed?</th>
+                                <th>Status Detail</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($debug_expired_members as $member): ?>
-                            <tr class="<?php echo $member['has_renewed'] === 'Yes' ? 'renewed-row' : 'not-renewed-row'; ?>" data-renewed="<?php echo $member['has_renewed'] === 'Yes' ? 'yes' : 'no'; ?>">
+                            <?php 
+                            // Determine row class based on subscription status first, then renewal status
+                            $row_class = '';
+                            if (isset($member['is_paused']) && $member['is_paused']) {
+                                $row_class = 'member-paused-row';
+                            } elseif (isset($member['is_cancelled']) && $member['is_cancelled']) {
+                                $row_class = 'member-cancelled-row';
+                            } elseif ($member['has_renewed'] === 'Yes') {
+                                $row_class = 'renewed-row';
+                            } elseif ($member['has_other_active']) {
+                                $row_class = 'other-active-row';
+                            } else {
+                                $row_class = 'not-renewed-row truly-churned-row';
+                            }
+                            ?>
+                            <tr class="<?php echo $row_class; ?>" 
+                                data-renewed="<?php echo $member['has_renewed'] === 'Yes' ? 'yes' : 'no'; ?>"
+                                data-other-active="<?php echo $member['has_other_active'] ? 'yes' : 'no'; ?>"
+                                data-truly-churned="<?php echo ($member['has_renewed'] === 'No' && !$member['has_other_active']) ? 'yes' : 'no'; ?>"
+                                data-paused="<?php echo (isset($member['is_paused']) && $member['is_paused']) ? 'yes' : 'no'; ?>"
+                                data-cancelled="<?php echo (isset($member['is_cancelled']) && $member['is_cancelled']) ? 'yes' : 'no'; ?>">
                                 <td>
                                     <a href="<?php echo admin_url('user-edit.php?user_id=' . $member['user_id']); ?>" target="_blank">
                                         <?php echo esc_html($member['name']); ?>
                                     </a>
+                                    <div class="member-email-small"><?php echo esc_html($member['email']); ?></div>
                                 </td>
-                                <td><?php echo esc_html($member['email']); ?></td>
                                 <td><?php echo esc_html($member['group']); ?></td>
-                                <td><?php echo esc_html($member['membership']); ?></td>
+                                <td class="membership-cell"><?php echo esc_html($member['membership']); ?></td>
                                 <td>
-                                    <?php if ($member['registration_date']): ?>
-                                        <?php echo esc_html($member['registration_date']); ?>
+                                    <?php if (isset($member['is_paused']) && $member['is_paused']): ?>
+                                        <span class="status-badge-small status-paused"><?php echo esc_html($member['subscription_status_label']); ?></span>
+                                    <?php elseif (isset($member['is_cancelled']) && $member['is_cancelled']): ?>
+                                        <span class="status-badge-small status-cancelled"><?php echo esc_html($member['subscription_status_label']); ?></span>
+                                    <?php elseif (isset($member['subscription_status']) && $member['subscription_status'] === 'active'): ?>
+                                        <span class="status-badge-small status-active"><?php echo esc_html($member['subscription_status_label']); ?></span>
                                     <?php else: ?>
-                                        <span class="no-data-badge">Not Set</span>
+                                        <span class="status-badge-small status-none"><?php echo isset($member['subscription_status_label']) ? esc_html($member['subscription_status_label']) : 'N/A'; ?></span>
                                     <?php endif; ?>
                                 </td>
                                 <td class="expired-date"><?php echo esc_html($member['expired_txn_date']); ?></td>
@@ -370,6 +492,17 @@ function dashboard_stats_shortcode() {
                                         <span class="not-renewed-badge">No</span>
                                     <?php endif; ?>
                                 </td>
+                                <td class="status-detail-cell">
+                                    <?php if ($member['overall_status'] === 'renewed_program'): ?>
+                                        <span class="status-badge status-renewed">Renewed in Program</span>
+                                    <?php elseif ($member['overall_status'] === 'active_other'): ?>
+                                        <span class="status-badge status-other-active">Has Other Active</span>
+                                        <div class="status-detail-text"><?php echo esc_html($member['status_detail']); ?></div>
+                                    <?php else: ?>
+                                        <span class="status-badge status-churned">Truly Churned</span>
+                                        <div class="status-detail-text">No active membership found</div>
+                                    <?php endif; ?>
+                                </td>
                             </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -380,27 +513,42 @@ function dashboard_stats_shortcode() {
                 <div class="debug-summary">
                     <?php 
                     $renewed_count = count(array_filter($debug_expired_members, function($m) { return $m['has_renewed'] === 'Yes'; }));
-                    $not_renewed_count = count($debug_expired_members) - $renewed_count;
+                    $other_active_count = count(array_filter($debug_expired_members, function($m) { return $m['has_renewed'] === 'No' && $m['has_other_active']; }));
+                    $truly_churned_count = count(array_filter($debug_expired_members, function($m) { return $m['has_renewed'] === 'No' && !$m['has_other_active']; }));
                     $manual_count = count(array_filter($debug_expired_members, function($m) { return $m['gateway'] === 'Manual'; }));
                     $stripe_count = count(array_filter($debug_expired_members, function($m) { return $m['gateway'] === 'Stripe'; }));
                     ?>
                     <div class="summary-grid">
-                        <div class="summary-item">
+                        <div class="summary-item success">
                             <span class="summary-number"><?php echo $renewed_count; ?></span>
-                            <span class="summary-label">Renewed</span>
+                            <span class="summary-label">Renewed (Program)</span>
+                        </div>
+                        <div class="summary-item info">
+                            <span class="summary-number"><?php echo $other_active_count; ?></span>
+                            <span class="summary-label">Other Active</span>
+                        </div>
+                        <div class="summary-item paused">
+                            <span class="summary-number"><?php echo $expired_paused_count; ?></span>
+                            <span class="summary-label">Paused</span>
+                        </div>
+                        <div class="summary-item cancelled">
+                            <span class="summary-number"><?php echo $expired_cancelled_count; ?></span>
+                            <span class="summary-label">Cancelled</span>
                         </div>
                         <div class="summary-item warning">
-                            <span class="summary-number"><?php echo $not_renewed_count; ?></span>
-                            <span class="summary-label">Not Renewed</span>
+                            <span class="summary-number"><?php echo $truly_churned_count; ?></span>
+                            <span class="summary-label">Truly Churned</span>
                         </div>
-                        <div class="summary-item">
-                            <span class="summary-number"><?php echo $manual_count; ?></span>
-                            <span class="summary-label">Manual Payments</span>
-                        </div>
-                        <div class="summary-item">
-                            <span class="summary-number"><?php echo $stripe_count; ?></span>
-                            <span class="summary-label">Stripe Payments</span>
-                        </div>
+                    </div>
+                    <div class="summary-explanation">
+                        <p><strong>Legend:</strong></p>
+                        <ul>
+                            <li><strong>Renewed (Program):</strong> Member renewed within the same defined program groups</li>
+                            <li><strong>Other Active:</strong> Member has other active memberships but NOT renewed in original program</li>
+                            <li><strong>Paused:</strong> Member has a suspended/paused subscription (soft yellow highlight)</li>
+                            <li><strong>Cancelled:</strong> Member has a cancelled subscription (gray highlight)</li>
+                            <li><strong>Truly Churned:</strong> Member has NO active membership anywhere - completely left</li>
+                        </ul>
                     </div>
                 </div>
                 <?php else: ?>
@@ -440,6 +588,10 @@ function dashboard_stats_shortcode() {
         // Filter rows
         rows.forEach(function(row) {
             var renewed = row.getAttribute('data-renewed');
+            var otherActive = row.getAttribute('data-other-active');
+            var trulyChurned = row.getAttribute('data-truly-churned');
+            var paused = row.getAttribute('data-paused');
+            var cancelled = row.getAttribute('data-cancelled');
             var show = false;
             
             if (filter === 'all') {
@@ -447,6 +599,14 @@ function dashboard_stats_shortcode() {
             } else if (filter === 'not-renewed' && renewed === 'no') {
                 show = true;
             } else if (filter === 'renewed' && renewed === 'yes') {
+                show = true;
+            } else if (filter === 'other-active' && otherActive === 'yes') {
+                show = true;
+            } else if (filter === 'truly-churned' && trulyChurned === 'yes') {
+                show = true;
+            } else if (filter === 'paused' && paused === 'yes') {
+                show = true;
+            } else if (filter === 'cancelled' && cancelled === 'yes') {
                 show = true;
             }
             
@@ -456,6 +616,39 @@ function dashboard_stats_shortcode() {
         
         // Update visible count in header
         document.getElementById('expired-visible-count').textContent = visibleCount;
+    }
+    
+    function filterActiveMembers(filter) {
+        var table = document.getElementById('active-members-table');
+        var rows = table.querySelectorAll('tbody tr');
+        var visibleCount = 0;
+        
+        // Update active button state
+        var buttons = document.querySelectorAll('.active-filter-buttons .filter-btn');
+        buttons.forEach(function(btn) {
+            btn.classList.remove('active');
+            if (btn.getAttribute('data-filter') === filter) {
+                btn.classList.add('active');
+            }
+        });
+        
+        // Filter rows
+        rows.forEach(function(row) {
+            var status = row.getAttribute('data-status');
+            var show = false;
+            
+            if (filter === 'all') {
+                show = true;
+            } else if (filter === status) {
+                show = true;
+            }
+            
+            row.style.display = show ? '' : 'none';
+            if (show) visibleCount++;
+        });
+        
+        // Update visible count in header
+        document.getElementById('active-members-visible-count').textContent = visibleCount;
     }
     </script>
     
@@ -608,7 +801,6 @@ function dashboard_stats_shortcode() {
             <div class="popup-body">
                 <div class="non-renewed-header">
                     <p><strong>Members whose memberships expired between <?php echo date('M j, Y', strtotime($date_from)); ?> and <?php echo date('M j, Y', strtotime($date_to)); ?> and did not renew</strong></p>
-                    <p><small>Debug info: Found <?php echo count($non_renewed_members); ?> non-renewed members. Check your error log for detailed debugging info.</small></p>
                 </div>
                 <?php if (!empty($non_renewed_members)): ?>
                 <div class="non-renewed-cards-container">
@@ -1108,6 +1300,172 @@ function dashboard_stats_shortcode() {
         </div>
     </div>
 
+    <!-- Total Students Breakdown Popup -->
+    <div id="total-students-popup" class="stats-popup" style="display: none;">
+        <div class="popup-overlay"></div>
+        <div class="popup-content">
+            <div class="popup-header">
+                <h3><span class="dashicons dashicons-groups"></span> Total Students Breakdown (<?php echo date('M j', strtotime($date_from)); ?> - <?php echo date('M j, Y', strtotime($date_to)); ?>)</h3>
+                <button class="popup-close">&times;</button>
+            </div>
+            <div class="popup-body">
+                <div class="total-students-header">
+                    <p><strong>Complete breakdown of all students during the selected period:</strong></p>
+                </div>
+                <div class="breakdown-grid total-students-grid">
+                    <div class="breakdown-item total-item">
+                        <div class="breakdown-number"><?php echo $total_students_breakdown['total']; ?></div>
+                        <div class="breakdown-label">Total Students</div>
+                        <div class="breakdown-percentage">100%</div>
+                    </div>
+                    <div class="breakdown-item active-item">
+                        <div class="breakdown-number"><?php echo $total_students_breakdown['active_count']; ?></div>
+                        <div class="breakdown-label">Active Members</div>
+                        <div class="breakdown-percentage">
+                            <?php echo $total_students_breakdown['total'] > 0 ? round(($total_students_breakdown['active_count'] / $total_students_breakdown['total']) * 100, 1) : 0; ?>%
+                        </div>
+                    </div>
+                    <div class="breakdown-item non-renewed-item">
+                        <div class="breakdown-number"><?php echo $total_students_breakdown['non_renewed_count']; ?></div>
+                        <div class="breakdown-label">Non-Renewed</div>
+                        <div class="breakdown-percentage">
+                            <?php echo $total_students_breakdown['total'] > 0 ? round(($total_students_breakdown['non_renewed_count'] / $total_students_breakdown['total']) * 100, 1) : 0; ?>%
+                        </div>
+                    </div>
+                    <div class="breakdown-item paused-item">
+                        <div class="breakdown-number"><?php echo $total_students_breakdown['paused_count']; ?></div>
+                        <div class="breakdown-label">Paused</div>
+                        <div class="breakdown-percentage">
+                            <?php echo $total_students_breakdown['total'] > 0 ? round(($total_students_breakdown['paused_count'] / $total_students_breakdown['total']) * 100, 1) : 0; ?>%
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="payment-breakdown-section">
+                    <h4><span class="dashicons dashicons-money-alt"></span> Active Members by Payment Method</h4>
+                    <div class="breakdown-grid payment-grid">
+                        <div class="breakdown-item manual-item">
+                            <div class="breakdown-number"><?php echo $total_students_breakdown['manual_count']; ?></div>
+                            <div class="breakdown-label">Manual Payment</div>
+                            <div class="breakdown-percentage">
+                                <?php echo $total_students_breakdown['active_count'] > 0 ? round(($total_students_breakdown['manual_count'] / $total_students_breakdown['active_count']) * 100, 1) : 0; ?>%
+                            </div>
+                        </div>
+                        <div class="breakdown-item stripe-item">
+                            <div class="breakdown-number"><?php echo $total_students_breakdown['stripe_count']; ?></div>
+                            <div class="breakdown-label">Stripe Payment</div>
+                            <div class="breakdown-percentage">
+                                <?php echo $total_students_breakdown['active_count'] > 0 ? round(($total_students_breakdown['stripe_count'] / $total_students_breakdown['active_count']) * 100, 1) : 0; ?>%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="breakdown-summary">
+                    <p><strong>Active Members:</strong> <?php echo $total_students_breakdown['active_count']; ?> (Manual: <?php echo $total_students_breakdown['manual_count']; ?> | Stripe: <?php echo $total_students_breakdown['stripe_count']; ?>)</p>
+                    <p><strong>Non-Renewed Members:</strong> <?php echo $total_students_breakdown['non_renewed_count']; ?></p>
+                    <p><strong>Paused Members:</strong> <?php echo $total_students_breakdown['paused_count']; ?></p>
+                    <p><strong>Total Students in Period:</strong> <?php echo $total_students_breakdown['total']; ?></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Paused Members Popup -->
+    <div id="paused-popup" class="stats-popup" style="display: none;">
+        <div class="popup-overlay"></div>
+        <div class="popup-content">
+            <div class="popup-header">
+                <h3><span class="dashicons dashicons-controls-pause"></span> Paused Members</h3>
+                <button class="popup-close">&times;</button>
+            </div>
+            <div class="popup-body">
+                <?php 
+                $paused_members = $total_students_breakdown['paused_members'];
+                if (!empty($paused_members)): 
+                ?>
+                <div class="paused-header">
+                    <p><strong>Members with paused/suspended subscriptions:</strong></p>
+                    <p><small>These members have temporarily paused their membership and are not currently attending.</small></p>
+                </div>
+                <div class="paused-members-container">
+                    <?php foreach ($paused_members as $member): ?>
+                    <div class="paused-member-card">
+                        <div class="member-card-header">
+                            <div class="member-info">
+                                <h4 class="member-name"><?php echo esc_html($member['name']); ?></h4>
+                                <div class="member-email"><?php echo esc_html($member['email']); ?></div>
+                            </div>
+                            <div class="status-badge paused-status">
+                                Paused
+                            </div>
+                        </div>
+                        <div class="member-card-body">
+                            <div class="member-details-grid">
+                                <div class="detail-item">
+                                    <div class="detail-icon">
+                                        <span class="dashicons dashicons-groups"></span>
+                                    </div>
+                                    <div class="detail-content">
+                                        <div class="detail-label">Program</div>
+                                        <div class="detail-value"><?php echo esc_html($member['program']); ?></div>
+                                        <?php if (isset($member['membership_type']) && !empty($member['membership_type'])): ?>
+                                        <div class="detail-sub"><?php echo esc_html($member['membership_type']); ?> Membership</div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-icon">
+                                        <span class="dashicons dashicons-calendar-alt"></span>
+                                    </div>
+                                    <div class="detail-content">
+                                        <div class="detail-label">Paused Since</div>
+                                        <div class="detail-value"><?php echo esc_html($member['paused_date']); ?></div>
+                                        <?php if (!empty($member['days_paused'])): ?>
+                                        <div class="detail-sub"><?php echo esc_html($member['days_paused']); ?> ago</div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="member-card-footer">
+                            <div class="member-actions">
+                                <?php if (isset($member['user_id'])): ?>
+                                <a href="<?php echo admin_url('user-edit.php?user_id=' . $member['user_id']); ?>"
+                                   class="action-btn view-profile" target="_blank" title="View Profile">
+                                    <span class="dashicons dashicons-admin-users"></span>
+                                    <span class="btn-text">Profile</span>
+                                </a>
+                                <?php endif; ?>
+                                <?php if (isset($member['subscription_id'])): ?>
+                                <a href="<?php echo admin_url('admin.php?page=memberpress-subscriptions&action=edit&id=' . $member['subscription_id']); ?>"
+                                   class="action-btn view-subscription" target="_blank" title="View Subscription">
+                                    <span class="dashicons dashicons-admin-settings"></span>
+                                    <span class="btn-text">Subscription</span>
+                                </a>
+                                <?php endif; ?>
+                                <a href="mailto:<?php echo esc_attr($member['email']); ?>"
+                                   class="action-btn send-email" title="Send Email">
+                                    <span class="dashicons dashicons-email-alt"></span>
+                                    <span class="btn-text">Email</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <div class="breakdown-summary">
+                    <p><strong>Total Paused:</strong> <?php echo count($paused_members); ?></p>
+                </div>
+                <?php else: ?>
+                <div class="no-data">
+                    <p>No paused members found.</p>
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
     <script>
     jQuery(document).ready(function($) {
         // Handle clickable stat cards
@@ -1291,6 +1649,10 @@ function dashboard_stats_shortcode() {
     }
     
     /* Colorful top borders for different stat cards */
+    .stat-card.total-students {
+        border-top-color: #4A90D9;
+    }
+    
     .stat-card.students {
         border-top-color: #A0C6FF;
     }
@@ -1341,6 +1703,10 @@ function dashboard_stats_shortcode() {
 
     .stat-card.schools {
         border-top-color: #32CD32;
+    }
+    
+    .stat-card.paused {
+        border-top-color: #FFA500;
     }
     
     .stat-card:hover {
@@ -1572,6 +1938,74 @@ function dashboard_stats_shortcode() {
     /* Prevent body scroll when popup is open */
     body.popup-open {
         overflow: hidden;
+    }
+    
+    /* Total Students Popup Styles */
+    .total-students-header {
+        background: #f8f9fa;
+        border: 1px solid #e5e5e5;
+        border-left: 4px solid #4A90D9;
+        padding: 16px;
+        margin-bottom: 20px;
+    }
+    
+    .total-students-header p {
+        margin: 0;
+        font-size: 14px;
+        color: #000000;
+    }
+    
+    .total-students-grid .breakdown-item.total-item {
+        background: #e8f4fc;
+        border-color: #4A90D9;
+    }
+    
+    .total-students-grid .breakdown-item.active-item {
+        background: #e8f8e8;
+        border-color: #27ae60;
+    }
+    
+    .total-students-grid .breakdown-item.non-renewed-item {
+        background: #fff3e8;
+        border-color: #FF6B6B;
+    }
+    
+    .total-students-grid .breakdown-item.paused-item {
+        background: #fff8e1;
+        border-color: #FFA500;
+    }
+    
+    .payment-breakdown-section {
+        margin-top: 24px;
+        padding-top: 20px;
+        border-top: 1px solid #e5e5e5;
+    }
+    
+    .payment-breakdown-section h4 {
+        margin: 0 0 16px 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: #000000;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .payment-breakdown-section h4 .dashicons {
+        font-size: 16px;
+        color: #666666;
+    }
+    
+    .payment-grid .breakdown-item.manual-item {
+        background: #fff8e1;
+        border-color: #ffc107;
+    }
+    
+    .payment-grid .breakdown-item.stripe-item {
+        background: #e8f0fe;
+        border-color: #635bff;
     }
     
     /* Non-Renewed Members Popup Styles */
@@ -1875,6 +2309,53 @@ function dashboard_stats_shortcode() {
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             border-color: #1976d2;
         }
+
+    /* Paused Members Popup Styles */
+    .paused-header {
+        background: #f8f9fa;
+        border: 1px solid #e5e5e5;
+        border-left: 4px solid #FFA500;
+        padding: 16px;
+        margin-bottom: 20px;
+    }
+    
+    .paused-header p {
+        margin: 0 0 8px 0;
+        font-size: 14px;
+        color: #000000;
+    }
+    
+    .paused-header p:last-child {
+        margin-bottom: 0;
+    }
+    
+    .paused-members-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .paused-member-card {
+        background: white;
+        border: 1px solid #e5e5e5;
+        border-radius: 8px;
+        overflow: hidden;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .paused-member-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border-color: #FFA500;
+    }
+
+    .status-badge.paused-status {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffc107;
+    }
 
         /* Responsive schools list */
         .schools-list {
@@ -2329,7 +2810,102 @@ function dashboard_stats_shortcode() {
         color: white;
     }
     
+    .expired-filter-buttons .filter-btn.filter-other-active:hover,
+    .expired-filter-buttons .filter-btn.filter-other-active.active {
+        border-color: #f39c12;
+        background: #f39c12;
+        color: white;
+    }
+    
+    .expired-filter-buttons .filter-btn.filter-truly-churned:hover,
+    .expired-filter-buttons .filter-btn.filter-truly-churned.active {
+        border-color: #c0392b;
+        background: #c0392b;
+        color: white;
+    }
+    
+    .expired-filter-buttons .filter-btn.filter-paused-status:hover,
+    .expired-filter-buttons .filter-btn.filter-paused-status.active {
+        border-color: #f9a825;
+        background: #f9a825;
+        color: white;
+    }
+    
+    .expired-filter-buttons .filter-btn.filter-cancelled-status:hover,
+    .expired-filter-buttons .filter-btn.filter-cancelled-status.active {
+        border-color: #757575;
+        background: #757575;
+        color: white;
+    }
+    
     .expired-filter-buttons .filter-count {
+        opacity: 0.8;
+        font-weight: 500;
+    }
+    
+    /* Active Members Filter Buttons */
+    .active-filter-buttons {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .active-filter-buttons .filter-btn {
+        padding: 8px 16px;
+        border: 2px solid #e5e5e5;
+        background: white;
+        color: #666;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .active-filter-buttons .filter-btn:hover {
+        border-color: #999;
+        background: #f8f9fa;
+    }
+    
+    .active-filter-buttons .filter-btn.active {
+        border-color: #2c3e50;
+        background: #2c3e50;
+        color: white;
+    }
+    
+    .active-filter-buttons .filter-btn.filter-active-status:hover,
+    .active-filter-buttons .filter-btn.filter-active-status.active {
+        border-color: #27ae60;
+        background: #27ae60;
+        color: white;
+    }
+    
+    .active-filter-buttons .filter-btn.filter-paused-status:hover,
+    .active-filter-buttons .filter-btn.filter-paused-status.active {
+        border-color: #f9a825;
+        background: #f9a825;
+        color: white;
+    }
+    
+    .active-filter-buttons .filter-btn.filter-cancelled-status:hover,
+    .active-filter-buttons .filter-btn.filter-cancelled-status.active {
+        border-color: #757575;
+        background: #757575;
+        color: white;
+    }
+    
+    .active-filter-buttons .filter-btn.filter-expired-status:hover,
+    .active-filter-buttons .filter-btn.filter-expired-status.active {
+        border-color: #e74c3c;
+        background: #e74c3c;
+        color: white;
+    }
+    
+    .active-filter-buttons .filter-count {
         opacity: 0.8;
         font-weight: 500;
     }
@@ -2432,6 +3008,40 @@ function dashboard_stats_shortcode() {
         font-weight: 500;
     }
     
+    .expired-date-badge {
+        display: inline-block;
+        padding: 2px 6px;
+        background: #f8d7da;
+        color: #721c24;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 500;
+    }
+    
+    .member-expired-row {
+        background: #fff5f5 !important;
+    }
+    
+    .member-expired-row:hover {
+        background: #ffe8e8 !important;
+    }
+    
+    .member-paused-row {
+        background: #fffde7 !important;
+    }
+    
+    .member-paused-row:hover {
+        background: #fff9c4 !important;
+    }
+    
+    .member-cancelled-row {
+        background: #f5f5f5 !important;
+    }
+    
+    .member-cancelled-row:hover {
+        background: #e0e0e0 !important;
+    }
+    
     .renewed-badge {
         display: inline-block;
         padding: 3px 8px;
@@ -2460,9 +3070,107 @@ function dashboard_stats_shortcode() {
         background: #fff8f8;
     }
     
+    .other-active-row {
+        background: #fff9e6;
+    }
+    
+    .truly-churned-row {
+        background: #ffe6e6;
+    }
+    
     .expired-date {
         color: #e74c3c;
         font-weight: 500;
+    }
+    
+    .member-email-small {
+        font-size: 11px;
+        color: #6c757d;
+        margin-top: 2px;
+    }
+    
+    .membership-cell {
+        max-width: 200px;
+        font-size: 12px;
+    }
+    
+    .status-detail-cell {
+        max-width: 250px;
+    }
+    
+    .status-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+    }
+    
+    .status-badge.status-renewed {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .status-badge.status-other-active {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeeba;
+    }
+    
+    .status-badge.status-churned {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    
+    /* Status badges for subscription status column */
+    .status-badge-small {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .status-badge-small.status-active {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .status-badge-small.status-paused {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffc107;
+    }
+    
+    .status-badge-small.status-cancelled {
+        background: #e0e0e0;
+        color: #424242;
+        border: 1px solid #bdbdbd;
+    }
+    
+    .status-badge-small.status-expired {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    
+    .status-badge-small.status-none {
+        background: #f5f5f5;
+        color: #757575;
+        border: 1px solid #e0e0e0;
+    }
+    
+    .status-detail-text {
+        font-size: 11px;
+        color: #555;
+        line-height: 1.3;
+        word-break: break-word;
     }
     
     .current-expires-renewed {
@@ -2503,6 +3211,16 @@ function dashboard_stats_shortcode() {
         border-color: #f5c6cb;
     }
     
+    .summary-item.success {
+        background: #f8fff8;
+        border-color: #c3e6cb;
+    }
+    
+    .summary-item.info {
+        background: #fff9e6;
+        border-color: #ffeeba;
+    }
+    
     .summary-number {
         display: block;
         font-size: 24px;
@@ -2512,6 +3230,62 @@ function dashboard_stats_shortcode() {
     
     .summary-item.warning .summary-number {
         color: #e74c3c;
+    }
+    
+    .summary-item.success .summary-number {
+        color: #27ae60;
+    }
+    
+    .summary-item.info .summary-number {
+        color: #856404;
+    }
+    
+    .summary-item.paused {
+        background: #fffde7;
+        border-color: #ffc107;
+    }
+    
+    .summary-item.paused .summary-number {
+        color: #f9a825;
+    }
+    
+    .summary-item.cancelled {
+        background: #f5f5f5;
+        border-color: #bdbdbd;
+    }
+    
+    .summary-item.cancelled .summary-number {
+        color: #616161;
+    }
+    
+    .summary-explanation {
+        margin-top: 15px;
+        padding: 12px 15px;
+        background: #e8f4fc;
+        border: 1px solid #bee5eb;
+        border-radius: 4px;
+    }
+    
+    .summary-explanation p {
+        margin: 0 0 8px 0;
+        font-size: 13px;
+        font-weight: 600;
+        color: #0c5460;
+    }
+    
+    .summary-explanation ul {
+        margin: 0;
+        padding-left: 20px;
+    }
+    
+    .summary-explanation li {
+        font-size: 12px;
+        color: #0c5460;
+        margin-bottom: 4px;
+    }
+    
+    .summary-explanation li:last-child {
+        margin-bottom: 0;
     }
     
     .summary-label {
@@ -3157,6 +3931,11 @@ function get_non_renewed_members_from_defined_groups($date_from, $date_to) {
 
     $non_renewed_members = [];
 
+    // DEBUG: Log how many expired transactions were found
+    wcb_debug_log("=== NON-RENEWED MEMBERS CHECK ===");
+    wcb_debug_log("Date Range: {$date_from} to {$date_to}");
+    wcb_debug_log("Found " . count($expired_transactions) . " expired transactions in defined groups");
+    
     foreach ($expired_transactions as $expired_txn) {
         $user_id = $expired_txn->user_id;
 
@@ -3178,12 +3957,21 @@ function get_non_renewed_members_from_defined_groups($date_from, $date_to) {
         wcb_debug_log("Non-Renewed Check - User ID: {$user_id}, Name: {$expired_txn->display_name}, Program: {$expired_txn->program_name}");
         wcb_debug_log("  - Has Active Membership: " . ($has_active_membership ? 'YES' : 'NO'));
         wcb_debug_log("  - Renewal Transactions After Expiry: {$renewed_membership}");
-        wcb_debug_log("  - Expired Date: {$expired_txn->expires_at}");
+        wcb_debug_log("  - Expired Date (UTC): {$expired_txn->expires_at}");
 
-        // Only consider non-renewed if BOTH conditions are true:
+        // Check if user has a PAUSED subscription - if so, they're not "non-renewed", they're "paused"
+        $has_paused_subscription = $wpdb->get_var($wpdb->prepare("
+            SELECT COUNT(*)
+            FROM {$wpdb->prefix}mepr_subscriptions
+            WHERE user_id = %d
+            AND status = 'suspended'
+        ", $user_id));
+        
+        // Only consider non-renewed if ALL conditions are true:
         // 1. No currently active membership AND 
-        // 2. No renewal transactions after expiry
-        if (!$has_active_membership && $renewed_membership == 0) {
+        // 2. No renewal transactions after expiry AND
+        // 3. No paused/suspended subscription (those go in the Paused category)
+        if (!$has_active_membership && $renewed_membership == 0 && $has_paused_subscription == 0) {
             $expired_date = date('d/m/Y', strtotime($expired_txn->expires_at));
             $days_since_expiry = floor((time() - strtotime($expired_txn->expires_at)) / (60 * 60 * 24));
 
@@ -3231,9 +4019,354 @@ function get_non_renewed_members_from_defined_groups($date_from, $date_to) {
     return array_values($non_renewed_members);
 }
 
+// NEW: Function to get paused members
+// Paused members have a subscription with status='suspended' (MemberPress uses 'suspended' for paused)
+// Filters by date range - shows members whose subscription was paused (last expires_at) within the date range
+// NOTE: mepr_subscriptions table does NOT have expires_at column - get it from latest transaction instead
+function get_paused_members_from_defined_groups($date_from, $date_to) {
+    global $wpdb;
+
+    $subscriptions_table = $wpdb->prefix . 'mepr_subscriptions';
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+    
+    // Get suspended subscriptions where the last transaction expired within the date range
+    // This means the member paused their subscription during or before the selected period
+    $query = $wpdb->prepare("
+        SELECT s.user_id, s.id as subscription_id, s.product_id, s.status as subscription_status,
+               s.created_at as subscription_created,
+               u.display_name, u.user_email, p.post_title as program_name,
+               (SELECT MAX(t.expires_at) FROM {$txn_table} t WHERE t.subscription_id = s.id) as last_expires_at
+        FROM {$subscriptions_table} s
+        JOIN {$wpdb->users} u ON s.user_id = u.ID
+        JOIN {$wpdb->posts} p ON s.product_id = p.ID
+        WHERE s.status = 'suspended'
+        HAVING last_expires_at IS NULL 
+           OR last_expires_at = '0000-00-00 00:00:00'
+           OR DATE(last_expires_at) <= %s
+        ORDER BY last_expires_at DESC
+    ", $date_to);
+    
+    $all_paused_subscriptions = $wpdb->get_results($query);
+
+    $paused_members = [];
+    $processed_users = [];
+
+    if (!empty($all_paused_subscriptions)) {
+        foreach ($all_paused_subscriptions as $paused_sub) {
+            $user_id = $paused_sub->user_id;
+            
+            // Avoid duplicates (same user with multiple paused subscriptions)
+            if (isset($processed_users[$user_id])) {
+                continue;
+            }
+            $processed_users[$user_id] = true;
+
+            // Get membership type from product title
+            $membership_type = '';
+            if (stripos($paused_sub->program_name, 'monthly') !== false) {
+                $membership_type = 'Monthly';
+            } elseif (stripos($paused_sub->program_name, 'weekly') !== false) {
+                $membership_type = 'Weekly';
+            } elseif (stripos($paused_sub->program_name, 'term') !== false) {
+                $membership_type = 'Full Term';
+            }
+
+            // Use the last transaction expires_at, or subscription created date as fallback
+            $paused_date = $paused_sub->last_expires_at;
+            if (empty($paused_date) || $paused_date === '0000-00-00 00:00:00') {
+                $paused_date = $paused_sub->subscription_created;
+            }
+            
+            $days_paused = '';
+            if ($paused_date && $paused_date !== '0000-00-00 00:00:00') {
+                $days_paused = floor((time() - strtotime($paused_date)) / (60 * 60 * 24)) . ' days';
+            }
+
+            $paused_members[] = [
+                'user_id' => $user_id,
+                'name' => $paused_sub->display_name,
+                'email' => $paused_sub->user_email,
+                'program' => $paused_sub->program_name,
+                'group' => 'N/A',
+                'membership_type' => $membership_type,
+                'paused_date' => $paused_date ? date('d/m/Y', strtotime($paused_date)) : 'Unknown',
+                'days_paused' => $days_paused,
+                'subscription_id' => $paused_sub->subscription_id,
+                'subscription_status' => $paused_sub->subscription_status
+            ];
+        }
+    }
+
+    return $paused_members;
+}
+
+// DEBUG: Helper function to identify WHY a user is marked as having active membership
+function wcb_get_active_membership_reason($user_id) {
+    global $wpdb;
+    
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+    $subscriptions_table = $wpdb->prefix . 'mepr_subscriptions';
+    
+    // Use exact same queries as wcb_user_has_active_membership() but return details
+    
+    // Method 1: Check for active transactions (COUNT like the real function)
+    $method1_count = $wpdb->get_var($wpdb->prepare("
+        SELECT COUNT(*)
+        FROM {$txn_table} t
+        WHERE t.user_id = %d
+        AND t.status IN ('confirmed', 'complete')
+        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+    ", $user_id));
+    
+    if ($method1_count > 0) {
+        // Get the actual transactions for display
+        $active_transactions = $wpdb->get_results($wpdb->prepare("
+            SELECT t.*, p.post_title as product_name
+            FROM {$txn_table} t
+            JOIN {$wpdb->posts} p ON t.product_id = p.ID
+            WHERE t.user_id = %d
+            AND t.status IN ('confirmed', 'complete')
+            AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+        ", $user_id));
+        
+        $products = array_map(function($t) { 
+            $exp = $t->expires_at ?: 'Never';
+            return $t->product_name . " (exp: {$exp})"; 
+        }, $active_transactions);
+        return "M1({$method1_count}): " . implode(', ', $products);
+    }
+    
+    // Method 2: Check for active subscriptions (COUNT like the real function)
+    $method2_count = $wpdb->get_var($wpdb->prepare("
+        SELECT COUNT(*)
+        FROM {$subscriptions_table} s
+        WHERE s.user_id = %d
+        AND s.status IN ('active', 'trialing')
+        AND (s.expires_at IS NULL OR s.expires_at > NOW() OR s.expires_at = '0000-00-00 00:00:00')
+    ", $user_id));
+    
+    if ($method2_count > 0) {
+        $active_subscriptions = $wpdb->get_results($wpdb->prepare("
+            SELECT s.*, p.post_title as product_name
+            FROM {$subscriptions_table} s
+            JOIN {$wpdb->posts} p ON s.product_id = p.ID
+            WHERE s.user_id = %d
+            AND s.status IN ('active', 'trialing')
+            AND (s.expires_at IS NULL OR s.expires_at > NOW() OR s.expires_at = '0000-00-00 00:00:00')
+        ", $user_id));
+        
+        $subs = array_map(function($s) { return $s->product_name . " ({$s->status})"; }, $active_subscriptions);
+        return "M2({$method2_count}): " . implode(', ', $subs);
+    }
+    
+    // Method 3: Weekly subscriptions check
+    $weekly_check = $wpdb->get_results($wpdb->prepare("
+        SELECT t.*, p.post_title as product_name
+        FROM {$txn_table} t
+        JOIN {$wpdb->posts} p ON t.product_id = p.ID
+        WHERE t.user_id = %d
+        AND t.status IN ('confirmed', 'complete')
+        AND p.post_title LIKE '%%weekly%%'
+        ORDER BY t.created_at DESC
+        LIMIT 5
+    ", $user_id));
+    
+    if (!empty($weekly_check)) {
+        foreach ($weekly_check as $weekly_txn) {
+            $expires_in_future = ($weekly_txn->expires_at === null || 
+                                 $weekly_txn->expires_at === '0000-00-00 00:00:00' || 
+                                 strtotime($weekly_txn->expires_at) > time());
+            
+            if ($expires_in_future) {
+                return "M3: Weekly - " . $weekly_txn->product_name . " (exp: " . ($weekly_txn->expires_at ?: 'Never') . ")";
+            }
+        }
+    }
+    
+    // Method 4: Stripe transactions (COUNT like the real function)
+    $method4_count = $wpdb->get_var($wpdb->prepare("
+        SELECT COUNT(*)
+        FROM {$txn_table} t
+        WHERE t.user_id = %d
+        AND t.status IN ('confirmed', 'complete')
+        AND t.gateway LIKE '%%stripe%%'
+        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+    ", $user_id));
+    
+    if ($method4_count > 0) {
+        $stripe_transactions = $wpdb->get_results($wpdb->prepare("
+            SELECT t.*, p.post_title as product_name
+            FROM {$txn_table} t
+            JOIN {$wpdb->posts} p ON t.product_id = p.ID
+            WHERE t.user_id = %d
+            AND t.status IN ('confirmed', 'complete')
+            AND t.gateway LIKE '%%stripe%%'
+            AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+        ", $user_id));
+        
+        $txns = array_map(function($t) { return $t->product_name; }, $stripe_transactions);
+        return "M4({$method4_count}): " . implode(', ', $txns);
+    }
+    
+    // Method 5: MemberPress access (skip for admins)
+    $user = get_user_by('ID', $user_id);
+    $is_admin = $user && in_array('administrator', (array) $user->roles);
+    
+    if ($is_admin) {
+        // Check Method 2 without expires filter to see if there's an 'active' subscription
+        $m2_no_expiry = $wpdb->get_var($wpdb->prepare("
+            SELECT COUNT(*)
+            FROM {$subscriptions_table} s
+            WHERE s.user_id = %d
+            AND s.status IN ('active', 'trialing')
+        ", $user_id));
+        
+        // Check all subscriptions for this user
+        $all_subs = $wpdb->get_results($wpdb->prepare("
+            SELECT s.*, p.post_title as product_name
+            FROM {$subscriptions_table} s
+            LEFT JOIN {$wpdb->posts} p ON s.product_id = p.ID
+            WHERE s.user_id = %d
+        ", $user_id));
+        
+        $subs_info = '';
+        if (!empty($all_subs)) {
+            foreach ($all_subs as $sub) {
+                $subs_info .= " [{$sub->product_name}: status={$sub->status}, exp={$sub->expires_at}]";
+            }
+        }
+        
+        return "ADMIN - M1={$method1_count}, M2={$method2_count}, M2_no_exp={$m2_no_expiry}, M4={$method4_count} | Subs:{$subs_info}";
+    }
+    
+    if ($user && function_exists('mepr_user_has_access')) {
+        $membership_products = get_posts([
+            'post_type' => 'memberpressproduct',
+            'post_status' => 'publish',
+            'numberposts' => -1
+        ]);
+        
+        foreach ($membership_products as $product) {
+            if (mepr_user_has_access($user_id, $product->ID)) {
+                return "M5: MemberPress Access - " . $product->post_title;
+            }
+        }
+    }
+    
+    return "Unknown - M1={$method1_count}, M2={$method2_count}, M4={$method4_count}, is_admin=" . ($is_admin ? 'YES' : 'NO');
+}
+
+// DEBUG: Helper function to show all expired transactions and why they were filtered
+function get_non_renewed_debug_info($date_from, $date_to) {
+    global $wpdb;
+
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$txn_table'") == $txn_table;
+
+    if (!$table_exists) {
+        return [];
+    }
+
+    $groups = $wpdb->get_results("SELECT ID, post_title FROM {$wpdb->posts} WHERE post_type = 'memberpressgroup' AND post_status IN ('publish', 'private') ORDER BY post_title");
+
+    $defined_groups = [
+        'Mini Cadet Boys (9-11 Years) Group 1',
+        'Cadet Boys Group 1',
+        'Cadet Boys Group 2',
+        'Youth Boys Group 1',
+        'Youth Boys Group 2',
+        'Mini Cadets Girls Group 1',
+        'Youth Girls Group 1'
+    ];
+
+    $all_group_membership_ids = [];
+    foreach ($defined_groups as $group_name) {
+        $group = null;
+        foreach ($groups as $g) {
+            if (strcasecmp($g->post_title, $group_name) === 0) {
+                $group = $g;
+                break;
+            }
+        }
+
+        if ($group) {
+            $group_memberships = wcb_get_group_memberships($group->ID);
+            if (!empty($group_memberships)) {
+                $membership_ids = array_map(function($m) { return $m->ID; }, $group_memberships);
+                $all_group_membership_ids = array_merge($all_group_membership_ids, $membership_ids);
+            }
+        }
+    }
+    
+    $competitive_team_id = 1932;
+    $all_group_membership_ids[] = $competitive_team_id;
+
+    if (empty($all_group_membership_ids)) {
+        return [];
+    }
+
+    $placeholders = implode(',', array_fill(0, count($all_group_membership_ids), '%d'));
+
+    $expired_transactions = $wpdb->get_results($wpdb->prepare("
+        SELECT t.*, u.display_name, u.user_email, p.post_title as program_name
+        FROM {$txn_table} t
+        JOIN {$wpdb->users} u ON t.user_id = u.ID
+        JOIN {$wpdb->posts} p ON t.product_id = p.ID
+        WHERE t.product_id IN ({$placeholders})
+        AND t.status IN ('confirmed', 'complete')
+        AND t.expires_at IS NOT NULL
+        AND t.expires_at != '0000-00-00 00:00:00'
+        AND DATE(t.expires_at) BETWEEN %s AND %s
+        ORDER BY t.expires_at DESC
+    ", array_merge($all_group_membership_ids, [$date_from, $date_to])));
+
+    $debug_info = [];
+    
+    foreach ($expired_transactions as $expired_txn) {
+        $user_id = $expired_txn->user_id;
+        $has_active_membership = wcb_user_has_active_membership($user_id);
+        
+        $renewed_membership = $wpdb->get_var($wpdb->prepare("
+            SELECT COUNT(*)
+            FROM {$txn_table} t
+            WHERE t.user_id = %d
+            AND t.status IN ('confirmed', 'complete')
+            AND t.created_at > %s
+            AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+        ", $user_id, $expired_txn->expires_at));
+
+        $is_non_renewed = !$has_active_membership && $renewed_membership == 0;
+        
+        // Get the internal debug info from the function
+        global $wcb_debug_active_method;
+        $func_debug = isset($wcb_debug_active_method) ? json_encode($wcb_debug_active_method) : 'N/A';
+        
+        // Show the internal function debug
+        $active_reason = "FUNC=" . ($has_active_membership ? 'TRUE' : 'FALSE') . " | INTERNAL: " . $func_debug;
+        
+        $debug_info[] = [
+            'user_id' => $user_id,
+            'name' => $expired_txn->display_name,
+            'email' => $expired_txn->user_email,
+            'program' => $expired_txn->program_name,
+            'expires_at' => $expired_txn->expires_at,
+            'has_active' => $has_active_membership,
+            'active_reason' => $active_reason,
+            'renewed_after' => $renewed_membership,
+            'is_non_renewed' => $is_non_renewed
+        ];
+    }
+    
+    return $debug_info;
+}
+
 // NEW: Function to check if a user has any active membership (handles weekly subscriptions & Stripe)
 function wcb_user_has_active_membership($user_id) {
     global $wpdb;
+    
+    // TEMP DEBUG: Store which method returns true
+    global $wcb_debug_active_method;
+    $wcb_debug_active_method = [];
     
     $txn_table = $wpdb->prefix . 'mepr_transactions';
     $subscriptions_table = $wpdb->prefix . 'mepr_subscriptions';
@@ -3247,8 +4380,10 @@ function wcb_user_has_active_membership($user_id) {
         AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
     ", $user_id));
     
+    $wcb_debug_active_method['M1'] = $active_transactions;
+    
     if ($active_transactions > 0) {
-        wcb_debug_log("  - ACTIVE via Method 1: Active Transactions ({$active_transactions} found)");
+        $wcb_debug_active_method['returned_at'] = 'M1';
         return true;
     }
     
@@ -3261,13 +4396,14 @@ function wcb_user_has_active_membership($user_id) {
         AND (s.expires_at IS NULL OR s.expires_at > NOW() OR s.expires_at = '0000-00-00 00:00:00')
     ", $user_id));
     
+    $wcb_debug_active_method['M2'] = $active_subscriptions;
+    
     if ($active_subscriptions > 0) {
-        wcb_debug_log("  - ACTIVE via Method 2: Active Subscriptions ({$active_subscriptions} found)");
+        $wcb_debug_active_method['returned_at'] = 'M2';
         return true;
     }
     
     // Method 3: Enhanced check for weekly subscriptions
-    // Weekly subscriptions might have gaps between transactions or overlapping periods
     $weekly_check = $wpdb->get_results($wpdb->prepare("
         SELECT t.*, p.post_title as product_name
         FROM {$txn_table} t
@@ -3279,44 +4415,48 @@ function wcb_user_has_active_membership($user_id) {
         LIMIT 5
     ", $user_id));
     
+    $wcb_debug_active_method['M3_count'] = count($weekly_check);
+    
     if (!empty($weekly_check)) {
         foreach ($weekly_check as $weekly_txn) {
-            // For weekly subscriptions, check if:
-            // 1. Transaction was created within last 14 days (covers 2 weeks)
-            // 2. OR transaction expires in the future
-            // 3. OR transaction was created recently but might be processing
-            $created_days_ago = floor((time() - strtotime($weekly_txn->created_at)) / (60 * 60 * 24));
             $expires_in_future = ($weekly_txn->expires_at === null || 
                                  $weekly_txn->expires_at === '0000-00-00 00:00:00' || 
                                  strtotime($weekly_txn->expires_at) > time());
             
-            if ($created_days_ago <= 14 || $expires_in_future) {
-                wcb_debug_log("  - ACTIVE via Method 3: Weekly Subscription (created {$created_days_ago} days ago, expires in future: " . ($expires_in_future ? 'YES' : 'NO') . ")");
+            $wcb_debug_active_method['M3_check'] = "exp={$weekly_txn->expires_at}, future=" . ($expires_in_future ? 'YES' : 'NO');
+            
+            if ($expires_in_future) {
+                $wcb_debug_active_method['returned_at'] = 'M3';
                 return true;
             }
         }
     }
     
     // Method 4: Check for Stripe subscription transactions specifically
-    // Stripe transactions might have different patterns
+    // NOTE: Use %%stripe%% to escape % in wpdb->prepare()
     $stripe_transactions = $wpdb->get_var($wpdb->prepare("
         SELECT COUNT(*)
         FROM {$txn_table} t
         WHERE t.user_id = %d
         AND t.status IN ('confirmed', 'complete')
-        AND t.gateway LIKE '%stripe%'
+        AND t.gateway LIKE '%%stripe%%'
         AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
     ", $user_id));
     
+    $wcb_debug_active_method['M4'] = $stripe_transactions;
+    
     if ($stripe_transactions > 0) {
-        wcb_debug_log("  - ACTIVE via Method 4: Stripe Transactions ({$stripe_transactions} found)");
+        $wcb_debug_active_method['returned_at'] = 'M4';
         return true;
     }
     
-    // Method 5: Check if user has MemberPress capabilities (using WP roles/capabilities)
+    // Method 5: Check if user has MemberPress capabilities
     $user = get_user_by('ID', $user_id);
-    if ($user && function_exists('mepr_user_has_access')) {
-        // Get all membership products and check access
+    $is_admin = $user && in_array('administrator', (array) $user->roles);
+    
+    $wcb_debug_active_method['is_admin'] = $is_admin ? 'YES' : 'NO';
+    
+    if ($user && !$is_admin && function_exists('mepr_user_has_access')) {
         $membership_products = get_posts([
             'post_type' => 'memberpressproduct',
             'post_status' => 'publish',
@@ -3325,13 +4465,13 @@ function wcb_user_has_active_membership($user_id) {
         
         foreach ($membership_products as $product) {
             if (mepr_user_has_access($user_id, $product->ID)) {
-                wcb_debug_log("  - ACTIVE via Method 5: MemberPress Access (Product ID: {$product->ID})");
+                $wcb_debug_active_method['returned_at'] = 'M5:' . $product->post_title;
                 return true;
             }
         }
     }
     
-    wcb_debug_log("  - NOT ACTIVE: No active membership found via any method");
+    $wcb_debug_active_method['returned_at'] = 'NONE-FALSE';
     return false;
 }
 
@@ -4559,10 +5699,12 @@ function wcb_utc_to_local_date($utc_datetime) {
 
 // DEBUG: Get detailed active members for debug table
 // FIXED: Now gets the LATEST transaction with MAX expiry date for each user
+// ENHANCED: Now includes subscription status (active/paused/cancelled)
 function wcb_get_debug_active_members($date_from, $date_to) {
     global $wpdb;
     
     $txn_table = $wpdb->prefix . 'mepr_transactions';
+    $subscriptions_table = $wpdb->prefix . 'mepr_subscriptions';
     $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$txn_table'") == $txn_table;
     
     if (!$table_exists) {
@@ -4695,6 +5837,42 @@ function wcb_get_debug_active_members($date_from, $date_to) {
         
         if (!$latest_txn) continue;
         
+        // Get subscription status for this user (check for paused/cancelled)
+        $subscription_status = $wpdb->get_row($wpdb->prepare("
+            SELECT s.status, s.id as subscription_id
+            FROM {$subscriptions_table} s
+            WHERE s.user_id = %d
+            AND s.product_id IN ({$placeholders})
+            ORDER BY s.id DESC
+            LIMIT 1
+        ", array_merge([$user_id], $all_membership_ids)));
+        
+        // Determine member status
+        $member_status = 'active';
+        $status_label = 'Active';
+        if ($subscription_status) {
+            if ($subscription_status->status === 'suspended') {
+                $member_status = 'paused';
+                $status_label = 'Paused';
+            } elseif ($subscription_status->status === 'cancelled') {
+                $member_status = 'cancelled';
+                $status_label = 'Cancelled';
+            }
+        }
+        
+        // Check if member's transaction is expired (overrides subscription status for display)
+        $is_expired = false;
+        if ($latest_txn->expires_at && $latest_txn->expires_at !== '0000-00-00 00:00:00') {
+            $expires_timestamp = strtotime($latest_txn->expires_at);
+            if ($expires_timestamp && $expires_timestamp < time()) {
+                $is_expired = true;
+                if ($member_status === 'active') {
+                    $member_status = 'expired';
+                    $status_label = 'Expired';
+                }
+            }
+        }
+        
         $gateway_label = 'Unknown';
         if ($latest_txn->gateway === 'manual') {
             $gateway_label = 'Manual';
@@ -4725,7 +5903,10 @@ function wcb_get_debug_active_members($date_from, $date_to) {
             'first_txn_date' => $first_txn_local,
             'expires_at' => $expires_display,
             'gateway' => $gateway_label,
-            'txn_status' => $latest_txn->status
+            'txn_status' => $latest_txn->status,
+            'member_status' => $member_status,
+            'status_label' => $status_label,
+            'is_expired' => $is_expired
         ];
     }
     
@@ -4738,12 +5919,12 @@ function wcb_get_debug_active_members($date_from, $date_to) {
 }
 
 // DEBUG: Get members who expired during the selected period
-// FIXED: Now correctly identifies users whose LATEST transaction expired during the period
-// and checks if they have a NEWER transaction that extends beyond the period
+// ENHANCED: Now shows detailed status including other active memberships, renewal reasons, and paused/cancelled status
 function wcb_get_debug_expired_members($date_from, $date_to) {
     global $wpdb;
     
     $txn_table = $wpdb->prefix . 'mepr_transactions';
+    $subscriptions_table = $wpdb->prefix . 'mepr_subscriptions';
     $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$txn_table'") == $txn_table;
     
     if (!$table_exists) {
@@ -4796,7 +5977,6 @@ function wcb_get_debug_expired_members($date_from, $date_to) {
     $placeholders = implode(',', array_fill(0, count($all_membership_ids), '%d'));
     
     // Get WordPress timezone offset for SQL conversion
-    // NZ timezone is typically +12 or +13 (with daylight saving)
     $wp_tz = wp_timezone();
     $now = new DateTime('now', $wp_tz);
     $tz_offset_seconds = $wp_tz->getOffset($now);
@@ -4804,7 +5984,6 @@ function wcb_get_debug_expired_members($date_from, $date_to) {
     $tz_offset_string = sprintf('%+03d:00', $tz_offset_hours);
     
     // STEP 1: Get all users who have ANY transaction that expired during the period
-    // Convert UTC expires_at to local timezone before comparing with local date filter
     $users_with_expirations = $wpdb->get_col($wpdb->prepare("
         SELECT DISTINCT user_id
         FROM {$txn_table}
@@ -4822,14 +6001,12 @@ function wcb_get_debug_expired_members($date_from, $date_to) {
     
     $members = [];
     
-    // STEP 2: For each user, get their transaction details
+    // STEP 2: For each user, get their transaction details with ENHANCED status info
     foreach ($users_with_expirations as $user_id) {
-        // Skip dev user
         $user = get_userdata($user_id);
         if (!$user || $user->user_login === 'bwgdev') continue;
         
-        // Get the transaction that expired during the period (the one that triggered inclusion)
-        // Use timezone conversion for accurate date comparison
+        // Get the transaction that expired during the period
         $expired_txn = $wpdb->get_row($wpdb->prepare("
             SELECT t.*, p.post_title as membership_name
             FROM {$txn_table} t
@@ -4860,23 +6037,117 @@ function wcb_get_debug_expired_members($date_from, $date_to) {
             }
         }
         
-        // Check if user has RENEWED - has a transaction with expiry AFTER the expired one
-        // This checks for a transaction created AFTER or with expiry date AFTER the expired transaction's expiry
-        $has_renewed = $wpdb->get_var($wpdb->prepare("
+        // ========================================
+        // ENHANCED: Get subscription status (paused/cancelled)
+        // ========================================
+        $subscription_info = $wpdb->get_row($wpdb->prepare("
+            SELECT s.status as sub_status, s.id as subscription_id
+            FROM {$subscriptions_table} s
+            WHERE s.user_id = %d
+            AND s.product_id IN ({$placeholders})
+            ORDER BY s.id DESC
+            LIMIT 1
+        ", array_merge([$user_id], $all_membership_ids)));
+        
+        $subscription_status = 'none';
+        $subscription_status_label = 'No Subscription';
+        if ($subscription_info) {
+            $subscription_status = $subscription_info->sub_status;
+            if ($subscription_status === 'suspended') {
+                $subscription_status_label = 'Paused';
+            } elseif ($subscription_status === 'cancelled') {
+                $subscription_status_label = 'Cancelled';
+            } elseif ($subscription_status === 'active') {
+                $subscription_status_label = 'Active';
+            } else {
+                $subscription_status_label = ucfirst($subscription_status);
+            }
+        }
+        
+        // ========================================
+        // ENHANCED: Detailed renewal/status checks
+        // ========================================
+        
+        // Check 1: Renewed within SAME program group (defined groups only)
+        $renewed_in_program = $wpdb->get_var($wpdb->prepare("
             SELECT COUNT(*) FROM {$txn_table}
             WHERE user_id = %d
             AND product_id IN ({$placeholders})
             AND status IN ('confirmed', 'complete')
             AND (
-                -- Has a transaction with later expiry
                 (expires_at IS NOT NULL AND expires_at != '0000-00-00 00:00:00' AND expires_at > %s)
-                OR
-                -- Or has a never-expiring transaction
-                (expires_at IS NULL OR expires_at = '0000-00-00 00:00:00')
+                OR (expires_at IS NULL OR expires_at = '0000-00-00 00:00:00')
             )
         ", array_merge([$user_id], $all_membership_ids, [$expired_txn->expires_at])));
         
-        // Get the LATEST transaction to show current status
+        // Check 2: Has ANY other active membership (outside defined groups)
+        $other_active_memberships = $wpdb->get_results($wpdb->prepare("
+            SELECT t.*, p.post_title as membership_name
+            FROM {$txn_table} t
+            JOIN {$wpdb->posts} p ON t.product_id = p.ID
+            WHERE t.user_id = %d
+            AND t.product_id NOT IN ({$placeholders})
+            AND t.status IN ('confirmed', 'complete')
+            AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+        ", array_merge([$user_id], $all_membership_ids)));
+        
+        // Check 3: Has active subscription (Stripe recurring)
+        $active_subscriptions = $wpdb->get_results($wpdb->prepare("
+            SELECT s.*, p.post_title as product_name
+            FROM {$subscriptions_table} s
+            JOIN {$wpdb->posts} p ON s.product_id = p.ID
+            WHERE s.user_id = %d
+            AND s.status IN ('active', 'trialing')
+        ", $user_id));
+        
+        // Check 4: Recent weekly transactions (within 14 days)
+        $recent_weekly = $wpdb->get_results($wpdb->prepare("
+            SELECT t.*, p.post_title as product_name
+            FROM {$txn_table} t
+            JOIN {$wpdb->posts} p ON t.product_id = p.ID
+            WHERE t.user_id = %d
+            AND t.status IN ('confirmed', 'complete')
+            AND p.post_title LIKE '%%weekly%%'
+            AND t.created_at > DATE_SUB(NOW(), INTERVAL 14 DAY)
+        ", $user_id));
+        
+        // Build status reason
+        $status_reasons = [];
+        $has_renewed = false;
+        
+        if ($renewed_in_program > 0) {
+            $has_renewed = true;
+            $status_reasons[] = 'Renewed in program';
+        }
+        
+        if (!empty($other_active_memberships)) {
+            $other_names = array_map(function($m) { return $m->membership_name; }, $other_active_memberships);
+            $status_reasons[] = 'Other active: ' . implode(', ', array_unique($other_names));
+        }
+        
+        if (!empty($active_subscriptions)) {
+            $sub_names = array_map(function($s) { return $s->product_name . ' (' . $s->status . ')'; }, $active_subscriptions);
+            $status_reasons[] = 'Active subs: ' . implode(', ', array_unique($sub_names));
+        }
+        
+        if (!empty($recent_weekly)) {
+            $weekly_names = array_map(function($w) { return $w->product_name; }, $recent_weekly);
+            $status_reasons[] = 'Recent weekly: ' . implode(', ', array_unique($weekly_names));
+        }
+        
+        // Determine overall status
+        $overall_status = 'not_renewed';
+        $status_detail = 'No active membership found';
+        
+        if ($renewed_in_program > 0) {
+            $overall_status = 'renewed_program';
+            $status_detail = 'Renewed within program';
+        } elseif (!empty($other_active_memberships) || !empty($active_subscriptions) || !empty($recent_weekly)) {
+            $overall_status = 'active_other';
+            $status_detail = implode(' | ', $status_reasons);
+        }
+        
+        // Get the LATEST transaction in defined groups
         $latest_txn = $wpdb->get_row($wpdb->prepare("
             SELECT t.*, p.post_title as membership_name
             FROM {$txn_table} t
@@ -4901,9 +6172,9 @@ function wcb_get_debug_expired_members($date_from, $date_to) {
         
         $group_name = isset($membership_to_group[$expired_txn->product_id]) ? $membership_to_group[$expired_txn->product_id] : 'Unknown';
         
-        // Determine current status - convert UTC to local timezone
+        // Determine current expires display
         $current_expires = 'Expired';
-        if ($latest_txn && $has_renewed > 0) {
+        if ($latest_txn && $renewed_in_program > 0) {
             if (!$latest_txn->expires_at || $latest_txn->expires_at === '0000-00-00 00:00:00') {
                 $current_expires = 'Never (renewed)';
             } else {
@@ -4911,7 +6182,6 @@ function wcb_get_debug_expired_members($date_from, $date_to) {
             }
         }
         
-        // Convert expired_txn_date from UTC to local timezone
         $expired_txn_local = wcb_utc_to_local_date($expired_txn->expires_at);
         
         $members[] = [
@@ -4925,7 +6195,14 @@ function wcb_get_debug_expired_members($date_from, $date_to) {
             'current_expires' => $current_expires,
             'gateway' => $gateway_label,
             'txn_status' => $expired_txn->status,
-            'has_renewed' => $has_renewed > 0 ? 'Yes' : 'No'
+            'has_renewed' => $renewed_in_program > 0 ? 'Yes' : 'No',
+            'overall_status' => $overall_status,
+            'status_detail' => $status_detail,
+            'has_other_active' => !empty($other_active_memberships) || !empty($active_subscriptions) || !empty($recent_weekly),
+            'subscription_status' => $subscription_status,
+            'subscription_status_label' => $subscription_status_label,
+            'is_paused' => $subscription_status === 'suspended',
+            'is_cancelled' => $subscription_status === 'cancelled'
         ];
     }
     
@@ -4937,6 +6214,87 @@ function wcb_get_debug_expired_members($date_from, $date_to) {
     });
     
     return $members;
+}
+
+// Helper function to get total students breakdown (active + non-renewed + paused with payment methods)
+// FIXED: Now excludes non-renewed and paused members from active count to avoid double-counting
+function get_total_students_breakdown($date_from, $date_to) {
+    global $wpdb;
+    
+    // Get all members who were active during the period (includes those who expired)
+    $all_active_during_period = get_active_members_from_defined_groups($date_from, $date_to);
+    $all_active_count = $all_active_during_period['total_count'];
+    
+    // Get non-renewed members (expired during period and didn't renew)
+    $non_renewed_members = get_non_renewed_members_from_defined_groups($date_from, $date_to);
+    $non_renewed_count = count($non_renewed_members);
+    $non_renewed_user_ids = array_column($non_renewed_members, 'user_id');
+    
+    // Get paused members (subscription status = 'suspended')
+    $paused_members = get_paused_members_from_defined_groups($date_from, $date_to);
+    $paused_count = count($paused_members);
+    $paused_user_ids = array_column($paused_members, 'user_id');
+    
+    // FIXED: Active count = All active during period MINUS non-renewed MINUS paused
+    // This gives us only the members who are CURRENTLY active (not expired, not paused)
+    $active_count = $all_active_count - $non_renewed_count - $paused_count;
+    
+    // Ensure active_count doesn't go negative (in case of overlap)
+    $active_count = max(0, $active_count);
+    
+    // Total = Active + Non-Renewed + Paused
+    $total_count = $active_count + $non_renewed_count + $paused_count;
+    
+    // Get active member IDs to calculate payment breakdown
+    $all_active_member_ids = get_active_member_ids_consistent_with_total($date_from, $date_to);
+    
+    // Exclude non-renewed and paused members from the payment breakdown (only count currently active)
+    $excluded_user_ids = array_merge($non_renewed_user_ids, $paused_user_ids);
+    $active_member_ids = array_diff($all_active_member_ids, $excluded_user_ids);
+    
+    // Calculate payment method breakdown for currently active members only
+    $manual_count = 0;
+    $stripe_count = 0;
+    
+    if (!empty($active_member_ids)) {
+        $txn_table = $wpdb->prefix . 'mepr_transactions';
+        $member_ids_str = implode(',', array_map('intval', $active_member_ids));
+        
+        // Get the latest transaction for each active member to determine payment method
+        $transactions = $wpdb->get_results("
+            SELECT t.user_id, t.gateway
+            FROM {$txn_table} t
+            INNER JOIN (
+                SELECT user_id, MAX(id) as max_id
+                FROM {$txn_table}
+                WHERE user_id IN ({$member_ids_str})
+                AND status IN ('confirmed', 'complete')
+                GROUP BY user_id
+            ) latest ON t.id = latest.max_id
+        ");
+        
+        foreach ($transactions as $txn) {
+            $gateway = strtolower($txn->gateway);
+            if (empty($gateway) || $gateway === 'manual') {
+                $manual_count++;
+            } elseif (strpos($gateway, 'stripe') !== false || preg_match('/^sz[a-z0-9\-]+$/', $gateway)) {
+                $stripe_count++;
+            } else {
+                // Other gateways count as manual
+                $manual_count++;
+            }
+        }
+    }
+    
+    return [
+        'total' => $total_count,
+        'active_count' => $active_count,
+        'non_renewed_count' => $non_renewed_count,
+        'paused_count' => $paused_count,
+        'manual_count' => $manual_count,
+        'stripe_count' => $stripe_count,
+        'paused_members' => $paused_members
+    ];
 }
 
 // Register the shortcode

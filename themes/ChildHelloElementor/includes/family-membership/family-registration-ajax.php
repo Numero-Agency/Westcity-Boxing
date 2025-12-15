@@ -718,6 +718,73 @@ function wcb_ajax_cancel_subscription() {
 add_action('wp_ajax_wcb_cancel_subscription', 'wcb_ajax_cancel_subscription');
 
 /**
+ * Pause Subscription AJAX Handler
+ */
+function wcb_ajax_pause_subscription() {
+    // Verify nonce
+    if (!wp_verify_nonce($_POST['nonce'], 'wcb_nonce')) {
+        wp_send_json_error('Security check failed');
+        return;
+    }
+
+    // Check if user is logged in
+    if (!is_user_logged_in()) {
+        wp_send_json_error('You must be logged in');
+        return;
+    }
+
+    $child_id = intval($_POST['child_id']);
+    $parent_user_id = get_current_user_id();
+
+    // Verify this child is linked to the parent
+    $linked_children = get_user_meta($parent_user_id, 'wcb_linked_children', true);
+    if (!is_array($linked_children) || !in_array($child_id, $linked_children)) {
+        wp_send_json_error('You do not have permission to manage this subscription');
+        return;
+    }
+
+    // Get child's active subscription
+    global $wpdb;
+    $subscription_table = $wpdb->prefix . 'mepr_subscriptions';
+
+    $subscription = $wpdb->get_row($wpdb->prepare(
+        "SELECT * FROM $subscription_table
+         WHERE user_id = %d
+         AND status = 'active'
+         ORDER BY created_at DESC
+         LIMIT 1",
+        $child_id
+    ));
+
+    if (!$subscription) {
+        wp_send_json_error('No active subscription found');
+        return;
+    }
+
+    // Pause the subscription (set status to suspended - MemberPress uses 'suspended' for paused)
+    $result = $wpdb->update(
+        $subscription_table,
+        ['status' => 'suspended'],
+        ['id' => $subscription->id],
+        ['%s'],
+        ['%d']
+    );
+
+    if ($result !== false) {
+        // Get child user for display name
+        $child_user = get_user_by('id', $child_id);
+        $child_name = $child_user ? $child_user->display_name : 'Member';
+        
+        wp_send_json_success([
+            'message' => $child_name . '\'s subscription has been paused. They can resume it at any time from the member dashboard.'
+        ]);
+    } else {
+        wp_send_json_error('Failed to pause subscription. Please try again.');
+    }
+}
+add_action('wp_ajax_wcb_pause_subscription', 'wcb_ajax_pause_subscription');
+
+/**
  * Get Stripe Customer Portal URL AJAX Handler
  */
 function wcb_ajax_get_stripe_portal() {
@@ -977,6 +1044,17 @@ function wcb_ajax_get_subscription_management() {
             </h4>
 
             <div class="action-buttons-grid">
+                <!-- Pause Subscription -->
+                <button type="button" class="wcb-btn wcb-btn-warning pause-subscription-btn"
+                        data-child-id="<?php echo $child_id; ?>"
+                        data-child-name="<?php echo esc_attr($child_user->display_name); ?>"
+                        style="background: #f39c12; color: white; border-color: #f39c12;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M14,19H18V5H14M6,19H10V5H6V19Z"/>
+                    </svg>
+                    Pause Subscription
+                </button>
+
                 <!-- Cancel Subscription -->
                 <button type="button" class="wcb-btn wcb-btn-outline cancel-subscription-btn"
                         data-child-id="<?php echo $child_id; ?>"
