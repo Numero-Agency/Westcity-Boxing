@@ -73,6 +73,9 @@ function dashboard_stats_shortcode() {
     $waitlist_members = get_waitlist_member_count_consistent();
     $waitlist_members_detailed = get_waitlist_members_detailed();
 
+    // Get "Other Active Memberships" (Competitive Team & WCB Mentoring)
+    $other_memberships = get_other_active_memberships($date_from, $date_to);
+
     // Get ethnicity and age data using the EXACT SAME active members logic as the total count
     // This ensures all counts match perfectly
     $active_member_ids = get_active_member_ids_consistent_with_total($date_from, $date_to);
@@ -149,10 +152,10 @@ function dashboard_stats_shortcode() {
                 <p><span class="dashicons dashicons-groups"></span> Total Students</p>
                 <small>Click to view breakdown</small>
             </div>
-            <div class="stat-card students">
-                <h3><?php echo $total_students; ?></h3>
-                <p><span class="dashicons dashicons-admin-users"></span> Active Students</p>
-                <small>Active during selected period</small>
+            <div class="stat-card students clickable-stat" data-popup="active-members">
+                <h3><?php echo $total_students_breakdown['active_count']; ?></h3>
+                <p><span class="dashicons dashicons-admin-users"></span> Active Members</p>
+                <small>Click to view breakdown</small>
             </div>
             <div class="stat-card sessions clickable-stat" data-popup="sessions">
                 <h3><?php echo $total_sessions; ?></h3>
@@ -650,6 +653,50 @@ function dashboard_stats_shortcode() {
         // Update visible count in header
         document.getElementById('active-members-visible-count').textContent = visibleCount;
     }
+
+    // Filter function for Active Members Popup table
+    function filterActiveMembersPopup(filter) {
+        var table = document.getElementById('active-members-popup-table');
+        if (!table) return;
+
+        var rows = table.querySelectorAll('tbody tr');
+        var visibleCount = 0;
+
+        // Update active button state
+        var buttons = document.querySelectorAll('.active-members-filters .filter-btn');
+        buttons.forEach(function(btn) {
+            btn.classList.remove('active');
+            if (btn.getAttribute('data-filter') === filter) {
+                btn.classList.add('active');
+            }
+        });
+
+        // Filter rows
+        rows.forEach(function(row) {
+            var source = row.getAttribute('data-source');
+            var show = false;
+
+            if (filter === 'all') {
+                show = true;
+            } else if (filter === source) {
+                show = true;
+            }
+
+            row.style.display = show ? '' : 'none';
+            if (show) visibleCount++;
+        });
+    }
+
+    // Add click handlers for Active Members Popup filter buttons
+    document.addEventListener('DOMContentLoaded', function() {
+        var filterBtns = document.querySelectorAll('.active-members-filters .filter-btn');
+        filterBtns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var filter = this.getAttribute('data-filter');
+                filterActiveMembersPopup(filter);
+            });
+        });
+    });
     </script>
     
     <!-- Ethnicity Breakdown Popup -->
@@ -1342,30 +1389,121 @@ function dashboard_stats_shortcode() {
                 </div>
                 
                 <div class="payment-breakdown-section">
-                    <h4><span class="dashicons dashicons-money-alt"></span> Active Members by Payment Method</h4>
+                    <h4><span class="dashicons dashicons-money-alt"></span> Currently Active Members by Payment Method</h4>
+                    <p class="section-description">Members with active Stripe subscriptions or valid manual transactions</p>
                     <div class="breakdown-grid payment-grid">
-                        <div class="breakdown-item manual-item">
-                            <div class="breakdown-number"><?php echo $total_students_breakdown['manual_count']; ?></div>
-                            <div class="breakdown-label">Manual Payment</div>
-                            <div class="breakdown-percentage">
-                                <?php echo $total_students_breakdown['active_count'] > 0 ? round(($total_students_breakdown['manual_count'] / $total_students_breakdown['active_count']) * 100, 1) : 0; ?>%
-                            </div>
-                        </div>
                         <div class="breakdown-item stripe-item">
                             <div class="breakdown-number"><?php echo $total_students_breakdown['stripe_count']; ?></div>
-                            <div class="breakdown-label">Stripe Payment</div>
+                            <div class="breakdown-label">Active Stripe Subscription</div>
                             <div class="breakdown-percentage">
                                 <?php echo $total_students_breakdown['active_count'] > 0 ? round(($total_students_breakdown['stripe_count'] / $total_students_breakdown['active_count']) * 100, 1) : 0; ?>%
                             </div>
                         </div>
+                        <div class="breakdown-item manual-item">
+                            <div class="breakdown-number"><?php echo $total_students_breakdown['manual_count']; ?></div>
+                            <div class="breakdown-label">Manual (No Expiration)</div>
+                            <div class="breakdown-percentage">
+                                <?php echo $total_students_breakdown['active_count'] > 0 ? round(($total_students_breakdown['manual_count'] / $total_students_breakdown['active_count']) * 100, 1) : 0; ?>%
+                            </div>
+                        </div>
                     </div>
                 </div>
-                
+
                 <div class="breakdown-summary">
-                    <p><strong>Active Members:</strong> <?php echo $total_students_breakdown['active_count']; ?> (Manual: <?php echo $total_students_breakdown['manual_count']; ?> | Stripe: <?php echo $total_students_breakdown['stripe_count']; ?>)</p>
-                    <p><strong>Non-Renewed Members:</strong> <?php echo $total_students_breakdown['non_renewed_count']; ?></p>
-                    <p><strong>Paused Members:</strong> <?php echo $total_students_breakdown['paused_count']; ?></p>
-                    <p><strong>Total Students in Period:</strong> <?php echo $total_students_breakdown['total']; ?></p>
+                    <p><strong>Currently Active:</strong> <?php echo $total_students_breakdown['active_count']; ?>
+                        <span class="breakdown-detail">(Stripe: <?php echo $total_students_breakdown['stripe_count']; ?> | Manual: <?php echo $total_students_breakdown['manual_count']; ?>)</span>
+                    </p>
+                    <p><strong>Non-Renewed:</strong> <?php echo $total_students_breakdown['non_renewed_count']; ?>
+                        <span class="breakdown-detail">(expired during period, not renewed)</span>
+                    </p>
+                    <p><strong>Paused:</strong> <?php echo $total_students_breakdown['paused_count']; ?>
+                        <span class="breakdown-detail">(suspended subscriptions)</span>
+                    </p>
+                    <p class="total-line"><strong>Total Students in Period:</strong> <?php echo $total_students_breakdown['total']; ?></p>
+                </div>
+
+                <!-- Other Active Memberships Section -->
+                <div class="other-memberships-section">
+                    <h4><span class="dashicons dashicons-awards"></span> Other Active Memberships</h4>
+                    <p class="section-description">Members with Competitive Team or WCB Mentoring memberships (separate from program groups)</p>
+
+                    <div class="breakdown-grid other-memberships-grid">
+                        <div class="breakdown-item competitive-item">
+                            <div class="breakdown-number"><?php echo $other_memberships['competitive_count']; ?></div>
+                            <div class="breakdown-label">Competitive Team</div>
+                        </div>
+                        <div class="breakdown-item mentoring-item">
+                            <div class="breakdown-number"><?php echo $other_memberships['mentoring_count']; ?></div>
+                            <div class="breakdown-label">WCB Mentoring</div>
+                        </div>
+                    </div>
+
+                    <div class="other-memberships-summary">
+                        <p><strong>Total Unique Members:</strong> <?php echo $other_memberships['total_unique']; ?></p>
+                        <p class="status-active"><span class="dashicons dashicons-yes-alt"></span> Also Active in Program: <?php echo $other_memberships['overlap_with_active_programs']; ?></p>
+                        <p class="status-expired"><span class="dashicons dashicons-warning"></span> Program Expired (still in Competitive/Mentoring): <?php echo $other_memberships['with_expired_programs']; ?></p>
+                        <p class="status-none"><span class="dashicons dashicons-minus"></span> Only Competitive/Mentoring (no program): <?php echo $other_memberships['only_other_memberships']; ?></p>
+                    </div>
+
+                    <?php if ($other_memberships['competitive_count'] > 0): ?>
+                    <div class="members-list-section">
+                        <h5><span class="dashicons dashicons-superhero"></span> Competitive Team Members (<?php echo $other_memberships['competitive_count']; ?>)</h5>
+                        <div class="members-table-wrapper">
+                            <table class="other-members-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Payment</th>
+                                        <th>Expires</th>
+                                        <th>Program Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($other_memberships['competitive_team'] as $member): ?>
+                                    <tr>
+                                        <td><?php echo esc_html($member['display_name']); ?></td>
+                                        <td><?php echo esc_html($member['user_email']); ?></td>
+                                        <td><span class="gateway-badge"><?php echo esc_html($member['gateway_display']); ?></span></td>
+                                        <td><?php echo esc_html($member['expires_display']); ?></td>
+                                        <td><span class="program-status-badge status-<?php echo esc_attr($member['program_status_class']); ?>"><?php echo esc_html($member['program_status']); ?></span></td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
+                    <?php if ($other_memberships['mentoring_count'] > 0): ?>
+                    <div class="members-list-section">
+                        <h5><span class="dashicons dashicons-heart"></span> WCB Mentoring Members (<?php echo $other_memberships['mentoring_count']; ?>)</h5>
+                        <div class="members-table-wrapper">
+                            <table class="other-members-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Payment</th>
+                                        <th>Expires</th>
+                                        <th>Program Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($other_memberships['wcb_mentoring'] as $member): ?>
+                                    <tr>
+                                        <td><?php echo esc_html($member['display_name']); ?></td>
+                                        <td><?php echo esc_html($member['user_email']); ?></td>
+                                        <td><span class="gateway-badge"><?php echo esc_html($member['gateway_display']); ?></span></td>
+                                        <td><?php echo esc_html($member['expires_display']); ?></td>
+                                        <td><span class="program-status-badge status-<?php echo esc_attr($member['program_status_class']); ?>"><?php echo esc_html($member['program_status']); ?></span></td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -1462,6 +1600,127 @@ function dashboard_stats_shortcode() {
                     <p>No paused members found.</p>
                 </div>
                 <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Members Breakdown Popup -->
+    <div id="active-members-popup" class="stats-popup" style="display: none;">
+        <div class="popup-overlay"></div>
+        <div class="popup-content popup-content-large">
+            <div class="popup-header">
+                <h3><span class="dashicons dashicons-admin-users"></span> Active Members Breakdown</h3>
+                <button class="popup-close">&times;</button>
+            </div>
+            <div class="popup-body">
+                <?php
+                $currently_active = $total_students_breakdown['currently_active_members'];
+                $stripe_count = $total_students_breakdown['stripe_count'];
+                $manual_count = $total_students_breakdown['manual_count'];
+                $active_count = $total_students_breakdown['active_count'];
+                ?>
+
+                <div class="active-members-header">
+                    <p><strong>Currently active members with valid paid program memberships:</strong></p>
+                    <p><small>These members have an active Stripe subscription or valid manual transaction for a program group.</small></p>
+                </div>
+
+                <!-- Payment Method Breakdown -->
+                <div class="payment-breakdown-section">
+                    <h4><span class="dashicons dashicons-money-alt"></span> By Payment Method</h4>
+                    <div class="breakdown-grid payment-grid">
+                        <div class="breakdown-item stripe-item">
+                            <div class="breakdown-number"><?php echo $stripe_count; ?></div>
+                            <div class="breakdown-label">Stripe Subscriptions</div>
+                            <div class="breakdown-percentage">
+                                <?php echo $active_count > 0 ? round(($stripe_count / $active_count) * 100, 1) : 0; ?>%
+                            </div>
+                        </div>
+                        <div class="breakdown-item manual-item">
+                            <div class="breakdown-number"><?php echo $manual_count; ?></div>
+                            <div class="breakdown-label">Manual Transactions</div>
+                            <div class="breakdown-percentage">
+                                <?php echo $active_count > 0 ? round(($manual_count / $active_count) * 100, 1) : 0; ?>%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Members List -->
+                <?php if (!empty($currently_active)): ?>
+                <div class="members-list-section">
+                    <h4><span class="dashicons dashicons-list-view"></span> Active Members List (<?php echo count($currently_active); ?>)</h4>
+
+                    <!-- Filter Buttons -->
+                    <div class="filter-buttons active-members-filters">
+                        <button class="filter-btn active" data-filter="all">
+                            All <span class="filter-count">(<?php echo count($currently_active); ?>)</span>
+                        </button>
+                        <button class="filter-btn" data-filter="stripe">
+                            Stripe <span class="filter-count">(<?php echo $stripe_count; ?>)</span>
+                        </button>
+                        <button class="filter-btn" data-filter="manual">
+                            Manual <span class="filter-count">(<?php echo $manual_count; ?>)</span>
+                        </button>
+                    </div>
+
+                    <div class="members-table-wrapper">
+                        <table class="active-members-table" id="active-members-popup-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Membership</th>
+                                    <th>Payment Type</th>
+                                    <th>Expires</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($currently_active as $member):
+                                    $expires_display = 'Never';
+                                    if (!empty($member['expires_at']) && $member['expires_at'] !== '0000-00-00 00:00:00') {
+                                        $expires_display = date('d M Y', strtotime($member['expires_at']));
+                                    }
+                                    $source_class = $member['source'] === 'stripe' ? 'stripe' : 'manual';
+                                    $source_label = $member['source'] === 'stripe' ? 'Stripe' : 'Manual';
+                                ?>
+                                <tr data-source="<?php echo esc_attr($member['source']); ?>">
+                                    <td class="member-name"><?php echo esc_html($member['display_name']); ?></td>
+                                    <td class="member-email"><?php echo esc_html($member['user_email']); ?></td>
+                                    <td class="member-membership"><?php echo esc_html($member['membership_name'] ?? 'N/A'); ?></td>
+                                    <td class="member-source">
+                                        <span class="source-badge <?php echo $source_class; ?>-badge"><?php echo $source_label; ?></span>
+                                    </td>
+                                    <td class="member-expires"><?php echo esc_html($expires_display); ?></td>
+                                    <td class="member-actions">
+                                        <a href="<?php echo admin_url('user-edit.php?user_id=' . $member['user_id']); ?>"
+                                           class="action-btn view-profile" target="_blank" title="View Profile">
+                                            <span class="dashicons dashicons-admin-users"></span>
+                                        </a>
+                                        <a href="mailto:<?php echo esc_attr($member['user_email']); ?>"
+                                           class="action-btn send-email" title="Send Email">
+                                            <span class="dashicons dashicons-email-alt"></span>
+                                        </a>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <?php else: ?>
+                <div class="no-data">
+                    <p>No active members found with paid program memberships.</p>
+                    <p><small>Check the debug logs for more information about subscription status.</small></p>
+                </div>
+                <?php endif; ?>
+
+                <div class="breakdown-summary">
+                    <p><strong>Total Active Members:</strong> <?php echo $active_count; ?>
+                        <span class="breakdown-detail">(Stripe: <?php echo $stripe_count; ?> | Manual: <?php echo $manual_count; ?>)</span>
+                    </p>
+                </div>
             </div>
         </div>
     </div>
@@ -1789,7 +2048,139 @@ function dashboard_stats_shortcode() {
         z-index: 10001;
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     }
-    
+
+    .popup-content-large {
+        max-width: 900px;
+    }
+
+    /* Active Members Popup Styles */
+    .active-members-header {
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #e5e5e5;
+    }
+
+    .active-members-header p {
+        margin: 5px 0;
+    }
+
+    .active-members-filters {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+    }
+
+    .active-members-filters .filter-btn {
+        padding: 8px 16px;
+        border: 1px solid #ddd;
+        background: #f8f9fa;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+        transition: all 0.2s;
+    }
+
+    .active-members-filters .filter-btn:hover {
+        background: #e9ecef;
+        border-color: #ccc;
+    }
+
+    .active-members-filters .filter-btn.active {
+        background: #000;
+        color: #fff;
+        border-color: #000;
+    }
+
+    .active-members-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+
+    .active-members-table th,
+    .active-members-table td {
+        padding: 10px 12px;
+        text-align: left;
+        border-bottom: 1px solid #e5e5e5;
+    }
+
+    .active-members-table th {
+        background: #f8f9fa;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 11px;
+        color: #666;
+    }
+
+    .active-members-table tbody tr:hover {
+        background: #f8f9fa;
+    }
+
+    .active-members-table .member-name {
+        font-weight: 500;
+    }
+
+    .active-members-table .member-email {
+        color: #666;
+        font-size: 12px;
+    }
+
+    .active-members-table .member-membership {
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .source-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .source-badge.stripe-badge {
+        background: #635bff;
+        color: white;
+    }
+
+    .source-badge.manual-badge {
+        background: #6c757d;
+        color: white;
+    }
+
+    .active-members-table .member-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .active-members-table .action-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 4px;
+        background: #f0f0f0;
+        color: #333;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .active-members-table .action-btn:hover {
+        background: #000;
+        color: #fff;
+    }
+
+    .active-members-table .action-btn .dashicons {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+    }
+
     .popup-header {
         background: #000000;
         color: white;
@@ -2007,7 +2398,214 @@ function dashboard_stats_shortcode() {
         background: #e8f0fe;
         border-color: #635bff;
     }
-    
+
+    .payment-breakdown-section .section-description {
+        margin: 0 0 16px 0;
+        font-size: 12px;
+        color: #666;
+        font-style: italic;
+    }
+
+    .competitive-only-note {
+        margin-top: 12px;
+        padding: 10px 14px;
+        background: #fff8e1;
+        border: 1px solid #ffc107;
+        border-radius: 6px;
+        font-size: 13px;
+        color: #856404;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .competitive-only-note .dashicons {
+        font-size: 16px;
+        color: #ffa000;
+    }
+
+    .breakdown-summary .breakdown-detail {
+        font-weight: normal;
+        color: #666;
+        font-size: 12px;
+        margin-left: 4px;
+    }
+
+    .breakdown-summary .total-line {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid #e0e0e0;
+    }
+
+    /* Other Active Memberships Section Styles */
+    .other-memberships-section {
+        margin-top: 24px;
+        padding-top: 20px;
+        border-top: 2px solid #e5e5e5;
+    }
+
+    .other-memberships-section h4 {
+        margin: 0 0 8px 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: #000000;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .other-memberships-section h4 .dashicons {
+        font-size: 16px;
+        color: #9c27b0;
+    }
+
+    .other-memberships-section .section-description {
+        margin: 0 0 16px 0;
+        font-size: 12px;
+        color: #666;
+        font-style: italic;
+    }
+
+    .other-memberships-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .other-memberships-grid .breakdown-item.competitive-item {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        border-color: #1976d2;
+    }
+
+    .other-memberships-grid .breakdown-item.mentoring-item {
+        background: linear-gradient(135deg, #fce4ec 0%, #f8bbd9 100%);
+        border-color: #c2185b;
+    }
+
+    .other-memberships-summary {
+        background: #f5f5f5;
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-bottom: 16px;
+    }
+
+    .other-memberships-summary p {
+        margin: 4px 0;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .other-memberships-summary p .dashicons {
+        font-size: 14px;
+        width: 14px;
+        height: 14px;
+    }
+
+    .other-memberships-summary .status-active {
+        color: #2e7d32;
+    }
+
+    .other-memberships-summary .status-expired {
+        color: #f57c00;
+    }
+
+    .other-memberships-summary .status-none {
+        color: #757575;
+    }
+
+    .members-list-section {
+        margin-top: 16px;
+        border: 1px solid #e5e5e5;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .members-list-section h5 {
+        margin: 0;
+        padding: 12px 16px;
+        background: #f5f5f5;
+        font-size: 13px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-bottom: 1px solid #e5e5e5;
+    }
+
+    .members-list-section h5 .dashicons {
+        font-size: 14px;
+        color: #666;
+    }
+
+    .members-table-wrapper {
+        max-height: 250px;
+        overflow-y: auto;
+    }
+
+    .other-members-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+    }
+
+    .other-members-table th,
+    .other-members-table td {
+        padding: 8px 12px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+
+    .other-members-table th {
+        background: #fafafa;
+        font-weight: 600;
+        color: #333;
+        position: sticky;
+        top: 0;
+    }
+
+    .other-members-table tr:hover {
+        background: #f9f9f9;
+    }
+
+    .other-members-table .gateway-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        background: #e3f2fd;
+        color: #1565c0;
+    }
+
+    .program-status-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 10px;
+        font-weight: 600;
+    }
+
+    .program-status-badge.status-active {
+        background: #e8f5e9;
+        color: #2e7d32;
+    }
+
+    .program-status-badge.status-expired {
+        background: #fff3e0;
+        color: #e65100;
+    }
+
+    .program-status-badge.status-none {
+        background: #f5f5f5;
+        color: #757575;
+    }
+
     /* Non-Renewed Members Popup Styles */
     .non-renewed-header {
         background: #f8f9fa;
@@ -6217,75 +6815,184 @@ function wcb_get_debug_expired_members($date_from, $date_to) {
 }
 
 // Helper function to get total students breakdown (active + non-renewed + paused with payment methods)
-// FIXED: Now excludes non-renewed and paused members from active count to avoid double-counting
+// IMPROVED: Now properly checks Stripe subscriptions to identify currently active members
 function get_total_students_breakdown($date_from, $date_to) {
     global $wpdb;
-    
-    // Get all members who were active during the period (includes those who expired)
-    $all_active_during_period = get_active_members_from_defined_groups($date_from, $date_to);
-    $all_active_count = $all_active_during_period['total_count'];
-    
-    // Get non-renewed members (expired during period and didn't renew)
-    $non_renewed_members = get_non_renewed_members_from_defined_groups($date_from, $date_to);
-    $non_renewed_count = count($non_renewed_members);
-    $non_renewed_user_ids = array_column($non_renewed_members, 'user_id');
-    
-    // Get paused members (subscription status = 'suspended')
-    $paused_members = get_paused_members_from_defined_groups($date_from, $date_to);
-    $paused_count = count($paused_members);
-    $paused_user_ids = array_column($paused_members, 'user_id');
-    
-    // FIXED: Active count = All active during period MINUS non-renewed MINUS paused
-    // This gives us only the members who are CURRENTLY active (not expired, not paused)
-    $active_count = $all_active_count - $non_renewed_count - $paused_count;
-    
-    // Ensure active_count doesn't go negative (in case of overlap)
-    $active_count = max(0, $active_count);
-    
-    // Total = Active + Non-Renewed + Paused
-    $total_count = $active_count + $non_renewed_count + $paused_count;
-    
-    // Get active member IDs to calculate payment breakdown
-    $all_active_member_ids = get_active_member_ids_consistent_with_total($date_from, $date_to);
-    
-    // Exclude non-renewed and paused members from the payment breakdown (only count currently active)
-    $excluded_user_ids = array_merge($non_renewed_user_ids, $paused_user_ids);
-    $active_member_ids = array_diff($all_active_member_ids, $excluded_user_ids);
-    
-    // Calculate payment method breakdown for currently active members only
-    $manual_count = 0;
-    $stripe_count = 0;
-    
-    if (!empty($active_member_ids)) {
-        $txn_table = $wpdb->prefix . 'mepr_transactions';
-        $member_ids_str = implode(',', array_map('intval', $active_member_ids));
-        
-        // Get the latest transaction for each active member to determine payment method
-        $transactions = $wpdb->get_results("
-            SELECT t.user_id, t.gateway
-            FROM {$txn_table} t
-            INNER JOIN (
-                SELECT user_id, MAX(id) as max_id
-                FROM {$txn_table}
-                WHERE user_id IN ({$member_ids_str})
-                AND status IN ('confirmed', 'complete')
-                GROUP BY user_id
-            ) latest ON t.id = latest.max_id
-        ");
-        
-        foreach ($transactions as $txn) {
-            $gateway = strtolower($txn->gateway);
-            if (empty($gateway) || $gateway === 'manual') {
-                $manual_count++;
-            } elseif (strpos($gateway, 'stripe') !== false || preg_match('/^sz[a-z0-9\-]+$/', $gateway)) {
-                $stripe_count++;
-            } else {
-                // Other gateways count as manual
-                $manual_count++;
+
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+    $subscriptions_table = $wpdb->prefix . 'mepr_subscriptions';
+
+    // Get all program group membership IDs
+    $groups = $wpdb->get_results("SELECT ID, post_title FROM {$wpdb->posts} WHERE post_type = 'memberpressgroup' AND post_status IN ('publish', 'private')");
+    $defined_groups = [
+        'Mini Cadet Boys (9-11 Years) Group 1',
+        'Cadet Boys Group 1',
+        'Cadet Boys Group 2',
+        'Youth Boys Group 1',
+        'Youth Boys Group 2',
+        'Mini Cadets Girls Group 1',
+        'Youth Girls Group 1'
+    ];
+
+    $program_membership_ids = [];
+    foreach ($defined_groups as $group_name) {
+        foreach ($groups as $g) {
+            if (strcasecmp($g->post_title, $group_name) === 0) {
+                $group_memberships = wcb_get_group_memberships($g->ID);
+                if (!empty($group_memberships)) {
+                    foreach ($group_memberships as $m) {
+                        $program_membership_ids[] = $m->ID;
+                    }
+                }
+                break;
             }
         }
     }
-    
+
+    // NOTE: Active members only counts PAID program groups
+    // Competitive Team and WCB Mentoring are shown separately in "Other Active Memberships"
+
+    if (empty($program_membership_ids)) {
+        return [
+            'total' => 0,
+            'active_count' => 0,
+            'non_renewed_count' => 0,
+            'paused_count' => 0,
+            'manual_count' => 0,
+            'stripe_count' => 0,
+            'stripe_active_count' => 0,
+            'manual_active_count' => 0,
+            'paused_members' => [],
+            'currently_active_members' => []
+        ];
+    }
+
+    $placeholders = implode(',', array_fill(0, count($program_membership_ids), '%d'));
+
+    // ========================================
+    // STEP 1: Get CURRENTLY ACTIVE members (PAID PROGRAM GROUPS ONLY)
+    // A member is currently active if they have a valid transaction with:
+    // - expires_at > NOW or NULL/0000-00-00 (no expiration)
+    // Payment type is determined by the transaction's gateway field:
+    // - Gateway contains 'stripe' = Stripe payment
+    // - Gateway is 'manual' or empty = Manual payment
+    // ========================================
+
+    // Get all active members with their most recent valid transaction
+    $all_active_members = $wpdb->get_results($wpdb->prepare("
+        SELECT t.user_id, u.display_name, u.user_email, t.expires_at,
+               p.post_title as membership_name, t.gateway,
+               t.id as transaction_id
+        FROM {$txn_table} t
+        JOIN {$wpdb->users} u ON t.user_id = u.ID
+        JOIN {$wpdb->posts} p ON t.product_id = p.ID
+        WHERE t.product_id IN ({$placeholders})
+        AND t.status IN ('confirmed', 'complete')
+        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+        AND u.user_login != 'bwgdev'
+        ORDER BY t.user_id, t.id DESC
+    ", $program_membership_ids), ARRAY_A);
+
+    // DEBUG: Log query results
+    wcb_debug_log("=== ACTIVE MEMBERS DEBUG ===");
+    wcb_debug_log("Program Membership IDs: " . implode(', ', $program_membership_ids));
+    wcb_debug_log("All active transactions found: " . count($all_active_members));
+
+    // Group by user and determine payment type from gateway
+    $currently_active_members = [];
+    $seen_users = [];
+
+    foreach ($all_active_members as $member) {
+        $user_id = $member['user_id'];
+
+        // Skip if we've already processed this user (we only want one entry per user)
+        if (isset($seen_users[$user_id])) {
+            continue;
+        }
+        $seen_users[$user_id] = true;
+
+        // Determine payment source based on gateway field
+        $gateway = strtolower($member['gateway'] ?? '');
+
+        // If gateway is 'manual' or empty = Manual payment
+        // Otherwise it's an online payment (Stripe) - gateway could be ID like 'sz7gj0-4lm' or 'MeproStripeGateway'
+        if (empty($gateway) || $gateway === 'manual' || $gateway === 'free') {
+            $member['source'] = 'manual';
+        } else {
+            // Any other gateway value is considered Stripe/online payment
+            $member['source'] = 'stripe';
+        }
+
+        wcb_debug_log("  User: {$member['display_name']}, Gateway: '{$member['gateway']}', Source: {$member['source']}");
+
+        $currently_active_members[] = $member;
+    }
+
+    // ========================================
+    // STEP 2: Get PAUSED members (suspended subscriptions)
+    // We need this first to exclude them from active counts
+    // ========================================
+    $paused_members = get_paused_members_from_defined_groups($date_from, $date_to);
+    $paused_count = count($paused_members);
+    $paused_user_ids = array_column($paused_members, 'user_id');
+
+    // Remove paused members from active members list
+    $currently_active_members = array_filter($currently_active_members, function($member) use ($paused_user_ids) {
+        return !in_array($member['user_id'], $paused_user_ids);
+    });
+    $currently_active_members = array_values($currently_active_members); // Re-index array
+
+    $currently_active_user_ids = array_column($currently_active_members, 'user_id');
+
+    // Count by source (after excluding paused members)
+    $stripe_active_count = 0;
+    $manual_active_count = 0;
+    foreach ($currently_active_members as $member) {
+        if ($member['source'] === 'stripe') {
+            $stripe_active_count++;
+        } else {
+            $manual_active_count++;
+        }
+    }
+    $active_count = count($currently_active_members);
+
+    wcb_debug_log("Active count: {$active_count}, Stripe: {$stripe_active_count}, Manual: {$manual_active_count}");
+
+    // ========================================
+    // STEP 4: Get NON-RENEWED members
+    // These are members who were active during the period but are NOT currently active and NOT paused
+    // ========================================
+    $all_active_during_period = get_active_members_from_defined_groups($date_from, $date_to);
+    $all_during_period_count = $all_active_during_period['total_count'];
+
+    // Get all member IDs who were active during period
+    $all_during_period_ids = get_active_member_ids_consistent_with_total($date_from, $date_to);
+
+    // Non-renewed = was active during period BUT NOT currently active AND NOT paused
+    $non_renewed_user_ids = array_diff($all_during_period_ids, $currently_active_user_ids, $paused_user_ids);
+    $non_renewed_count = count($non_renewed_user_ids);
+
+    // Get non-renewed member details for display
+    $non_renewed_members = get_non_renewed_members_from_defined_groups($date_from, $date_to);
+
+    // ========================================
+    // STEP 5: Calculate totals
+    // ========================================
+    // Total = everyone who was active during period (historical view)
+    $total_count = $all_during_period_count;
+
+    // For payment breakdown, use the currently active members
+    $manual_count = 0;
+    $stripe_count = 0;
+
+    foreach ($currently_active_members as $member) {
+        if ($member['source'] === 'stripe') {
+            $stripe_count++;
+        } else {
+            $manual_count++;
+        }
+    }
+
     return [
         'total' => $total_count,
         'active_count' => $active_count,
@@ -6293,7 +7000,247 @@ function get_total_students_breakdown($date_from, $date_to) {
         'paused_count' => $paused_count,
         'manual_count' => $manual_count,
         'stripe_count' => $stripe_count,
-        'paused_members' => $paused_members
+        'stripe_active_count' => $stripe_active_count,
+        'manual_active_count' => $manual_active_count,
+        'paused_members' => $paused_members,
+        'currently_active_members' => $currently_active_members
+    ];
+}
+
+/**
+ * Get members with "Other Active Memberships" (Competitive Team & WCB Mentoring)
+ * Shows detailed breakdown of members in these special programs
+ * and whether they also have active/expired program group memberships
+ */
+function get_other_active_memberships($date_from, $date_to) {
+    global $wpdb;
+
+    $txn_table = $wpdb->prefix . 'mepr_transactions';
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$txn_table'") == $txn_table;
+
+    if (!$table_exists) {
+        return [
+            'competitive_team' => [],
+            'wcb_mentoring' => [],
+            'competitive_count' => 0,
+            'mentoring_count' => 0,
+            'overlap_with_programs' => 0,
+            'only_other_memberships' => 0
+        ];
+    }
+
+    // Membership IDs
+    $competitive_team_id = 1932;
+    $wcb_mentoring_id = 1738;
+
+    // Get all program group membership IDs (to check for overlap)
+    $groups = $wpdb->get_results("SELECT ID, post_title FROM {$wpdb->posts} WHERE post_type = 'memberpressgroup' AND post_status IN ('publish', 'private')");
+    $defined_groups = [
+        'Mini Cadet Boys (9-11 Years) Group 1',
+        'Cadet Boys Group 1',
+        'Cadet Boys Group 2',
+        'Youth Boys Group 1',
+        'Youth Boys Group 2',
+        'Mini Cadets Girls Group 1',
+        'Youth Girls Group 1'
+    ];
+
+    $program_membership_ids = [];
+    foreach ($defined_groups as $group_name) {
+        foreach ($groups as $g) {
+            if (strcasecmp($g->post_title, $group_name) === 0) {
+                $group_memberships = wcb_get_group_memberships($g->ID);
+                if (!empty($group_memberships)) {
+                    foreach ($group_memberships as $m) {
+                        $program_membership_ids[] = $m->ID;
+                    }
+                }
+                break;
+            }
+        }
+    }
+
+    // Get Competitive Team members with details
+    $competitive_members = $wpdb->get_results($wpdb->prepare("
+        SELECT DISTINCT u.ID as user_id, u.display_name, u.user_email,
+               t.expires_at, t.gateway, t.created_at
+        FROM {$wpdb->users} u
+        JOIN {$txn_table} t ON u.ID = t.user_id
+        WHERE t.product_id = %d
+        AND t.status IN ('confirmed', 'complete')
+        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+        AND u.user_login != 'bwgdev'
+        ORDER BY u.display_name ASC
+    ", $competitive_team_id), ARRAY_A);
+
+    // Get WCB Mentoring members with details
+    $mentoring_members = $wpdb->get_results($wpdb->prepare("
+        SELECT DISTINCT u.ID as user_id, u.display_name, u.user_email,
+               t.expires_at, t.gateway, t.created_at
+        FROM {$wpdb->users} u
+        JOIN {$txn_table} t ON u.ID = t.user_id
+        WHERE t.product_id = %d
+        AND t.status IN ('confirmed', 'complete')
+        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+        AND u.user_login != 'bwgdev'
+        ORDER BY u.display_name ASC
+    ", $wcb_mentoring_id), ARRAY_A);
+
+    // Check program membership status for each member
+    $program_placeholders = !empty($program_membership_ids) ? implode(',', array_fill(0, count($program_membership_ids), '%d')) : '0';
+
+    // Track unique users across both memberships
+    $all_other_member_ids = [];
+    $members_with_active_program = [];
+    $members_with_expired_program = [];
+
+    // Process Competitive Team members
+    foreach ($competitive_members as &$member) {
+        $user_id = $member['user_id'];
+        $all_other_member_ids[$user_id] = true;
+
+        // Format expiration
+        if (empty($member['expires_at']) || $member['expires_at'] === '0000-00-00 00:00:00') {
+            $member['expires_display'] = 'Never';
+        } else {
+            $member['expires_display'] = date('d M Y', strtotime($member['expires_at']));
+        }
+
+        // Format gateway
+        $gateway = strtolower($member['gateway']);
+        $member['gateway_display'] = ($gateway === 'manual' || empty($gateway)) ? 'Manual' : 'Stripe';
+
+        // Check if they have active program membership
+        if (!empty($program_membership_ids)) {
+            $has_active_program = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM {$txn_table}
+                 WHERE user_id = %d
+                 AND product_id IN ({$program_placeholders})
+                 AND status IN ('confirmed', 'complete')
+                 AND (expires_at IS NULL OR expires_at > NOW() OR expires_at = '0000-00-00 00:00:00')",
+                array_merge([$user_id], $program_membership_ids)
+            ));
+
+            $has_expired_program = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM {$txn_table}
+                 WHERE user_id = %d
+                 AND product_id IN ({$program_placeholders})
+                 AND status IN ('confirmed', 'complete')
+                 AND expires_at IS NOT NULL
+                 AND expires_at != '0000-00-00 00:00:00'
+                 AND expires_at <= NOW()",
+                array_merge([$user_id], $program_membership_ids)
+            ));
+
+            $member['has_active_program'] = $has_active_program > 0;
+            $member['has_expired_program'] = $has_expired_program > 0 && !$member['has_active_program'];
+
+            if ($member['has_active_program']) {
+                $members_with_active_program[$user_id] = true;
+            } elseif ($member['has_expired_program']) {
+                $members_with_expired_program[$user_id] = true;
+            }
+
+            // Determine program status label
+            if ($member['has_active_program']) {
+                $member['program_status'] = 'Active in Program';
+                $member['program_status_class'] = 'active';
+            } elseif ($member['has_expired_program']) {
+                $member['program_status'] = 'Program Expired';
+                $member['program_status_class'] = 'expired';
+            } else {
+                $member['program_status'] = 'No Program Membership';
+                $member['program_status_class'] = 'none';
+            }
+        } else {
+            $member['has_active_program'] = false;
+            $member['has_expired_program'] = false;
+            $member['program_status'] = 'No Program Membership';
+            $member['program_status_class'] = 'none';
+        }
+    }
+
+    // Process Mentoring members
+    foreach ($mentoring_members as &$member) {
+        $user_id = $member['user_id'];
+        $all_other_member_ids[$user_id] = true;
+
+        // Format expiration
+        if (empty($member['expires_at']) || $member['expires_at'] === '0000-00-00 00:00:00') {
+            $member['expires_display'] = 'Never';
+        } else {
+            $member['expires_display'] = date('d M Y', strtotime($member['expires_at']));
+        }
+
+        // Format gateway
+        $gateway = strtolower($member['gateway']);
+        $member['gateway_display'] = ($gateway === 'manual' || empty($gateway)) ? 'Manual' : 'Stripe';
+
+        // Check if they have active program membership
+        if (!empty($program_membership_ids)) {
+            $has_active_program = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM {$txn_table}
+                 WHERE user_id = %d
+                 AND product_id IN ({$program_placeholders})
+                 AND status IN ('confirmed', 'complete')
+                 AND (expires_at IS NULL OR expires_at > NOW() OR expires_at = '0000-00-00 00:00:00')",
+                array_merge([$user_id], $program_membership_ids)
+            ));
+
+            $has_expired_program = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM {$txn_table}
+                 WHERE user_id = %d
+                 AND product_id IN ({$program_placeholders})
+                 AND status IN ('confirmed', 'complete')
+                 AND expires_at IS NOT NULL
+                 AND expires_at != '0000-00-00 00:00:00'
+                 AND expires_at <= NOW()",
+                array_merge([$user_id], $program_membership_ids)
+            ));
+
+            $member['has_active_program'] = $has_active_program > 0;
+            $member['has_expired_program'] = $has_expired_program > 0 && !$member['has_active_program'];
+
+            if ($member['has_active_program']) {
+                $members_with_active_program[$user_id] = true;
+            } elseif ($member['has_expired_program']) {
+                $members_with_expired_program[$user_id] = true;
+            }
+
+            // Determine program status label
+            if ($member['has_active_program']) {
+                $member['program_status'] = 'Active in Program';
+                $member['program_status_class'] = 'active';
+            } elseif ($member['has_expired_program']) {
+                $member['program_status'] = 'Program Expired';
+                $member['program_status_class'] = 'expired';
+            } else {
+                $member['program_status'] = 'No Program Membership';
+                $member['program_status_class'] = 'none';
+            }
+        } else {
+            $member['has_active_program'] = false;
+            $member['has_expired_program'] = false;
+            $member['program_status'] = 'No Program Membership';
+            $member['program_status_class'] = 'none';
+        }
+    }
+
+    // Calculate totals
+    $total_unique = count($all_other_member_ids);
+    $overlap_count = count($members_with_active_program);
+    $expired_program_count = count($members_with_expired_program);
+    $only_other = $total_unique - $overlap_count - $expired_program_count;
+
+    return [
+        'competitive_team' => $competitive_members,
+        'wcb_mentoring' => $mentoring_members,
+        'competitive_count' => count($competitive_members),
+        'mentoring_count' => count($mentoring_members),
+        'total_unique' => $total_unique,
+        'overlap_with_active_programs' => $overlap_count,
+        'with_expired_programs' => $expired_program_count,
+        'only_other_memberships' => $only_other
     ];
 }
 

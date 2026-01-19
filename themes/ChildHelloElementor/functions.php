@@ -47,10 +47,11 @@ function wcb_load_files() {
         
         // Dashboard Components
         'dashboard/dashboard-stats.php',
-        'dashboard/dashboard-sessions.php', 
+        'dashboard/dashboard-sessions.php',
         'dashboard/dashboard-students.php',
         'dashboard/dashboard-memberships.php',
         'dashboard/dashboard-referrals.php',
+        'dashboard/dashboard-bulk-expire.php',
         
         // AJAX Handlers
         'ajax/student-search.php',
