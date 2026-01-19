@@ -297,29 +297,9 @@ function wcb_get_program_groups() {
 }
 
 /**
- * Get all children linked to a parent using your existing active members system
+ * Get all children linked to a parent (includes expired and waitlist members)
  */
 function wcb_get_parent_children($parent_user_id) {
-    // Use the same logic as active-members-test.php to get active members
-    global $wpdb;
-    $txn_table = $wpdb->prefix . 'mepr_transactions';
-
-    // Get WCB Mentoring and Competitive membership IDs to exclude (they're not paid)
-    $wcb_mentoring_id = 1738;
-    $competitive_team_id = 1932;
-
-    // Get all active members (excluding mentoring and competitive memberships)
-    $active_members = $wpdb->get_results($wpdb->prepare("
-        SELECT DISTINCT u.ID, u.display_name, u.user_email
-        FROM {$wpdb->users} u
-        JOIN {$txn_table} t ON u.ID = t.user_id
-        WHERE t.status IN ('confirmed', 'complete')
-        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-        AND t.product_id NOT IN (%d, %d)
-        AND u.user_login != 'bwgdev'
-        ORDER BY u.display_name
-    ", $wcb_mentoring_id, $competitive_team_id));
-
     // Get children linked to this parent
     $linked_children_ids = get_user_meta($parent_user_id, 'wcb_linked_children', true);
 
@@ -327,11 +307,16 @@ function wcb_get_parent_children($parent_user_id) {
         return [];
     }
 
-    // Filter active members to only include linked children
+    // Get all linked children users (regardless of membership status)
     $children = [];
-    foreach ($active_members as $member) {
-        if (in_array($member->ID, $linked_children_ids)) {
-            $children[] = $member;
+    foreach ($linked_children_ids as $child_id) {
+        $user = get_userdata($child_id);
+        if ($user) {
+            $children[] = (object) [
+                'ID' => $user->ID,
+                'display_name' => $user->display_name,
+                'user_email' => $user->user_email
+            ];
         }
     }
 
@@ -346,10 +331,12 @@ function wcb_get_child_membership_status($child_user) {
     $user_id = $child_user->ID;
     $txn_table = $wpdb->prefix . 'mepr_transactions';
 
-    // Get user's most recent active transaction (excluding mentoring and competitive - they're not paid)
+    // Get user's most recent transaction (excluding mentoring and competitive - they're not paid)
+    // First try to get an active one, then fall back to most recent (including expired)
     $wcb_mentoring_id = 1738;
     $competitive_team_id = 1932;
 
+    // First: Try to get an active (non-expired) transaction
     $transaction = $wpdb->get_row($wpdb->prepare("
         SELECT t.*, p.post_title as product_name
         FROM {$txn_table} t
@@ -361,6 +348,20 @@ function wcb_get_child_membership_status($child_user) {
         ORDER BY t.created_at DESC
         LIMIT 1
     ", $user_id, $wcb_mentoring_id, $competitive_team_id));
+
+    // Second: If no active transaction, get the most recent expired one
+    if (!$transaction) {
+        $transaction = $wpdb->get_row($wpdb->prepare("
+            SELECT t.*, p.post_title as product_name
+            FROM {$txn_table} t
+            JOIN {$wpdb->posts} p ON t.product_id = p.ID
+            WHERE t.user_id = %d
+            AND t.status IN ('confirmed', 'complete')
+            AND t.product_id NOT IN (%d, %d)
+            ORDER BY t.created_at DESC
+            LIMIT 1
+        ", $user_id, $wcb_mentoring_id, $competitive_team_id));
+    }
 
     // Default status
     $status = [
@@ -374,6 +375,19 @@ function wcb_get_child_membership_status($child_user) {
     if ($transaction) {
         $expires_at = $transaction->expires_at;
         $now = current_time('mysql');
+        
+        // Check if this is a waitlist membership
+        $is_waitlist = (strpos($transaction->product_name, 'Waitlist') !== false);
+        
+        // Check if user has a paused (suspended) subscription
+        $subscriptions_table = $wpdb->prefix . 'mepr_subscriptions';
+        $paused_subscription = $wpdb->get_row($wpdb->prepare("
+            SELECT * FROM {$subscriptions_table}
+            WHERE user_id = %d
+            AND status = 'suspended'
+            ORDER BY created_at DESC
+            LIMIT 1
+        ", $user_id));
 
         // Determine status based on expiry
         if ($expires_at && $expires_at !== '0000-00-00 00:00:00') {
@@ -392,16 +406,30 @@ function wcb_get_child_membership_status($child_user) {
                 }
                 $status['expires_date'] = $expires_at;
             } else {
-                $status['status'] = 'expired';
-                $status['status_text'] = 'Expired';
-                $status['expires_date'] = $expires_at;
+                // Membership expired - but check if they have a paused subscription
+                if ($paused_subscription) {
+                    $status['status'] = 'paused';
+                    $status['status_text'] = 'Paused';
+                    $status['expires_date'] = $expires_at;
+                    $status['paused_subscription'] = $paused_subscription;
+                } else {
+                    $status['status'] = 'expired';
+                    $status['status_text'] = 'Expired';
+                    $status['expires_date'] = $expires_at;
+                }
             }
         } else {
             // Lifetime membership or manual payment
             $payment_type = wcb_detect_payment_type($transaction);
             if ($payment_type === 'manual') {
-                $status['status'] = 'needs_activation';
-                $status['status_text'] = 'Needs Activation';
+                // For waitlist members, show "On Waitlist" instead of "Needs Activation"
+                if ($is_waitlist) {
+                    $status['status'] = 'needs_activation';
+                    $status['status_text'] = 'On Waitlist';
+                } else {
+                    $status['status'] = 'needs_activation';
+                    $status['status_text'] = 'Needs Activation';
+                }
             } else {
                 // Check if it's an active Stripe subscription
                 $subscription_info = wcb_get_stripe_subscription_info($transaction->user_id, $transaction->product_id);
@@ -424,18 +452,15 @@ function wcb_get_child_membership_status($child_user) {
             // Get the group this membership belongs to
             $group_info = wcb_get_membership_group_info($transaction->product_id);
             $status['payment_type'] = wcb_detect_payment_type($transaction);
+            $status['is_waitlist'] = $is_waitlist;
 
             if ($group_info) {
                 $status['group_name'] = $group_info['group_name'];
                 $status['group_url'] = $group_info['group_url'];
-                $status['billing_options'] = $group_info['billing_options'];
+                $status['billing_options'] = isset($group_info['billing_options']) ? $group_info['billing_options'] : [];
 
-                // For manual payments, show group name instead of specific membership
-                if ($status['payment_type'] === 'manual') {
-                    $status['program_name'] = $group_info['group_name'];
-                } else {
-                    $status['program_name'] = $transaction->product_name;
-                }
+                // Always use group_name which now includes "Waitlist" suffix when applicable
+                $status['program_name'] = $group_info['group_name'];
             } else {
                 $status['program_name'] = $transaction->product_name;
             }
@@ -448,12 +473,11 @@ function wcb_get_child_membership_status($child_user) {
 }
 
 /**
- * Link a child to a parent account (must be an active or paused member)
+ * Link a child to a parent account (any member with a transaction can be linked)
  */
 function wcb_link_child_to_parent($parent_user_id, $child_identifier) {
     global $wpdb;
     $txn_table = $wpdb->prefix . 'mepr_transactions';
-    $subscriptions_table = $wpdb->prefix . 'mepr_subscriptions';
     $wcb_mentoring_id = 1738;
     $competitive_team_id = 1932;
 
@@ -477,28 +501,20 @@ function wcb_link_child_to_parent($parent_user_id, $child_identifier) {
         return ['success' => false, 'message' => 'No user found with that email, username, or name.'];
     }
 
-    // Check if this user is an active member (excluding mentoring and competitive - they're not paid)
-    $is_active_member = $wpdb->get_var($wpdb->prepare("
+    // Check if this user has ANY membership transaction (active, expired, waitlist, etc.)
+    // This allows parents to link children who need to re-enroll
+    $has_membership = $wpdb->get_var($wpdb->prepare("
         SELECT COUNT(*)
         FROM {$wpdb->users} u
         JOIN {$txn_table} t ON u.ID = t.user_id
         WHERE u.ID = %d
         AND t.status IN ('confirmed', 'complete')
-        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
         AND t.product_id NOT IN (%d, %d)
         AND u.user_login != 'bwgdev'
     ", $child_user->ID, $wcb_mentoring_id, $competitive_team_id));
 
-    // Also check if member has a paused (suspended) subscription - paused members can still be linked
-    $has_paused_subscription = $wpdb->get_var($wpdb->prepare("
-        SELECT COUNT(*)
-        FROM {$subscriptions_table}
-        WHERE user_id = %d
-        AND status = 'suspended'
-    ", $child_user->ID));
-
-    if (!$is_active_member && !$has_paused_subscription) {
-        return ['success' => false, 'message' => $child_user->display_name . ' is not currently an active member.'];
+    if (!$has_membership) {
+        return ['success' => false, 'message' => $child_user->display_name . ' does not have any membership records in our system.'];
     }
 
     // Get current linked children
@@ -714,77 +730,79 @@ function wcb_get_membership_group_info($product_id) {
     }
 
     $product_name = $product->post_title;
+    
+    // Check if this is a waitlist membership
+    $is_waitlist = (strpos($product_name, 'Waitlist') !== false);
 
-    // Map product names to groups based on your membership structure
+    // Map product categories to groups based on your membership structure
+    // Order matters - more specific patterns should come first
     $group_mappings = [
-        // Mini Cadet Boys patterns
+        // Waitlist patterns - send to appropriate group page for enrollment
         'Mini Cadet Boys' => [
             'group_name' => 'Mini Cadet Boys (9-11 Years) Group 1',
             'group_url' => home_url('/plans/mini-cadet-boys-9-11-years-group-1/')
         ],
-
-        // Cadet Boys Group 1 patterns
-        'Cadet Boys (12-14 Years) Group 1' => [
-            'group_name' => 'Cadet Boys Group 1',
-            'group_url' => home_url('/plans/cadet-boys-group-1/')
-        ],
-
-        // Cadet Boys Group 2 patterns
-        'Cadet Boys (12-14 Years) Group 2' => [
-            'group_name' => 'Cadet Boys Group 2',
-            'group_url' => home_url('/plans/cadet-boys-group-2/')
-        ],
-
-        // Youth Boys Group 1 patterns
-        'Youth Boys (15-18 Years) Group 1' => [
-            'group_name' => 'Youth Boys Group 1',
-            'group_url' => home_url('/plans/youth-boys-group-1/')
-        ],
-
-        // Youth Boys Group 2 patterns
-        'Youth Boys (15-18 Years) Group 2' => [
-            'group_name' => 'Youth Boys Group 2',
-            'group_url' => home_url('/plans/youth-boys-group-2/')
-        ],
-
-        // Mini Cadets Girls patterns
         'Mini Cadet Girls' => [
             'group_name' => 'Mini Cadets Girls Group 1',
             'group_url' => home_url('/plans/mini-cadets-girls-group-1/')
         ],
-
-        // Youth Girls patterns
+        'Cadet Boys (12-14 Years) Group 1' => [
+            'group_name' => 'Cadet Boys (12-14 Years) Group 1',
+            'group_url' => home_url('/plans/cadet-boys-group-1/')
+        ],
+        'Cadet Boys (12-14 Years) Group 2' => [
+            'group_name' => 'Cadet Boys (12-14 Years) Group 2',
+            'group_url' => home_url('/plans/cadet-boys-group-2/')
+        ],
+        'Cadet Boys' => [
+            'group_name' => 'Cadet Boys (12-14 Years)',
+            'group_url' => home_url('/plans/cadet-boys-group-1/')
+        ],
+        'Youth Boys (15-18 Years) Group 1' => [
+            'group_name' => 'Youth Boys (15-18 Years) Group 1',
+            'group_url' => home_url('/plans/youth-boys-group-1/')
+        ],
+        'Youth Boys (15-18 Years) Group 2' => [
+            'group_name' => 'Youth Boys (15-18 Years) Group 2',
+            'group_url' => home_url('/plans/youth-boys-group-2/')
+        ],
+        'Youth Boys' => [
+            'group_name' => 'Youth Boys (15-18 Years)',
+            'group_url' => home_url('/plans/youth-boys-group-1/')
+        ],
         'Youth Girls (13-18 Years) Group 1' => [
-            'group_name' => 'Youth Girls Group 1',
+            'group_name' => 'Youth Girls (13-18 Years) Group 1',
+            'group_url' => home_url('/plans/youth-girls-group-1/')
+        ],
+        'Youth Girls' => [
+            'group_name' => 'Youth Girls (13-18 Years)',
             'group_url' => home_url('/plans/youth-girls-group-1/')
         ]
     ];
 
-    // Try to match the product name to a group
+    // Try to match the product name to a group (check more specific patterns first)
+    $matched_group = null;
     foreach ($group_mappings as $pattern => $group_info) {
         if (strpos($product_name, $pattern) !== false) {
-            return $group_info;
+            $matched_group = $group_info;
+            break;
         }
     }
 
-    // Fallback: try to extract group from product name
-    if (strpos($product_name, 'Mini Cadet Boys') !== false) {
-        return $group_mappings['Mini Cadet Boys'];
-    } elseif (strpos($product_name, 'Cadet Boys') !== false && strpos($product_name, 'Group 1') !== false) {
-        return $group_mappings['Cadet Boys (12-14 Years) Group 1'];
-    } elseif (strpos($product_name, 'Cadet Boys') !== false && strpos($product_name, 'Group 2') !== false) {
-        return $group_mappings['Cadet Boys (12-14 Years) Group 2'];
-    } elseif (strpos($product_name, 'Youth Boys') !== false && strpos($product_name, 'Group 1') !== false) {
-        return $group_mappings['Youth Boys (15-18 Years) Group 1'];
-    } elseif (strpos($product_name, 'Youth Boys') !== false && strpos($product_name, 'Group 2') !== false) {
-        return $group_mappings['Youth Boys (15-18 Years) Group 2'];
-    } elseif (strpos($product_name, 'Mini Cadet Girls') !== false) {
-        return $group_mappings['Mini Cadet Girls'];
-    } elseif (strpos($product_name, 'Youth Girls') !== false) {
-        return $group_mappings['Youth Girls (13-18 Years) Group 1'];
+    // If no match found, return null
+    if (!$matched_group) {
+        return null;
     }
 
-    return null;
+    // Append "Waitlist" to group name if this is a waitlist membership
+    if ($is_waitlist) {
+        $matched_group['group_name'] .= ' Waitlist';
+        $matched_group['is_waitlist'] = true;
+    } else {
+        $matched_group['is_waitlist'] = false;
+    }
+
+    return $matched_group;
 }
 
 /**

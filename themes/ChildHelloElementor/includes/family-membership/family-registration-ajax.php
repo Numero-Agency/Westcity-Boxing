@@ -785,6 +785,73 @@ function wcb_ajax_pause_subscription() {
 add_action('wp_ajax_wcb_pause_subscription', 'wcb_ajax_pause_subscription');
 
 /**
+ * Resume Subscription AJAX Handler
+ */
+function wcb_ajax_resume_subscription() {
+    // Verify nonce
+    if (!wp_verify_nonce($_POST['nonce'], 'wcb_nonce')) {
+        wp_send_json_error('Security check failed');
+        return;
+    }
+
+    // Check if user is logged in
+    if (!is_user_logged_in()) {
+        wp_send_json_error('You must be logged in');
+        return;
+    }
+
+    $child_id = intval($_POST['child_id']);
+    $parent_user_id = get_current_user_id();
+
+    // Verify this child is linked to the parent
+    $linked_children = get_user_meta($parent_user_id, 'wcb_linked_children', true);
+    if (!is_array($linked_children) || !in_array($child_id, $linked_children)) {
+        wp_send_json_error('You do not have permission to manage this subscription');
+        return;
+    }
+
+    global $wpdb;
+    $subscription_table = $wpdb->prefix . 'mepr_subscriptions';
+
+    // Find the paused (suspended) subscription
+    $subscription = $wpdb->get_row($wpdb->prepare(
+        "SELECT * FROM $subscription_table
+         WHERE user_id = %d
+         AND status = 'suspended'
+         ORDER BY created_at DESC
+         LIMIT 1",
+        $child_id
+    ));
+
+    if (!$subscription) {
+        wp_send_json_error('No paused subscription found');
+        return;
+    }
+
+    // Resume the subscription (set status back to active)
+    $result = $wpdb->update(
+        $subscription_table,
+        ['status' => 'active'],
+        ['id' => $subscription->id],
+        ['%s'],
+        ['%d']
+    );
+
+    if ($result !== false) {
+        // Get child user for display name
+        $child_user = get_user_by('id', $child_id);
+        $child_name = $child_user ? $child_user->display_name : 'Member';
+        
+        wp_send_json_success([
+            'message' => $child_name . '\'s subscription has been resumed. Billing will continue from the next billing cycle.'
+        ]);
+    } else {
+        wp_send_json_error('Failed to resume subscription. Please try again.');
+    }
+}
+add_action('wp_ajax_wcb_resume_subscription', 'wcb_ajax_resume_subscription');
+
+/**
  * Get Stripe Customer Portal URL AJAX Handler
  */
 function wcb_ajax_get_stripe_portal() {
@@ -1044,7 +1111,19 @@ function wcb_ajax_get_subscription_management() {
             </h4>
 
             <div class="action-buttons-grid">
-                <!-- Pause Subscription -->
+                <?php if ($membership_status['status'] === 'paused'): ?>
+                <!-- Resume Subscription (for paused subscriptions) -->
+                <button type="button" class="wcb-btn wcb-btn-success resume-subscription-btn"
+                        data-child-id="<?php echo $child_id; ?>"
+                        data-child-name="<?php echo esc_attr($child_user->display_name); ?>"
+                        style="background: #27ae60; color: white; border-color: #27ae60;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                    Resume Subscription
+                </button>
+                <?php else: ?>
+                <!-- Pause Subscription (for active subscriptions) -->
                 <button type="button" class="wcb-btn wcb-btn-warning pause-subscription-btn"
                         data-child-id="<?php echo $child_id; ?>"
                         data-child-name="<?php echo esc_attr($child_user->display_name); ?>"
@@ -1054,6 +1133,7 @@ function wcb_ajax_get_subscription_management() {
                     </svg>
                     Pause Subscription
                 </button>
+                <?php endif; ?>
 
                 <!-- Cancel Subscription -->
                 <button type="button" class="wcb-btn wcb-btn-outline cancel-subscription-btn"

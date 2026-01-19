@@ -88,7 +88,9 @@ function wcb_family_dashboard_shortcode($atts) {
                         </div>
                         <?php elseif ($membership_status['expires_date']): ?>
                         <p class="expires-date">
-                            <?php if ($status_class === 'expired'): ?>
+                            <?php if ($status_class === 'paused'): ?>
+                                Paused since: <?php echo date('M j, Y', strtotime($membership_status['expires_date'])); ?>
+                            <?php elseif ($status_class === 'expired'): ?>
                                 Expired: <?php echo date('M j, Y', strtotime($membership_status['expires_date'])); ?>
                             <?php else: ?>
                                 Expires: <?php echo date('M j, Y', strtotime($membership_status['expires_date'])); ?>
@@ -118,6 +120,18 @@ function wcb_family_dashboard_shortcode($atts) {
                             Choose Payment Plan
                         </a>
                         <?php endif; ?>
+
+                        <?php elseif ($status_class === 'paused'): ?>
+                        <!-- Paused Subscription - Show Manage Subscription Button -->
+                        <button type="button"
+                                class="wcb-btn wcb-btn-primary manage-subscription-btn"
+                                data-child-id="<?php echo $child->ID; ?>"
+                                data-child-name="<?php echo esc_attr($child->display_name); ?>">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1H5C3.89 1 3 1.89 3 3V21C3 22.11 3.89 23 5 23H11V21H5V3H13V9H21ZM14 10V12H22V10H14ZM14 14V16H22V14H14ZM14 18V20H22V18H14Z"/>
+                            </svg>
+                            Manage Subscription
+                        </button>
 
                         <?php elseif ($status_class === 'active_subscription'): ?>
                         <!-- Active Stripe Subscription - Show Management Options -->
@@ -362,6 +376,11 @@ function wcb_family_dashboard_shortcode($atts) {
     .status-active_subscription {
         background: #74b9ff;
         color: #ffffff;
+    }
+
+    .status-paused {
+        background: #fdcb6e;
+        color: #6c5ce7;
     }
 
     .expires-date {
@@ -1124,6 +1143,45 @@ function wcb_family_dashboard_shortcode($atts) {
                             // Bind the actual working event handlers
                             console.log('🔧 Binding working event handlers...');
 
+                            // Resume Subscription Handler (for paused subscriptions)
+                            var resumeBtns = $('.resume-subscription-btn');
+                            resumeBtns.off('click').on('click', function() {
+                                var childId = $(this).data('child-id');
+                                var childName = $(this).data('child-name');
+                                console.log('🟢 Resume subscription clicked!', childId, childName);
+
+                                if (confirm('Are you sure you want to resume ' + childName + '\'s subscription?\n\nBilling will resume from the next billing cycle.')) {
+                                    var $btn = $(this);
+                                    var originalHtml = $btn.html();
+                                    $btn.prop('disabled', true).html('<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="animation: spin 1s linear infinite;"><path d="M12 4V2A10 10 0 0 0 2 12H4A8 8 0 0 1 12 4Z"/></svg> Resuming...');
+
+                                    $.ajax({
+                                        url: wcb_ajax.ajax_url,
+                                        type: 'POST',
+                                        data: {
+                                            action: 'wcb_resume_subscription',
+                                            child_id: childId,
+                                            nonce: wcb_ajax.nonce
+                                        },
+                                        success: function(response) {
+                                            console.log('Resume subscription response:', response);
+                                            if (response.success) {
+                                                alert(response.data.message);
+                                                $('#subscription-management-popup').fadeOut(300);
+                                                location.reload();
+                                            } else {
+                                                alert('Error: ' + response.data);
+                                                $btn.prop('disabled', false).html(originalHtml);
+                                            }
+                                        },
+                                        error: function() {
+                                            alert('Connection error. Please try again.');
+                                            $btn.prop('disabled', false).html(originalHtml);
+                                        }
+                                    });
+                                }
+                            });
+
                             // Pause Subscription Handler
                             var pauseBtns = $('.pause-subscription-btn');
                             pauseBtns.off('click').on('click', function() {
@@ -1365,6 +1423,41 @@ function wcb_family_dashboard_shortcode($atts) {
                     $btn.prop('disabled', false).html(originalHtml);
                 }
             });
+        });
+
+        // Handle Resume Subscription
+        $(document).on('click', '.resume-subscription-btn', function() {
+            var childId = $(this).data('child-id');
+            var childName = $(this).data('child-name');
+
+            if (confirm('Are you sure you want to resume ' + childName + '\'s subscription?\n\nBilling will resume from the next billing cycle.')) {
+                var $btn = $(this);
+                var originalHtml = $btn.html();
+                $btn.prop('disabled', true).html('<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="animation: spin 1s linear infinite;"><path d="M12 4V2A10 10 0 0 0 2 12H4A8 8 0 0 1 12 4Z"/></svg> Resuming...');
+
+                $.ajax({
+                    url: wcb_ajax.ajax_url,
+                    type: 'POST',
+                    data: {
+                        action: 'wcb_resume_subscription',
+                        child_id: childId,
+                        nonce: wcb_ajax.nonce
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            alert(response.data.message);
+                            location.reload();
+                        } else {
+                            alert('Error: ' + response.data);
+                            $btn.prop('disabled', false).html(originalHtml);
+                        }
+                    },
+                    error: function() {
+                        alert('Connection error. Please try again.');
+                        $btn.prop('disabled', false).html(originalHtml);
+                    }
+                });
+            }
         });
 
         // Handle Update Payment Method
