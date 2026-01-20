@@ -86,7 +86,7 @@ function wcb_family_dashboard_shortcode($atts) {
                             </p>
                             <?php endif; ?>
                         </div>
-                        <?php elseif ($membership_status['expires_date']): ?>
+                        <?php elseif ($membership_status['expires_date'] && $status_class !== 'needs_activation'): ?>
                         <p class="expires-date">
                             <?php if ($status_class === 'paused'): ?>
                                 Paused since: <?php echo date('M j, Y', strtotime($membership_status['expires_date'])); ?>

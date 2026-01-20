@@ -146,10 +146,6 @@ Yes, both parents can access the dashboard by logging in with any linked child's
 - You can resume the subscription at any time from the dashboard
 - When resumed, billing continues from the next billing cycle
 
-### Can I change my payment method?
-
-Yes, click **"Manage Subscription"** and then **"Stripe Customer Portal"** to update your payment card or bank details.
-
 ### How do I add a new child who just joined?
 
 1. Make sure the new child has been registered with West City Boxing and has an account
