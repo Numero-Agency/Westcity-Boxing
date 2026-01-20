@@ -318,8 +318,8 @@ function wcb_family_dashboard_shortcode($atts) {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        color: #007bff;
-        text-decoration: none;
+        color: #007bff !important;
+        text-decoration: none !important;
         font-size: 14px;
         font-weight: 500;
         padding: 8px 16px;
@@ -329,8 +329,8 @@ function wcb_family_dashboard_shortcode($atts) {
 
     .help-link:hover {
         background: #f0f7ff;
-        color: #0056b3;
-        text-decoration: none;
+        color: #0056b3 !important;
+        text-decoration: none !important;
     }
 
     .help-link svg {
