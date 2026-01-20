@@ -107,11 +107,17 @@ function dashboard_stats_shortcode() {
     $total_schools = count($schools_data);
 
     ob_start();
+    
+    // Check if we have date filter params - if so, we need to hide content initially to prevent flash
+    $has_date_filter = isset($_GET['date_from']) || isset($_GET['date_to']);
     ?>
-    <div class="dashboard-stats-container">
+    <?php if ($has_date_filter): ?>
+    <style>.dashboard-stats-container { opacity: 0; transition: opacity 0.2s ease; } .dashboard-stats-container.loaded { opacity: 1; }</style>
+    <?php endif; ?>
+    <div class="dashboard-stats-container" style="width:100%!important;max-width:100%!important;min-width:100%!important;">
         <!-- Date Filter Controls -->
         <div class="dashboard-date-filter">
-            <form method="GET" id="dashboard-date-filter-form">
+            <form method="GET" id="dashboard-date-filter-form" action="<?php echo home_url('/staff-dashboard/'); ?>">
                 <div class="date-filter-controls">
                     <div class="date-filter-group">
                         <label for="date_from">From:</label>
@@ -145,7 +151,7 @@ function dashboard_stats_shortcode() {
             </form>
         </div>
         
-        <div class="dashboard-stats">
+        <div class="dashboard-stats" style="width:100%!important;">
             <!-- Row 1: Core Stats -->
             <div class="stat-card total-students clickable-stat" data-popup="total-students">
                 <h3><?php echo $total_students_breakdown['total']; ?></h3>
@@ -1727,6 +1733,32 @@ function dashboard_stats_shortcode() {
 
     <script>
     jQuery(document).ready(function($) {
+        // Fix Breakdance tabs when page loads with query parameters (date filter)
+        // The tabs JS doesn't properly initialize, so we need to manually activate the correct tab
+        if (window.location.search.includes('date_from') || window.location.search.includes('date_to')) {
+            // Find the tab content containing our dashboard and ensure it's visible
+            var $dashboardContainer = $('.dashboard-stats-container');
+            var $tabContent = $dashboardContainer.closest('.bde-advanced-tabs-content');
+            var $tabsWrapper = $dashboardContainer.closest('.bde-advanced-tabs');
+            
+            if ($tabContent.length && $tabsWrapper.length) {
+                // Hide all tab contents first
+                $tabsWrapper.find('.bde-advanced-tabs-content').hide();
+                
+                // Show only the one containing our dashboard
+                $tabContent.show().css('display', 'block');
+                
+                // Also update the tab button states
+                var tabIndex = $tabContent.index();
+                var $tabButtons = $tabsWrapper.find('.bde-tabs__tabslist-container .js-tabs-container > div');
+                $tabButtons.removeClass('is-active').attr('aria-selected', 'false');
+                $tabButtons.eq(tabIndex).addClass('is-active').attr('aria-selected', 'true');
+            }
+            
+            // Now show the dashboard with fade in
+            $dashboardContainer.addClass('loaded');
+        }
+        
         // Handle clickable stat cards
         $('.clickable-stat').on('click', function() {
             const popupId = $(this).data('popup') + '-popup';
@@ -1768,17 +1800,15 @@ function dashboard_stats_shortcode() {
         });
     });
     
-    // Reset date filter to default (last 30 days)
+    // Reset date filter - removes date params and reloads to default state
     function resetDateFilter() {
-        const today = new Date();
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(today.getDate() - 30);
+        // Get the current URL without query parameters
+        const url = new URL(window.location.href);
+        url.searchParams.delete('date_from');
+        url.searchParams.delete('date_to');
         
-        document.getElementById('date_from').value = thirtyDaysAgo.toISOString().split('T')[0];
-        document.getElementById('date_to').value = today.toISOString().split('T')[0];
-        
-        // Submit the form
-        document.getElementById('dashboard-date-filter-form').submit();
+        // Redirect to the clean URL (will use default 30-day range)
+        window.location.href = url.toString();
     }
     </script>
     
@@ -1787,6 +1817,9 @@ function dashboard_stats_shortcode() {
     .dashboard-stats-container {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         margin-bottom: 40px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
     }
     
     /* Date Filter Styles */
@@ -1796,6 +1829,8 @@ function dashboard_stats_shortcode() {
         border-bottom: 2px solid #000000;
         padding: 20px 24px;
         margin-bottom: 20px;
+        width: 100%;
+        box-sizing: border-box;
     }
     
     .date-filter-controls {
@@ -1892,9 +1927,30 @@ function dashboard_stats_shortcode() {
     .dashboard-stats {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        grid-template-columns: repeat(4, 1fr);
         gap: 20px;
         margin-bottom: 40px;
+        width: 100% !important;
+        min-width: 100% !important;
+        box-sizing: border-box;
+    }
+    
+    @media (max-width: 1200px) {
+        .dashboard-stats {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+    
+    @media (max-width: 900px) {
+        .dashboard-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    
+    @media (max-width: 600px) {
+        .dashboard-stats {
+            grid-template-columns: 1fr;
+        }
     }
     
     .stat-card {
@@ -3127,7 +3183,7 @@ function dashboard_stats_shortcode() {
         }
         
         .dashboard-stats {
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(2, 1fr) !important;
             gap: 16px;
         }
         
@@ -3223,7 +3279,7 @@ function dashboard_stats_shortcode() {
         }
         
         .dashboard-stats {
-            grid-template-columns: 1fr;
+            grid-template-columns: 1fr !important;
         }
         
         .breakdown-grid {

@@ -9,10 +9,12 @@ jQuery(document).ready(function ($) {
   const config = {
     searchDelay: 300,
     animationSpeed: 300,
-    notificationDuration: 3000,
   };
 
   let searchTimeout;
+
+  // Silent notification function (does nothing - notifications removed)
+  function showNotification() {}
 
   // =======================
   // SEARCH FUNCTIONALITY
