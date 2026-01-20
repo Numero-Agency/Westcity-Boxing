@@ -36,8 +36,8 @@ function wcb_family_dashboard_shortcode($atts) {
         <div class="dashboard-header">
             <h2>Family Dashboard</h2>
             <div class="welcome-message">
-                <p>Welcome back, <strong><?php echo esc_html($current_user->display_name); ?></strong>!</p>
-                <p>Manage your West City Boxing memberships from one location.</p>
+                <p>Welcome to your Family Dashboard!</p>
+                <p>Manage all your West City Boxing memberships from one convenient location.</p>
             </div>
         </div>
 
