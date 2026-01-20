@@ -406,13 +406,22 @@ function wcb_get_child_membership_status($child_user) {
                 }
                 $status['expires_date'] = $expires_at;
             } else {
-                // Membership expired - but check if they have a paused subscription
+                // Membership expired - check payment type and subscription status
+                $payment_type = wcb_detect_payment_type($transaction);
+                
                 if ($paused_subscription) {
+                    // Has a paused subscription - can be resumed
                     $status['status'] = 'paused';
                     $status['status_text'] = 'Paused';
                     $status['expires_date'] = $expires_at;
                     $status['paused_subscription'] = $paused_subscription;
+                } elseif ($payment_type === 'manual') {
+                    // Manual payment expired - needs to choose a payment plan
+                    $status['status'] = 'needs_activation';
+                    $status['status_text'] = 'Needs Activation';
+                    $status['expires_date'] = $expires_at;
                 } else {
+                    // Stripe payment expired - can renew
                     $status['status'] = 'expired';
                     $status['status_text'] = 'Expired';
                     $status['expires_date'] = $expires_at;

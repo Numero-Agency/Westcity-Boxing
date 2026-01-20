@@ -101,8 +101,8 @@ function wcb_family_dashboard_shortcode($atts) {
 
                     <!-- Main CTA Button -->
                     <div class="main-cta">
-                        <?php if (isset($membership_status['payment_type']) && $membership_status['payment_type'] === 'manual'): ?>
-                        <!-- Manual Payment Member - Needs Activation -->
+                        <?php if ($status_class === 'needs_activation'): ?>
+                        <!-- Needs Activation (manual payment or waitlist) - Choose Payment Plan -->
                         <?php if (isset($membership_status['group_url'])): ?>
                         <a href="<?php echo esc_url($membership_status['group_url']); ?>"
                            class="wcb-btn activate-btn">
@@ -133,18 +133,32 @@ function wcb_family_dashboard_shortcode($atts) {
                             Manage Subscription
                         </button>
 
+                        <?php elseif ($status_class === 'expired'): ?>
+                        <!-- Expired Stripe Subscription - Show Manage Subscription to renew -->
+                        <button type="button"
+                                class="wcb-btn wcb-btn-primary manage-subscription-btn"
+                                data-child-id="<?php echo $child->ID; ?>"
+                                data-child-name="<?php echo esc_attr($child->display_name); ?>">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1H5C3.89 1 3 1.89 3 3V21C3 22.11 3.89 23 5 23H11V21H5V3H13V9H21ZM14 10V12H22V10H14ZM14 14V16H22V14H14ZM14 18V20H22V18H14Z"/>
+                            </svg>
+                            Manage Subscription
+                        </button>
+
                         <?php elseif ($status_class === 'active_subscription'): ?>
                         <!-- Active Stripe Subscription - Show Management Options -->
-                        <?php if (isset($membership_status['group_url'])): ?>
-                        <a href="<?php echo esc_url($membership_status['group_url']); ?>"
-                           class="wcb-btn wcb-btn-outline wcb-btn-small">
-                            <span class="dashicons dashicons-admin-settings"></span>
-                            Change Plan
-                        </a>
-                        <?php endif; ?>
+                        <button type="button"
+                                class="wcb-btn wcb-btn-primary manage-subscription-btn"
+                                data-child-id="<?php echo $child->ID; ?>"
+                                data-child-name="<?php echo esc_attr($child->display_name); ?>">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1H5C3.89 1 3 1.89 3 3V21C3 22.11 3.89 23 5 23H11V21H5V3H13V9H21ZM14 10V12H22V10H14ZM14 14V16H22V14H14ZM14 18V20H22V18H14Z"/>
+                            </svg>
+                            Manage Subscription
+                        </button>
 
-                        <?php elseif (isset($membership_status['payment_type']) && $membership_status['payment_type'] === 'stripe'): ?>
-                        <!-- Stripe Payment Member - Show Manage Subscription -->
+                        <?php elseif ($status_class === 'expiring'): ?>
+                        <!-- Expiring Soon - Show Manage Subscription -->
                         <button type="button"
                                 class="wcb-btn wcb-btn-primary manage-subscription-btn"
                                 data-child-id="<?php echo $child->ID; ?>"
@@ -156,12 +170,13 @@ function wcb_family_dashboard_shortcode($atts) {
                         </button>
 
                         <?php else: ?>
-                        <!-- Fallback for unknown payment type -->
-                        <a href="<?php echo esc_url($membership_status['renewal_url']); ?>"
-                           class="wcb-btn wcb-btn-primary renew-btn">
-                            <span class="dashicons dashicons-update"></span>
-                            Renew
-                        </a>
+                        <!-- Fallback - View Details -->
+                        <button type="button"
+                                class="wcb-btn wcb-btn-secondary view-details-btn"
+                                data-child-id="<?php echo $child->ID; ?>"
+                                data-child-name="<?php echo esc_attr($child->display_name); ?>">
+                            View Details
+                        </button>
                         <?php endif; ?>
                     </div>
 
