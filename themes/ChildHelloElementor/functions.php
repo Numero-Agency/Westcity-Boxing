@@ -61,6 +61,7 @@ function wcb_load_files() {
         'family-membership/parent-registration.php',
         'family-membership/family-registration-ajax.php',
         'family-membership/family-membership-setup.php',
+        'family-membership/family-login.php',
         
         // Shortcodes
         'shortcodes/single-session.php',
