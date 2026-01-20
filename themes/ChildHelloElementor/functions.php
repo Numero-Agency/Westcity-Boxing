@@ -78,6 +78,7 @@ function wcb_load_files() {
         'forms/intervention-form.php',
         'forms/competition-form.php',
         'forms/referral-form.php',
+        'forms/memberpress-customizations.php',
         
         // Authentication & Tracking
         'auth/login-sessions.php',
