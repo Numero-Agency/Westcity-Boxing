@@ -1742,21 +1742,63 @@ function dashboard_stats_shortcode() {
             var $tabsWrapper = $dashboardContainer.closest('.bde-advanced-tabs');
             
             if ($tabContent.length && $tabsWrapper.length) {
-                // Hide all tab contents first
-                $tabsWrapper.find('.bde-advanced-tabs-content').hide();
-                
-                // Show only the one containing our dashboard
-                $tabContent.show().css('display', 'block');
-                
-                // Also update the tab button states
-                var tabIndex = $tabContent.index();
+                var $allTabContents = $tabsWrapper.find('.bde-advanced-tabs-content');
                 var $tabButtons = $tabsWrapper.find('.bde-tabs__tabslist-container .js-tabs-container > div');
+                
+                // Get the index of our tab (the one containing dashboard)
+                var tabIndex = $allTabContents.index($tabContent);
+                
+                // Hide all tab contents, show only ours
+                $allTabContents.css('display', 'none');
+                $tabContent.css('display', 'block');
+                
+                // Update tab button states
                 $tabButtons.removeClass('is-active').attr('aria-selected', 'false');
                 $tabButtons.eq(tabIndex).addClass('is-active').attr('aria-selected', 'true');
+                
+                // Use native event listener with capture to intercept before Breakdance
+                var tabsContainer = $tabsWrapper.find('.bde-tabs__tabslist-container')[0];
+                if (tabsContainer) {
+                    tabsContainer.addEventListener('click', function(e) {
+                        var clickedTab = e.target.closest('[role="tab"]') || e.target.closest('.js-tabs-container > div');
+                        if (clickedTab) {
+                            var clickedIndex = Array.from(clickedTab.parentNode.children).indexOf(clickedTab);
+                            // If clicking a different tab than dashboard, reload without filter but with tab index
+                            if (clickedIndex !== tabIndex) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                e.stopImmediatePropagation();
+                                // Reload with tab parameter so we can activate the correct tab
+                                window.location.href = window.location.pathname + '?tab=' + clickedIndex;
+                            }
+                        }
+                    }, true); // true = capture phase
+                }
             }
             
             // Now show the dashboard with fade in
             $dashboardContainer.addClass('loaded');
+        }
+        
+        // Handle tab parameter - activate the correct tab on page load (when redirected from filtered view)
+        var urlParams = new URLSearchParams(window.location.search);
+        var tabParam = urlParams.get('tab');
+        if (tabParam !== null && !urlParams.has('date_from')) {
+            var requestedTabIndex = parseInt(tabParam, 10);
+            var $tabsWrapper = $('.bde-advanced-tabs');
+            if ($tabsWrapper.length) {
+                var $tabButtons = $tabsWrapper.find('.bde-tabs__tabslist-container .js-tabs-container > div');
+                if ($tabButtons.length > requestedTabIndex) {
+                    // Small delay to let Breakdance initialize, then click the tab
+                    setTimeout(function() {
+                        $tabButtons.eq(requestedTabIndex).trigger('click');
+                        
+                        // Clear the tab parameter from URL without reloading
+                        var cleanUrl = window.location.pathname;
+                        window.history.replaceState({}, document.title, cleanUrl);
+                    }, 100);
+                }
+            }
         }
         
         // Handle clickable stat cards
