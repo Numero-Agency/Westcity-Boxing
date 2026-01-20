@@ -737,7 +737,7 @@ function wcb_get_membership_group_info($product_id) {
     // Map product categories to groups based on your membership structure
     // Order matters - more specific patterns should come first
     $group_mappings = [
-        // Waitlist patterns - send to appropriate group page for enrollment
+        // Mini Cadet patterns
         'Mini Cadet Boys' => [
             'group_name' => 'Mini Cadet Boys (9-11 Years) Group 1',
             'group_url' => home_url('/plans/mini-cadet-boys-9-11-years-group-1/')
@@ -746,6 +746,7 @@ function wcb_get_membership_group_info($product_id) {
             'group_name' => 'Mini Cadets Girls Group 1',
             'group_url' => home_url('/plans/mini-cadets-girls-group-1/')
         ],
+        // Cadet Boys patterns
         'Cadet Boys (12-14 Years) Group 1' => [
             'group_name' => 'Cadet Boys (12-14 Years) Group 1',
             'group_url' => home_url('/plans/cadet-boys-group-1/')
@@ -758,6 +759,16 @@ function wcb_get_membership_group_info($product_id) {
             'group_name' => 'Cadet Boys (12-14 Years)',
             'group_url' => home_url('/plans/cadet-boys-group-1/')
         ],
+        // Cadet Girls patterns (no group page yet - sends to membership plans)
+        'Cadet Girls (12-14 Years)' => [
+            'group_name' => 'Cadet Girls (12-14 Years)',
+            'group_url' => home_url('/membership-plans/')
+        ],
+        'Cadet Girls' => [
+            'group_name' => 'Cadet Girls (12-14 Years)',
+            'group_url' => home_url('/membership-plans/')
+        ],
+        // Youth Boys patterns
         'Youth Boys (15-18 Years) Group 1' => [
             'group_name' => 'Youth Boys (15-18 Years) Group 1',
             'group_url' => home_url('/plans/youth-boys-group-1/')
@@ -770,6 +781,7 @@ function wcb_get_membership_group_info($product_id) {
             'group_name' => 'Youth Boys (15-18 Years)',
             'group_url' => home_url('/plans/youth-boys-group-1/')
         ],
+        // Youth Girls patterns
         'Youth Girls (13-18 Years) Group 1' => [
             'group_name' => 'Youth Girls (13-18 Years) Group 1',
             'group_url' => home_url('/plans/youth-girls-group-1/')
