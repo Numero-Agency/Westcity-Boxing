@@ -179,6 +179,17 @@ function wcb_get_student_stats_cards() {
         </div>
     </div>
 
+    <div class="stat-card mentoring-card" data-status="wcb_mentoring">
+        <div class="stat-icon">
+            <span class="dashicons dashicons-heart"></span>
+        </div>
+        <div class="stat-content">
+            <h3><?php echo number_format($stats['wcb_mentoring']); ?></h3>
+            <p>WCB Mentoring</p>
+            <span class="stat-description">Mentoring program & referrals</span>
+        </div>
+    </div>
+
     <div class="stat-card paid-stripe-card" data-status="paid_stripe">
         <div class="stat-icon">
             <span class="dashicons dashicons-money-alt"></span>
@@ -219,6 +230,7 @@ function wcb_get_membership_status_counts() {
             'active' => 0,
             'waitlist' => 0,
             'inactive' => 0,
+            'wcb_mentoring' => 0,
             'total' => 0
         ];
     }
@@ -315,10 +327,14 @@ function wcb_get_membership_status_counts() {
     // Get count of Stripe/paid members
     $paid_stripe_count = wcb_get_paid_stripe_members_count();
 
+    // Get WCB Mentoring members count (MemberPress + processed referrals)
+    $wcb_mentoring_count = wcb_get_program_member_count($wcb_mentoring_id);
+
     return [
         'active' => (int) $total_active_count,
         'waitlist' => (int) $waitlist_count,
-        'inactive' => 0, // Can be implemented later if needed
+        'inactive' => 0,
+        'wcb_mentoring' => (int) $wcb_mentoring_count,
         'paid_stripe' => (int) $paid_stripe_count,
         'total' => (int) ($total_active_count + $waitlist_count)
     ];
@@ -372,6 +388,8 @@ function wcb_get_table_title($filter) {
             return 'Waitlist Members';
         case 'inactive':
             return 'Inactive Members';
+        case 'wcb_mentoring':
+            return 'WCB Mentoring Students';
         case 'paid_stripe':
             return 'Paid (Stripe) Members';
         default:
@@ -455,6 +473,7 @@ function wcb_students_dashboard_styles() {
     .stat-card.active-card { border-color: #4CAF50; }
     .stat-card.waitlist-card { border-color: #FF9800; }
     .stat-card.inactive-card { border-color: #f44336; }
+    .stat-card.mentoring-card { border-color: #E91E63; }
     .stat-card.paid-stripe-card { border-color: #9C27B0; }
     .stat-card.total-card { border-color: #2196F3; }
 
@@ -928,6 +947,7 @@ function wcb_students_dashboard_scripts() {
                 case 'active': return 'Active Members';
                 case 'waitlist': return 'Waitlist Members';
                 case 'inactive': return 'Inactive Members';
+                case 'wcb_mentoring': return 'WCB Mentoring Students';
                 case 'paid_stripe': return 'Paid (Stripe) Members';
                 default: return 'All Students';
             }
@@ -1110,11 +1130,63 @@ function wcb_ajax_load_dashboard_students_table() {
     }
 
     // Filter by membership status
-    if ($membership_status === 'paid_stripe') {
+    if ($membership_status === 'wcb_mentoring') {
+        // WCB Mentoring: use the proven dual-source function (MemberPress + processed referrals)
+        $mentoring_members = wcb_get_mentoring_program_members();
+
+        // Apply search filter
+        if (!empty($search)) {
+            $mentoring_members = array_filter($mentoring_members, function($member) use ($search) {
+                return (stripos($member->display_name, $search) !== false ||
+                        stripos($member->user_email, $search) !== false);
+            });
+            $mentoring_members = array_values($mentoring_members);
+        }
+
+        // Apply pagination
+        $total_items = count($mentoring_members);
+        $total_pages = ceil($total_items / $per_page);
+        $paginated = array_slice($mentoring_members, $offset, $per_page);
+
+        // Convert to table format, preserving referral type
+        $users = [];
+        foreach ($paginated as $member) {
+            $is_referral = isset($member->type) && $member->type === 'referral';
+            $user_obj = (object) [
+                'ID' => $member->ID,
+                'display_name' => $member->display_name ?? 'Unknown',
+                'user_email' => $member->user_email ?? '',
+                'user_registered' => '',
+                'type' => $is_referral ? 'referral' : 'member',
+            ];
+
+            if ($is_referral && isset($member->referral_id)) {
+                $user_obj->referral_id = $member->referral_id;
+                $referral_date = get_post_meta($member->referral_id, 'referral_date', true);
+                $user_obj->user_registered = $referral_date ?: get_the_date('Y-m-d H:i:s', $member->referral_id);
+            } else {
+                $wp_user = get_userdata($member->ID);
+                $user_obj->user_registered = $wp_user ? $wp_user->user_registered : date('Y-m-d H:i:s');
+            }
+
+            $users[] = $user_obj;
+        }
+
+        $rows_html = wcb_generate_students_table_html($users, $membership_status);
+        $pagination_html = wcb_generate_pagination_html($page, $total_pages, $total_items);
+
+        wp_send_json_success([
+            'rows' => $rows_html,
+            'pagination_controls' => $pagination_html,
+            'total_items' => $total_items,
+            'current_page' => $page,
+            'total_pages' => $total_pages
+        ]);
+        return;
+    } elseif ($membership_status === 'paid_stripe') {
         // Filter for Stripe/paid members only
         $target_members = [];
         foreach ($filtered_members as $member) {
-            // Check if this member has Stripe payment (excluding mentoring and competitive)
             $has_stripe = $wpdb->get_var($wpdb->prepare("
                 SELECT COUNT(*)
                 FROM {$txn_table} t
@@ -1214,20 +1286,29 @@ function wcb_generate_students_table_html($users, $membership_status) {
         <tbody>
             <?php foreach ($users as $user): ?>
                 <?php
-                $membership_info = wcb_get_user_membership_info($user->ID);
-                if ($membership_status === 'paid_stripe') {
-                    // Include the payment status function from student-table.php
-                    if (function_exists('wcb_get_student_payment_status')) {
-                        $status_info = wcb_get_student_payment_status($user->ID);
-                    } else {
-                        $status_info = '<span class="status-badge status-active">Stripe Member</span>';
-                    }
+                $is_referral = isset($user->type) && $user->type === 'referral';
+
+                if ($is_referral) {
+                    $membership_info = 'WCB Mentoring (Referral)';
+                    $status_info = '<span class="status-badge status-mentoring">Referral</span>';
+                    $join_date = !empty($user->user_registered) ? date('M j, Y', strtotime($user->user_registered)) : 'N/A';
                 } else {
-                    $status_info = wcb_get_user_status_info($user->ID, $membership_status);
+                    $membership_info = wcb_get_user_membership_info($user->ID);
+                    if ($membership_status === 'paid_stripe') {
+                        if (function_exists('wcb_get_student_payment_status')) {
+                            $status_info = wcb_get_student_payment_status($user->ID);
+                        } else {
+                            $status_info = '<span class="status-badge status-active">Stripe Member</span>';
+                        }
+                    } elseif ($membership_status === 'wcb_mentoring') {
+                        $status_info = '<span class="status-badge status-mentoring">Mentoring</span>';
+                    } else {
+                        $status_info = wcb_get_user_status_info($user->ID, $membership_status);
+                    }
+                    $join_date = date('M j, Y', strtotime($user->user_registered));
                 }
-                $join_date = date('M j, Y', strtotime($user->user_registered));
                 ?>
-                <tr data-user-id="<?php echo $user->ID; ?>">
+                <tr data-user-id="<?php echo esc_attr($user->ID); ?>" <?php if ($is_referral): ?>data-referral-id="<?php echo esc_attr($user->referral_id ?? ''); ?>"<?php endif; ?>>
                     <td>
                         <div class="student-name">
                             <strong><?php echo esc_html($user->display_name); ?></strong>
@@ -1235,7 +1316,7 @@ function wcb_generate_students_table_html($users, $membership_status) {
                     </td>
                     <td>
                         <div class="student-email">
-                            <?php echo esc_html($user->user_email); ?>
+                            <?php echo esc_html($user->user_email ?: 'No email'); ?>
                         </div>
                     </td>
                     <td>
@@ -1255,14 +1336,21 @@ function wcb_generate_students_table_html($users, $membership_status) {
                     </td>
                     <td>
                         <div class="student-actions">
-                            <button class="btn-view-student" data-user-id="<?php echo $user->ID; ?>">
-                                <span class="dashicons dashicons-visibility"></span>
-                                View
-                            </button>
-                            <button class="btn-edit-student" data-user-id="<?php echo $user->ID; ?>">
-                                <span class="dashicons dashicons-edit"></span>
-                                Edit
-                            </button>
+                            <?php if ($is_referral): ?>
+                                <a href="<?php echo esc_url(home_url('/referrals/' . ($user->referral_id ?? '') . '/')); ?>" class="btn-view-student" target="_blank">
+                                    <span class="dashicons dashicons-visibility"></span>
+                                    View
+                                </a>
+                            <?php else: ?>
+                                <button class="btn-view-student" data-user-id="<?php echo esc_attr($user->ID); ?>">
+                                    <span class="dashicons dashicons-visibility"></span>
+                                    View
+                                </button>
+                                <button class="btn-edit-student" data-user-id="<?php echo esc_attr($user->ID); ?>">
+                                    <span class="dashicons dashicons-edit"></span>
+                                    Edit
+                                </button>
+                            <?php endif; ?>
                         </div>
                     </td>
                 </tr>
@@ -1395,6 +1483,12 @@ function wcb_generate_students_table_html($users, $membership_status) {
         background: #f8d7da;
         color: #721c24;
         border: 1px solid #f5c6cb;
+    }
+
+    .status-mentoring {
+        background: #fce4ec;
+        color: #880e4f;
+        border: 1px solid #f8bbd0;
     }
     </style>
     <?php
@@ -1720,6 +1814,52 @@ function wcb_ajax_export_students() {
             ";
             break;
             
+        case 'wcb_mentoring':
+            // WCB Mentoring uses dual-source (MemberPress + referrals), handle separately
+            $mentoring_members = wcb_get_mentoring_program_members();
+
+            if (!empty($search)) {
+                $mentoring_members = array_filter($mentoring_members, function($member) use ($search) {
+                    return (stripos($member->display_name, $search) !== false ||
+                            stripos($member->user_email, $search) !== false);
+                });
+                $mentoring_members = array_values($mentoring_members);
+            }
+
+            $filename = 'wcb_mentoring_export_' . date('Y-m-d_H-i-s') . '.csv';
+            header('Content-Type: text/csv');
+            header('Content-Disposition: attachment; filename="' . $filename . '"');
+            header('Pragma: no-cache');
+            header('Expires: 0');
+
+            $output = fopen('php://output', 'w');
+            fputcsv($output, ['Name', 'Email', 'Type', 'Status', 'Date']);
+
+            foreach ($mentoring_members as $member) {
+                $is_referral = isset($member->type) && $member->type === 'referral';
+                $type = $is_referral ? 'Referral' : 'MemberPress';
+                $member_status = $is_referral ? 'Referral' : 'Mentoring';
+
+                if ($is_referral && isset($member->referral_id)) {
+                    $date = get_post_meta($member->referral_id, 'referral_date', true);
+                    $date = $date ? date('M j, Y', strtotime($date)) : 'N/A';
+                } else {
+                    $wp_user = get_userdata($member->ID);
+                    $date = $wp_user ? date('M j, Y', strtotime($wp_user->user_registered)) : 'N/A';
+                }
+
+                fputcsv($output, [
+                    $member->display_name,
+                    $member->user_email ?: 'No email',
+                    $type,
+                    $member_status,
+                    $date
+                ]);
+            }
+
+            fclose($output);
+            exit;
+
         case 'paid_stripe':
             $query = "
                 SELECT DISTINCT u.ID, u.display_name, u.user_email, u.user_registered

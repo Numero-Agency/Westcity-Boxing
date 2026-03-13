@@ -22,6 +22,7 @@ function student_table_shortcode($atts) {
                         <option value="paid_stripe">Paid (Stripe) Members</option>
                         <option value="inactive">Inactive Members</option>
                         <option value="waitlist">Waitlist Members</option>
+                        <option value="wcb_mentoring">WCB Mentoring</option>
                     </select>
                 </div>
                 <?php if($atts['show_search'] === 'true'): ?>
@@ -1338,6 +1339,17 @@ function student_table_shortcode($atts) {
          animation: pulse-activation 2s infinite;
      }
 
+     .mentoring-status {
+         display: inline-block;
+         padding: 4px 10px;
+         border-radius: 12px;
+         font-size: 11px;
+         font-weight: 600;
+         background: #fce4ec;
+         color: #880e4f;
+         border: 1px solid #f8bbd0;
+     }
+
      .payment-no-membership {
          background: #f8d7da;
          color: #721c24;
@@ -2101,6 +2113,46 @@ function wcb_ajax_load_students_table() {
                 )
             ";
 
+        } elseif ($membership_status === 'wcb_mentoring') {
+            // WCB Mentoring: dual-source (MemberPress product 1738 + processed referrals)
+            $mentoring_members = wcb_get_mentoring_program_members();
+
+            // Apply search filter
+            if (!empty($search)) {
+                $mentoring_members = array_filter($mentoring_members, function($member) use ($search) {
+                    return (stripos($member->display_name, $search) !== false ||
+                            stripos($member->user_email, $search) !== false);
+                });
+                $mentoring_members = array_values($mentoring_members);
+            }
+
+            $total_users = count($mentoring_members);
+            $offset = ($page - 1) * $per_page;
+            $paginated = array_slice($mentoring_members, $offset, $per_page);
+
+            foreach ($paginated as $member) {
+                $is_referral = isset($member->type) && $member->type === 'referral';
+                $user_obj = new stdClass();
+                $user_obj->ID = $member->ID;
+                $user_obj->display_name = $member->display_name ?? 'Unknown';
+                $user_obj->user_email = $member->user_email ?? '';
+                $user_obj->type = $is_referral ? 'referral' : 'member';
+
+                if ($is_referral && isset($member->referral_id)) {
+                    $user_obj->referral_id = $member->referral_id;
+                    $referral_date = get_post_meta($member->referral_id, 'referral_date', true);
+                    $user_obj->user_registered = $referral_date ?: get_the_date('Y-m-d H:i:s', $member->referral_id);
+                } else {
+                    $wp_user = get_userdata($member->ID);
+                    $user_obj->user_registered = $wp_user ? $wp_user->user_registered : date('Y-m-d H:i:s');
+                }
+
+                $users[] = $user_obj;
+            }
+
+            // Skip the SQL query path below - we already have users
+            $query = null;
+
         } else {
             // All members: get ALL active members (not just program groups)
             $wcb_mentoring_id = 1738;
@@ -2115,31 +2167,34 @@ function wcb_ajax_load_students_table() {
             ";
         }
         
-        // Add search filter
-        if (!empty($search)) {
-            $search_term = '%' . $wpdb->esc_like($search) . '%';
-            $query .= $wpdb->prepare(" AND (u.display_name LIKE %s OR u.user_email LIKE %s OR u.user_login LIKE %s)", $search_term, $search_term, $search_term);
-        }
-        
-        // Get total count
-        $count_query = preg_replace('/SELECT DISTINCT u\.ID, u\.display_name, u\.user_email, u\.user_registered/', 'SELECT COUNT(DISTINCT u.ID)', $query);
-        $total_users = $wpdb->get_var($count_query);
-        
-        // Get users for current page
-        $offset = ($page - 1) * $per_page;
-        $query .= " ORDER BY u.display_name ASC LIMIT {$per_page} OFFSET {$offset}";
-        
-        $user_results = $wpdb->get_results($query);
-        
-        // Use the data we already have from the SQL query
-        foreach ($user_results as $user_result) {
-            // Create a user-like object with the data we need
-            $user_obj = new stdClass();
-            $user_obj->ID = $user_result->ID;
-            $user_obj->display_name = $user_result->display_name;
-            $user_obj->user_email = $user_result->user_email;
-            $user_obj->user_registered = $user_result->user_registered;
-            $users[] = $user_obj;
+        // For wcb_mentoring, users are already populated above - skip SQL
+        if ($query !== null) {
+            // Add search filter
+            if (!empty($search)) {
+                $search_term = '%' . $wpdb->esc_like($search) . '%';
+                $query .= $wpdb->prepare(" AND (u.display_name LIKE %s OR u.user_email LIKE %s OR u.user_login LIKE %s)", $search_term, $search_term, $search_term);
+            }
+            
+            // Get total count
+            $count_query = preg_replace('/SELECT DISTINCT u\.ID, u\.display_name, u\.user_email, u\.user_registered/', 'SELECT COUNT(DISTINCT u.ID)', $query);
+            $total_users = $wpdb->get_var($count_query);
+            
+            // Get users for current page
+            $offset = ($page - 1) * $per_page;
+            $query .= " ORDER BY u.display_name ASC LIMIT {$per_page} OFFSET {$offset}";
+            
+            $user_results = $wpdb->get_results($query);
+            
+            // Use the data we already have from the SQL query
+            foreach ($user_results as $user_result) {
+                // Create a user-like object with the data we need
+                $user_obj = new stdClass();
+                $user_obj->ID = $user_result->ID;
+                $user_obj->display_name = $user_result->display_name;
+                $user_obj->user_email = $user_result->user_email;
+                $user_obj->user_registered = $user_result->user_registered;
+                $users[] = $user_obj;
+            }
         }
         
     } else {
@@ -2174,28 +2229,33 @@ function wcb_ajax_load_students_table() {
             if (!$user || !is_object($user)) {
                 continue;
             }
-            
-            // Get all active memberships for this user
-            $membership_info = wcb_get_user_all_memberships($user->ID);
 
-            // Get payment status
-            $payment_status = wcb_get_student_payment_status($user->ID);
+            $is_referral = isset($user->type) && $user->type === 'referral';
 
-            // Get session count
-            $session_count = wcb_get_user_session_count($user->ID);
-
-            // Use the same logic as "Member since" in detail view
-            $member_since_date = wcb_get_member_since_date($user->ID);
-            $join_date = $member_since_date ? date('M j, Y', strtotime($member_since_date)) : 'No data';
+            if ($is_referral) {
+                $membership_info = '<span class="membership-badge">WCB Mentoring (Referral)</span>';
+                $payment_status = '<span class="status-badge mentoring-status">Referral</span>';
+                $session_count = '-';
+                $join_date = !empty($user->user_registered) ? date('M j, Y', strtotime($user->user_registered)) : 'N/A';
+                $referral_id = isset($user->referral_id) ? $user->referral_id : '';
+                $view_btn = '<a href="' . esc_url(home_url('/referrals/' . $referral_id . '/')) . '" class="student-table-view-btn" target="_blank">View</a>';
+            } else {
+                $membership_info = wcb_get_user_all_memberships($user->ID);
+                $payment_status = wcb_get_student_payment_status($user->ID);
+                $session_count = wcb_get_user_session_count($user->ID);
+                $member_since_date = wcb_get_member_since_date($user->ID);
+                $join_date = $member_since_date ? date('M j, Y', strtotime($member_since_date)) : 'No data';
+                $view_btn = '<button class="student-table-view-btn" data-student-id="' . $user->ID . '">View</button>';
+            }
 
             $rows_html .= '<tr>';
             $rows_html .= '<td><div class="student-name">' . esc_html($user->display_name) . '</div></td>';
-            $rows_html .= '<td>' . esc_html($user->user_email) . '</td>';
+            $rows_html .= '<td>' . esc_html($user->user_email ?: 'No email') . '</td>';
             $rows_html .= '<td>' . $membership_info . '</td>';
             $rows_html .= '<td>' . $payment_status . '</td>';
             $rows_html .= '<td><span class="sessions-count">' . esc_html($session_count) . '</span></td>';
             $rows_html .= '<td>' . esc_html($join_date) . '</td>';
-            $rows_html .= '<td><button class="student-table-view-btn" data-student-id="' . $user->ID . '">View</button></td>';
+            $rows_html .= '<td>' . $view_btn . '</td>';
             $rows_html .= '</tr>';
         }
     } else {
@@ -2212,6 +2272,9 @@ function wcb_ajax_load_students_table() {
                 break;
             case 'waitlist':
                 $status_text = 'waitlist ';
+                break;
+            case 'wcb_mentoring':
+                $status_text = 'WCB mentoring ';
                 break;
         }
         $rows_html = '<tr><td colspan="7" class="no-results">No ' . $status_text . 'students found' . (!empty($search) ? ' matching "' . esc_html($search) . '"' : '') . '</td></tr>';
@@ -2944,16 +3007,16 @@ function wcb_ajax_load_student_profile_overlay() {
             <!-- Session History -->
             <div class="overlay-profile-section">
                 <h3 class="overlay-section-title">
-                    <span class="dashicons dashicons-chart-bar"></span> Recent Sessions
+                    <span class="dashicons dashicons-chart-bar"></span> All Sessions
                 </h3>
                 <?php
                 // Get session count
                 $session_count = wcb_get_user_session_count($student_id);
                 
-                // Get recent sessions for this student
+                // Get all sessions to find this student's attendance
                 $all_sessions = get_posts([
                     'post_type' => 'session_log',
-                    'numberposts' => 50, // Get more to filter through
+                    'numberposts' => -1,
                     'post_status' => 'publish',
                     'orderby' => 'date',
                     'order' => 'DESC'
@@ -3004,7 +3067,6 @@ function wcb_ajax_load_student_profile_overlay() {
                     
                     if ($is_student_involved) {
                         $sessions[] = $session;
-                        if (count($sessions) >= 10) break; // Limit for overlay
                     }
                 }
                 
