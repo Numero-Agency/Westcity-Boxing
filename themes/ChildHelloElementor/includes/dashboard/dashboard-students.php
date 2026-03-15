@@ -1337,7 +1337,7 @@ function wcb_generate_students_table_html($users, $membership_status) {
                     <td>
                         <div class="student-actions">
                             <?php if ($is_referral): ?>
-                                <a href="<?php echo esc_url(home_url('/referrals/' . ($user->referral_id ?? '') . '/')); ?>" class="btn-view-student" target="_blank">
+                                <a href="<?php echo esc_url(get_permalink($user->referral_id ?? 0)); ?>" class="btn-view-student" target="_blank">
                                     <span class="dashicons dashicons-visibility"></span>
                                     View
                                 </a>

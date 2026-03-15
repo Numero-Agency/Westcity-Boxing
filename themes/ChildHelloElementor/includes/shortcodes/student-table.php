@@ -2238,7 +2238,8 @@ function wcb_ajax_load_students_table() {
                 $session_count = '-';
                 $join_date = !empty($user->user_registered) ? date('M j, Y', strtotime($user->user_registered)) : 'N/A';
                 $referral_id = isset($user->referral_id) ? $user->referral_id : '';
-                $view_btn = '<a href="' . esc_url(home_url('/referrals/' . $referral_id . '/')) . '" class="student-table-view-btn" target="_blank">View</a>';
+                $referral_url = $referral_id ? get_permalink($referral_id) : '#';
+                $view_btn = '<a href="' . esc_url($referral_url) . '" class="student-table-view-btn" target="_blank">View</a>';
             } else {
                 $membership_info = wcb_get_user_all_memberships($user->ID);
                 $payment_status = wcb_get_student_payment_status($user->ID);
