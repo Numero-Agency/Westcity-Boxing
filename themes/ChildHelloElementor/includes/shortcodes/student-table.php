@@ -153,10 +153,14 @@ function student_table_shortcode($atts) {
         $(document).on('click', '.student-table-view-btn', function(e) {
             e.preventDefault();
             var studentId = $(this).data('student-id');
+            var referralId = $(this).data('referral-id');
             var studentName = $(this).closest('tr').find('.student-name').text();
             
-            // Load profile in the same container
-            loadStudentProfileOverlay(studentId, studentName);
+            if (referralId) {
+                loadReferralProfileOverlay(referralId, studentName);
+            } else if (studentId) {
+                loadStudentProfileOverlay(studentId, studentName);
+            }
         });
         
         // Back to students list function
@@ -246,6 +250,43 @@ function student_table_shortcode($atts) {
                 error: function() {
                     $('#table-profile-overlay .profile-overlay-content').html(
                         '<div class="profile-error">Failed to load student profile. Please try again.</div>'
+                    );
+                }
+            });
+        }
+
+        function loadReferralProfileOverlay(referralId, studentName) {
+            if (!referralId) {
+                return;
+            }
+
+            $('.student-table-header h3').html('<span class="dashicons dashicons-admin-users"></span> ' + studentName);
+            $('.student-table-content, .pagination').hide();
+            $('#table-profile-overlay .profile-overlay-content').html(
+                '<div class="profile-loading"><p>Loading referral profile...</p></div>'
+            );
+            $('#table-profile-overlay').show();
+
+            $.ajax({
+                url: wcb_ajax.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'wcb_load_referral_profile_overlay',
+                    referral_id: referralId,
+                    nonce: wcb_ajax.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $('#table-profile-overlay .profile-overlay-content').html(response.data.html);
+                    } else {
+                        $('#table-profile-overlay .profile-overlay-content').html(
+                            '<div class="profile-error">Error loading profile: ' + response.data + '</div>'
+                        );
+                    }
+                },
+                error: function() {
+                    $('#table-profile-overlay .profile-overlay-content').html(
+                        '<div class="profile-error">Failed to load referral profile. Please try again.</div>'
                     );
                 }
             });
@@ -2238,8 +2279,7 @@ function wcb_ajax_load_students_table() {
                 $session_count = '-';
                 $join_date = !empty($user->user_registered) ? date('M j, Y', strtotime($user->user_registered)) : 'N/A';
                 $referral_id = isset($user->referral_id) ? $user->referral_id : '';
-                $referral_url = $referral_id ? get_permalink($referral_id) : '#';
-                $view_btn = '<a href="' . esc_url($referral_url) . '" class="student-table-view-btn" target="_blank">View</a>';
+                $view_btn = '<button class="student-table-view-btn" data-referral-id="' . esc_attr($referral_id) . '">View</button>';
             } else {
                 $membership_info = wcb_get_user_all_memberships($user->ID);
                 $payment_status = wcb_get_student_payment_status($user->ID);
@@ -3277,6 +3317,298 @@ function wcb_ajax_load_student_profile_overlay() {
 }
 add_action('wp_ajax_wcb_load_student_profile_overlay', 'wcb_ajax_load_student_profile_overlay');
 add_action('wp_ajax_nopriv_wcb_load_student_profile_overlay', 'wcb_ajax_load_student_profile_overlay');
+
+function wcb_ajax_load_referral_profile_overlay() {
+    if (!wp_verify_nonce($_POST['nonce'], 'wcb_nonce')) {
+        wp_send_json_error('Security check failed');
+        return;
+    }
+
+    $referral_id = intval($_POST['referral_id']);
+    if (!$referral_id) {
+        wp_send_json_error('Invalid referral ID');
+        return;
+    }
+
+    $referral = get_post($referral_id);
+    if (!$referral || $referral->post_type !== 'referral') {
+        wp_send_json_error('Referral not found');
+        return;
+    }
+
+    $first_name = get_field('first_name', $referral_id) ?: get_post_meta($referral_id, 'first_name', true);
+    $last_name = get_field('last_name', $referral_id) ?: get_post_meta($referral_id, 'last_name', true);
+    $display_name = trim($first_name . ' ' . $last_name) ?: 'Unknown';
+    $contact_email = get_field('contact_email', $referral_id) ?: get_post_meta($referral_id, 'contact_email', true);
+    $contact_phone = get_field('contact_phone', $referral_id) ?: get_post_meta($referral_id, 'contact_phone', true);
+    $date_of_birth = get_field('date_of_birth', $referral_id) ?: get_post_meta($referral_id, 'date_of_birth', true);
+    $gender = get_field('gender', $referral_id) ?: get_post_meta($referral_id, 'gender', true);
+    $ethnicity = get_field('ethnicity', $referral_id) ?: get_post_meta($referral_id, 'ethnicity', true);
+    $address = get_field('address', $referral_id) ?: get_post_meta($referral_id, 'address', true);
+    $suburb = get_field('suburb', $referral_id) ?: get_post_meta($referral_id, 'suburb', true);
+    $medical_info = get_field('medical_information', $referral_id) ?: get_post_meta($referral_id, 'medical_information', true);
+    $parent_name = get_field('parent_name', $referral_id) ?: get_post_meta($referral_id, 'parent_name', true);
+    $parent_phone = get_field('parent_phone', $referral_id) ?: get_post_meta($referral_id, 'parent_phone', true);
+    $parent_email = get_field('parent_email', $referral_id) ?: get_post_meta($referral_id, 'parent_email', true);
+    $referrer_name = get_field('referrer_name', $referral_id) ?: get_post_meta($referral_id, 'referrer_name', true);
+    $agency = get_field('agency', $referral_id) ?: get_post_meta($referral_id, 'agency', true);
+    $referral_date = get_field('referral_date', $referral_id) ?: get_post_meta($referral_id, 'referral_date', true);
+    $referral_status = get_field('referral_status', $referral_id) ?: get_post_meta($referral_id, 'referral_status', true);
+    $notes = get_field('notes', $referral_id) ?: get_post_meta($referral_id, 'notes', true);
+
+    $full_address = array_filter([$address, $suburb]);
+    $full_address_str = $full_address ? implode(', ', $full_address) : '';
+
+    $age_display = 'Not provided';
+    if ($date_of_birth) {
+        try {
+            $dob = new DateTime($date_of_birth);
+            $now = new DateTime();
+            $age = $now->diff($dob)->y;
+            $age_display = $age . ' years old';
+        } catch (Exception $e) {
+            $age_display = 'Not provided';
+        }
+    }
+
+    $dob_display = 'Not provided';
+    if ($date_of_birth) {
+        $ts = strtotime($date_of_birth);
+        if ($ts) $dob_display = date('M j, Y', $ts);
+    }
+
+    $referral_date_display = 'Not provided';
+    if ($referral_date) {
+        $ts = strtotime($referral_date);
+        if ($ts) $referral_date_display = date('M j, Y', $ts);
+    }
+
+    // Get mentoring sessions for this referral participant
+    $student_involved_key = 'referral_' . $referral_id;
+    $all_sessions = get_posts([
+        'post_type' => 'session_log',
+        'numberposts' => -1,
+        'post_status' => 'publish',
+        'orderby' => 'date',
+        'order' => 'DESC'
+    ]);
+
+    $sessions = [];
+    foreach ($all_sessions as $session) {
+        $session_type_data = wcb_get_session_type($session->ID);
+        if ($session_type_data['slug'] === 'mentoring') {
+            $involved = get_field('student_involved', $session->ID);
+            if ($involved == $student_involved_key) {
+                $sessions[] = $session;
+            }
+        }
+    }
+    $session_count = count($sessions);
+
+    ob_start();
+    ?>
+    <div class="overlay-student-profile">
+        <div class="overlay-profile-header">
+            <div class="overlay-profile-info">
+                <div class="overlay-profile-meta">
+                    <?php if ($contact_email): ?>
+                    <span><span class="dashicons dashicons-email"></span> <?php echo esc_html($contact_email); ?></span>
+                    <?php endif; ?>
+                    <span><span class="dashicons dashicons-calendar-alt"></span> Referred: <?php echo esc_html($referral_date_display); ?></span>
+                    <span><span class="dashicons dashicons-id"></span> Referral #<?php echo $referral_id; ?></span>
+                    <span><span class="status-badge mentoring-status" style="display:inline-block;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:600;background:#fce4ec;color:#880e4f;border:1px solid #f8bbd0;">Referral</span></span>
+                </div>
+            </div>
+            <div class="overlay-profile-actions">
+                <a href="<?php echo admin_url('post.php?post=' . $referral_id . '&action=edit'); ?>" class="back-to-students-btn" style="margin-right: 12px;">
+                    <span class="dashicons dashicons-edit"></span> Edit Referral
+                </a>
+                <button class="back-to-students-btn" onclick="showStudentsTable()">
+                    <span class="dashicons dashicons-arrow-left-alt2"></span> All Students
+                </button>
+            </div>
+        </div>
+
+        <div class="overlay-profile-content">
+            <div class="overlay-profile-section">
+                <h3 class="overlay-section-title">
+                    <span class="dashicons dashicons-admin-generic"></span> Student Information
+                </h3>
+                <div class="overlay-three-column-grid">
+                    <div class="info-column">
+                        <h4 class="column-header">
+                            <span class="dashicons dashicons-admin-users"></span> Student Details
+                        </h4>
+                        <div class="column-content">
+                            <div class="info-row">
+                                <div class="info-label">Email</div>
+                                <div class="info-value<?php echo !$contact_email ? ' not-provided' : ''; ?>"><?php echo $contact_email ? esc_html($contact_email) : 'Not provided'; ?></div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Phone</div>
+                                <div class="info-value<?php echo !$contact_phone ? ' not-provided' : ''; ?>"><?php echo $contact_phone ? esc_html($contact_phone) : 'Not provided'; ?></div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Age</div>
+                                <div class="info-value<?php echo $age_display === 'Not provided' ? ' not-provided' : ''; ?>"><?php echo esc_html($age_display); ?></div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Gender</div>
+                                <div class="info-value<?php echo !$gender ? ' not-provided' : ''; ?>"><?php echo $gender ? esc_html($gender) : 'Not specified'; ?></div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Ethnicity</div>
+                                <div class="info-value<?php echo !$ethnicity ? ' not-provided' : ''; ?>"><?php echo $ethnicity ? esc_html($ethnicity) : 'Not specified'; ?></div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Date of Birth</div>
+                                <div class="info-value<?php echo $dob_display === 'Not provided' ? ' not-provided' : ''; ?>"><?php echo esc_html($dob_display); ?></div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Address</div>
+                                <div class="info-value<?php echo !$full_address_str ? ' not-provided' : ''; ?>"><?php echo $full_address_str ? esc_html($full_address_str) : 'Not provided'; ?></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-column">
+                        <h4 class="column-header">
+                            <span class="dashicons dashicons-groups"></span> Parent/Guardian
+                        </h4>
+                        <div class="column-content">
+                            <div class="info-row">
+                                <div class="info-label">Parent/Guardian Name</div>
+                                <div class="info-value<?php echo !$parent_name ? ' not-provided' : ''; ?>"><?php echo $parent_name ? esc_html($parent_name) : 'Not provided'; ?></div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Parent/Guardian Phone</div>
+                                <div class="info-value<?php echo !$parent_phone ? ' not-provided' : ''; ?>"><?php echo $parent_phone ? esc_html($parent_phone) : 'Not provided'; ?></div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Parent/Guardian Email</div>
+                                <div class="info-value<?php echo !$parent_email ? ' not-provided' : ''; ?>"><?php echo $parent_email ? esc_html($parent_email) : 'Not provided'; ?></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-column">
+                        <h4 class="column-header">
+                            <span class="dashicons dashicons-heart"></span> Medical Information
+                        </h4>
+                        <div class="column-content">
+                            <div class="info-row medical-note">
+                                <div class="info-label">Medical Information</div>
+                                <div class="info-value medical-text<?php echo !$medical_info ? ' not-provided' : ''; ?>"><?php echo $medical_info ? esc_html($medical_info) : 'No medical information provided'; ?></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="overlay-profile-section">
+                <h3 class="overlay-section-title">
+                    <span class="dashicons dashicons-awards"></span> Memberships
+                </h3>
+                <div class="overlay-membership-item" style="background-color: #fce4ec; margin-bottom: 12px;">
+                    <div class="overlay-membership-name" style="color: #880e4f;">WCB Mentoring (Referral)</div>
+                    <div class="overlay-membership-status" style="color: #880e4f; opacity: 0.8;">Status: <?php echo esc_html(ucfirst($referral_status ?: 'processed')); ?></div>
+                </div>
+                <?php if ($referrer_name || $agency): ?>
+                <div class="overlay-three-column-grid" style="grid-template-columns: 1fr; margin-top: 20px;">
+                    <div class="info-column">
+                        <h4 class="column-header">
+                            <span class="dashicons dashicons-businessman"></span> Referral Details
+                        </h4>
+                        <div class="column-content">
+                            <?php if ($referrer_name): ?>
+                            <div class="info-row">
+                                <div class="info-label">Referred By</div>
+                                <div class="info-value"><?php echo esc_html($referrer_name); ?></div>
+                            </div>
+                            <?php endif; ?>
+                            <?php if ($agency): ?>
+                            <div class="info-row">
+                                <div class="info-label">Agency</div>
+                                <div class="info-value"><?php echo esc_html($agency); ?></div>
+                            </div>
+                            <?php endif; ?>
+                            <?php if ($notes): ?>
+                            <div class="info-row">
+                                <div class="info-label">Notes</div>
+                                <div class="info-value"><?php echo esc_html($notes); ?></div>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
+            </div>
+
+            <div class="overlay-profile-section">
+                <h3 class="overlay-section-title">
+                    <span class="dashicons dashicons-chart-bar"></span> All Sessions
+                </h3>
+                <?php if (!empty($sessions)): ?>
+                <div style="margin-bottom: 16px;">
+                    <strong>Total Mentoring Sessions: <?php echo esc_html($session_count); ?></strong>
+                </div>
+                <table class="overlay-sessions-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Class/Program</th>
+                            <th>Attendance</th>
+                            <th>Interventions</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($sessions as $session):
+                            $session_id = $session->ID;
+                            $date = get_field('intervention_date_', $session_id);
+                            $formatted_date = 'Unknown Date';
+                            if (!empty($date) && $date !== '0000-00-00') {
+                                $timestamp = strtotime($date);
+                                if ($timestamp !== false && $timestamp > 0) {
+                                    $formatted_date = date('M j, Y', $timestamp);
+                                }
+                            }
+                        ?>
+                        <tr>
+                            <td><?php echo esc_html($formatted_date); ?></td>
+                            <td>Mentoring</td>
+                            <td>WCB Mentoring</td>
+                            <td>Present (Mentoring)</td>
+                            <td class="intervention-full">
+                                <a href="<?php echo get_permalink($session_id); ?>" class="intervention-link" target="_blank">Full Mentoring</a>
+                            </td>
+                            <td>
+                                <a href="<?php echo get_permalink($session_id); ?>" class="session-view-btn" target="_blank">
+                                    <span class="dashicons dashicons-visibility"></span> View
+                                </a>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+                <?php else: ?>
+                <div class="overlay-no-sessions">No mentoring sessions found for this student</div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+    <?php
+
+    $html = ob_get_clean();
+
+    wp_send_json_success([
+        'html' => $html,
+        'student_name' => $display_name
+    ]);
+}
+add_action('wp_ajax_wcb_load_referral_profile_overlay', 'wcb_ajax_load_referral_profile_overlay');
+add_action('wp_ajax_nopriv_wcb_load_referral_profile_overlay', 'wcb_ajax_load_referral_profile_overlay');
 
 // Get detailed payment information for student profile
 function wcb_get_student_detailed_payment_info($user_id) {
