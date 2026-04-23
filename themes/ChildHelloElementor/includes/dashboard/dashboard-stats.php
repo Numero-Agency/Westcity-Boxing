@@ -148,6 +148,14 @@ function dashboard_stats_shortcode() {
                     <small><strong>📊 Date Filter:</strong> Showing members who joined on/before <strong><?php echo date('M j, Y', strtotime($date_to)); ?></strong> AND whose subscription was active during this period (not expired before <strong><?php echo date('M j, Y', strtotime($date_from)); ?></strong>).<br>
                     <em>Note: Join dates use MemberPress Registration Date if available, otherwise the first transaction date. Expiry dates from transaction records determine when members stopped being active.</em></small>
                 </div>
+                <?php if (current_user_can('manage_options')): ?>
+                <div class="dashboard-maintenance-links">
+                    <a href="<?php echo esc_url(WCB_THEME_URL . '/cleanup-waitlist-memberships.php'); ?>" class="dashboard-maintenance-link" target="_blank" rel="noopener">
+                        <span class="dashicons dashicons-admin-tools"></span>
+                        Waitlist Cleanup Tool
+                    </a>
+                </div>
+                <?php endif; ?>
             </form>
         </div>
         
@@ -1964,6 +1972,31 @@ function dashboard_stats_shortcode() {
     
     .date-filter-info strong {
         color: #1a5490;
+    }
+
+    .dashboard-maintenance-links {
+        margin-top: 12px;
+    }
+
+    .dashboard-maintenance-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 12px;
+        background: #f6f8fa;
+        border: 1px solid #d0d7de;
+        border-radius: 4px;
+        color: #1d2327;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .dashboard-maintenance-link:hover {
+        background: #ffffff;
+        border-color: #000000;
+        color: #000000;
     }
     
     .dashboard-stats {
