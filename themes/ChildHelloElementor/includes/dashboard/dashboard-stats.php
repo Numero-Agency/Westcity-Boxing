@@ -263,8 +263,11 @@ function dashboard_stats_shortcode() {
     </div>
     
     <!-- DEBUG SECTION: Active Members & Expired Members Tables -->
-    <?php 
-    $debug_active_members = wcb_get_debug_active_members($date_from, $date_to);
+    <?php
+    // Pass the same currently-active user-id set used by the Active Members card so the
+    // debug Active bucket matches the card exactly (single source of truth).
+    $known_active_user_ids = array_values(array_unique(array_map('intval', array_column($total_students_breakdown['currently_active_members'], 'user_id'))));
+    $debug_active_members = wcb_get_debug_active_members($date_from, $date_to, $known_active_user_ids);
     $debug_expired_members = wcb_get_debug_expired_members($date_from, $date_to);
     ?>
     <div class="dashboard-debug-section">
@@ -6329,7 +6332,7 @@ function wcb_utc_to_local_date($utc_datetime) {
 // DEBUG: Get detailed active members for debug table
 // FIXED: Now gets the LATEST transaction with MAX expiry date for each user
 // ENHANCED: Now includes subscription status (active/paused/cancelled)
-function wcb_get_debug_active_members($date_from, $date_to) {
+function wcb_get_debug_active_members($date_from, $date_to, $known_active_user_ids = null) {
     global $wpdb;
     
     $txn_table = $wpdb->prefix . 'mepr_transactions';
@@ -6486,32 +6489,58 @@ function wcb_get_debug_active_members($date_from, $date_to) {
             LIMIT 1
         ", array_merge([$user_id], $all_membership_ids)));
         
-        // Determine member status
-        $member_status = 'active';
-        $status_label = 'Active';
-        if ($subscription_status) {
-            if ($subscription_status->status === 'suspended') {
-                $member_status = 'paused';
-                $status_label = 'Paused';
-            } elseif ($subscription_status->status === 'cancelled') {
-                $member_status = 'cancelled';
-                $status_label = 'Cancelled';
-            }
-        }
-        
-        // Check if member's transaction is expired (overrides subscription status for display)
-        $is_expired = false;
+        // Determine member status.
+        // The Active Members card is the single source of truth for who is "active right now".
+        // When $known_active_user_ids is provided, anyone in that set is 'active' here too;
+        // anyone outside it must be paused/cancelled/expired (never 'active'). This guarantees
+        // the debug Active bucket count == Active Members card count.
+        $use_known_active = is_array($known_active_user_ids);
+        $is_known_active = $use_known_active && in_array((int) $user_id, $known_active_user_ids, true);
+
+        $latest_txn_expired = false;
         if ($latest_txn->expires_at && $latest_txn->expires_at !== '0000-00-00 00:00:00') {
             $expires_timestamp = strtotime($latest_txn->expires_at);
             if ($expires_timestamp && $expires_timestamp < time()) {
-                $is_expired = true;
-                if ($member_status === 'active') {
-                    $member_status = 'expired';
-                    $status_label = 'Expired';
-                }
+                $latest_txn_expired = true;
             }
         }
-        
+
+        if ($use_known_active) {
+            if ($is_known_active) {
+                $member_status = 'active';
+                $status_label = 'Active';
+            } elseif ($subscription_status && $subscription_status->status === 'suspended') {
+                $member_status = 'paused';
+                $status_label = 'Paused';
+            } elseif ($subscription_status && $subscription_status->status === 'cancelled') {
+                $member_status = 'cancelled';
+                $status_label = 'Cancelled';
+            } else {
+                // Not active per the Active card and not flagged suspended/cancelled — treat as expired.
+                $member_status = 'expired';
+                $status_label = 'Expired';
+            }
+        } else {
+            // Legacy path (no $known_active_user_ids passed): classify by sub status + txn expiry.
+            $member_status = 'active';
+            $status_label = 'Active';
+            if ($subscription_status) {
+                if ($subscription_status->status === 'suspended') {
+                    $member_status = 'paused';
+                    $status_label = 'Paused';
+                } elseif ($subscription_status->status === 'cancelled') {
+                    $member_status = 'cancelled';
+                    $status_label = 'Cancelled';
+                }
+            }
+            if ($latest_txn_expired && $member_status === 'active') {
+                $member_status = 'expired';
+                $status_label = 'Expired';
+            }
+        }
+
+        $is_expired = $latest_txn_expired;
+
         $gateway_label = 'Unknown';
         if ($latest_txn->gateway === 'manual') {
             $gateway_label = 'Manual';
