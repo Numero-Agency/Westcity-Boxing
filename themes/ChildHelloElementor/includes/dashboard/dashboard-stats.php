@@ -1,6 +1,18 @@
 <?php
 // Dashboard Stats Component - Enhanced with Clickable Summary Boxes
 
+function wcb_normalize_dashboard_date($date, $fallback) {
+    $date = is_string($date) ? sanitize_text_field($date) : '';
+
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+        return $fallback;
+    }
+
+    $parsed = DateTime::createFromFormat('!Y-m-d', $date, wp_timezone());
+
+    return $parsed && $parsed->format('Y-m-d') === $date ? $date : $fallback;
+}
+
 function dashboard_stats_shortcode() {
     // Get date range from URL parameters or use defaults
     // Use WordPress timezone for accurate local dates
@@ -8,8 +20,12 @@ function dashboard_stats_shortcode() {
     $now = new DateTime('now', $timezone);
     $thirty_days_ago = new DateTime('-30 days', $timezone);
     
-    $date_from = isset($_GET['date_from']) ? sanitize_text_field($_GET['date_from']) : $thirty_days_ago->format('Y-m-d');
-    $date_to = isset($_GET['date_to']) ? sanitize_text_field($_GET['date_to']) : $now->format('Y-m-d');
+    $date_from = wcb_normalize_dashboard_date($_GET['date_from'] ?? null, $thirty_days_ago->format('Y-m-d'));
+    $date_to = wcb_normalize_dashboard_date($_GET['date_to'] ?? null, $now->format('Y-m-d'));
+
+    if ($date_from > $date_to) {
+        [$date_from, $date_to] = [$date_to, $date_from];
+    }
 
     // Use the proven logic from active-members-test.php for active members counting
     // Get total students breakdown FIRST (active + non-renewed) with payment method breakdown
@@ -48,6 +64,13 @@ function dashboard_stats_shortcode() {
     $class_sessions = get_posts([
         'post_type' => 'session_log',
         'numberposts' => -1,
+        'date_query' => [
+            [
+                'after' => $date_from,
+                'before' => $date_to,
+                'inclusive' => true,
+            ]
+        ],
         'tax_query' => [
             [
                 'taxonomy' => $session_taxonomy,
@@ -60,6 +83,13 @@ function dashboard_stats_shortcode() {
     $interventions = get_posts([
         'post_type' => 'session_log',
         'numberposts' => -1,
+        'date_query' => [
+            [
+                'after' => $date_from,
+                'before' => $date_to,
+                'inclusive' => true,
+            ]
+        ],
         'tax_query' => [
             [
                 'taxonomy' => $session_taxonomy,
@@ -78,7 +108,7 @@ function dashboard_stats_shortcode() {
 
     // Get ethnicity and age data using the EXACT SAME active members logic as the total count
     // This ensures all counts match perfectly
-    $active_member_ids = get_active_member_ids_consistent_with_total($date_from, $date_to);
+    $active_member_ids = array_values(array_unique(array_map('intval', array_column($total_students_breakdown['currently_active_members'], 'user_id'))));
     
     // DEBUG: Log the active member IDs count to verify consistency
     wcb_debug_log("Dashboard Stats DEBUG: Total active member IDs count: " . count($active_member_ids));
@@ -7009,7 +7039,9 @@ function get_total_students_breakdown($date_from, $date_to) {
     // - Gateway is 'manual' or empty = Manual payment
     // ========================================
 
-    // Get all active members with their most recent valid transaction
+    $active_cutoff_date = $date_to ?: current_time('Y-m-d');
+
+    // Get all members active at the selected end date with their most recent valid transaction
     $all_active_members = $wpdb->get_results($wpdb->prepare("
         SELECT t.user_id, u.display_name, u.user_email, t.expires_at,
                p.post_title as membership_name, t.gateway,
@@ -7019,10 +7051,11 @@ function get_total_students_breakdown($date_from, $date_to) {
         JOIN {$wpdb->posts} p ON t.product_id = p.ID
         WHERE t.product_id IN ({$placeholders})
         AND t.status IN ('confirmed', 'complete')
-        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+        AND DATE(t.created_at) <= %s
+        AND (t.expires_at IS NULL OR DATE(t.expires_at) >= %s OR t.expires_at = '0000-00-00 00:00:00')
         AND u.user_login != 'bwgdev'
         ORDER BY t.user_id, t.id DESC
-    ", $program_membership_ids), ARRAY_A);
+    ", array_merge($program_membership_ids, [$active_cutoff_date, $active_cutoff_date])), ARRAY_A);
 
     // DEBUG: Log query results
     wcb_debug_log("=== ACTIVE MEMBERS DEBUG ===");
