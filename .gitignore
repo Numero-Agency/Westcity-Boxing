@@ -52,3 +52,6 @@ languages/
 
 # Claude Code settings (local only)
 .claude/
+
+# Local session transcripts
+session-*.md
