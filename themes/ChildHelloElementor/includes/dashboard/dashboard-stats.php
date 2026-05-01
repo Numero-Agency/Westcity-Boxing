@@ -1464,7 +1464,7 @@ function dashboard_stats_shortcode() {
                     </p>
                     <p class="total-line"><strong>Total Students in Period:</strong> <?php echo $total_students_breakdown['total']; ?></p>
                     <p class="total-line"><strong>Currently Active overall:</strong> <?php echo $total_students_breakdown['active_count']; ?>
-                        <span class="breakdown-detail">(snapshot right now, includes new joiners after this period)</span>
+                        <span class="breakdown-detail">(live snapshot right now &mdash; independent of the selected period)</span>
                     </p>
                 </div>
 
@@ -4222,18 +4222,14 @@ function get_active_members_from_defined_groups($date_from = null, $date_to = nu
                     WHERE t.product_id IN ({$placeholders})
                     AND t.status IN ('confirmed', 'complete')
                     AND (
-                        CASE 
-                            WHEN um_reg.meta_value IS NOT NULL 
-                                AND um_reg.meta_value != '0000-00-00' 
-                                AND um_reg.meta_value != '0000-00-00 00:00:00'
-                                AND um_reg.meta_value != '1970-01-01'
-                                AND um_reg.meta_value != '1970-01-01 00:00:00'
-                            THEN STR_TO_DATE(um_reg.meta_value, '%%d/%%m/%%Y')
-                            ELSE DATE(t.created_at)
-                        END
+                        COALESCE(
+                            STR_TO_DATE(NULLIF(NULLIF(NULLIF(NULLIF(NULLIF(um_reg.meta_value, ''), '0000-00-00'), '0000-00-00 00:00:00'), '1970-01-01'), '1970-01-01 00:00:00'), '%%d/%%m/%%Y'),
+                            STR_TO_DATE(NULLIF(NULLIF(NULLIF(NULLIF(NULLIF(um_reg.meta_value, ''), '0000-00-00'), '0000-00-00 00:00:00'), '1970-01-01'), '1970-01-01 00:00:00'), '%%Y-%%m-%%d'),
+                            DATE(t.created_at)
+                        )
                     ) <= %s
                     AND (
-                        t.expires_at IS NULL 
+                        t.expires_at IS NULL
                         OR t.expires_at = '0000-00-00 00:00:00'
                         OR DATE(t.expires_at) >= %s
                     )
@@ -4278,15 +4274,11 @@ function get_active_members_from_defined_groups($date_from = null, $date_to = nu
             WHERE t.product_id = %d
             AND t.status IN ('confirmed', 'complete')
             AND (
-                CASE 
-                    WHEN um_reg.meta_value IS NOT NULL 
-                        AND um_reg.meta_value != '0000-00-00' 
-                        AND um_reg.meta_value != '0000-00-00 00:00:00'
-                        AND um_reg.meta_value != '1970-01-01'
-                        AND um_reg.meta_value != '1970-01-01 00:00:00'
-                    THEN STR_TO_DATE(um_reg.meta_value, '%%d/%%m/%%Y')
-                    ELSE DATE(t.created_at)
-                END
+                COALESCE(
+                    STR_TO_DATE(NULLIF(NULLIF(NULLIF(NULLIF(NULLIF(um_reg.meta_value, ''), '0000-00-00'), '0000-00-00 00:00:00'), '1970-01-01'), '1970-01-01 00:00:00'), '%%d/%%m/%%Y'),
+                    STR_TO_DATE(NULLIF(NULLIF(NULLIF(NULLIF(NULLIF(um_reg.meta_value, ''), '0000-00-00'), '0000-00-00 00:00:00'), '1970-01-01'), '1970-01-01 00:00:00'), '%%Y-%%m-%%d'),
+                    DATE(t.created_at)
+                )
             ) <= %s
             AND (
                 t.expires_at IS NULL 
@@ -4391,18 +4383,14 @@ function get_active_member_ids_consistent_with_total($date_from = null, $date_to
                     WHERE t.product_id IN ({$placeholders})
                     AND t.status IN ('confirmed', 'complete')
                     AND (
-                        CASE 
-                            WHEN um_reg.meta_value IS NOT NULL 
-                                AND um_reg.meta_value != '0000-00-00' 
-                                AND um_reg.meta_value != '0000-00-00 00:00:00'
-                                AND um_reg.meta_value != '1970-01-01'
-                                AND um_reg.meta_value != '1970-01-01 00:00:00'
-                            THEN STR_TO_DATE(um_reg.meta_value, '%%d/%%m/%%Y')
-                            ELSE DATE(t.created_at)
-                        END
+                        COALESCE(
+                            STR_TO_DATE(NULLIF(NULLIF(NULLIF(NULLIF(NULLIF(um_reg.meta_value, ''), '0000-00-00'), '0000-00-00 00:00:00'), '1970-01-01'), '1970-01-01 00:00:00'), '%%d/%%m/%%Y'),
+                            STR_TO_DATE(NULLIF(NULLIF(NULLIF(NULLIF(NULLIF(um_reg.meta_value, ''), '0000-00-00'), '0000-00-00 00:00:00'), '1970-01-01'), '1970-01-01 00:00:00'), '%%Y-%%m-%%d'),
+                            DATE(t.created_at)
+                        )
                     ) <= %s
                     AND (
-                        t.expires_at IS NULL 
+                        t.expires_at IS NULL
                         OR t.expires_at = '0000-00-00 00:00:00'
                         OR DATE(t.expires_at) >= %s
                     )
@@ -6406,15 +6394,11 @@ function wcb_get_debug_active_members($date_from, $date_to) {
         WHERE t.product_id IN ({$placeholders})
         AND t.status IN ('confirmed', 'complete')
         AND (
-            CASE
-                WHEN um_reg.meta_value IS NOT NULL
-                    AND um_reg.meta_value != '0000-00-00'
-                    AND um_reg.meta_value != '0000-00-00 00:00:00'
-                    AND um_reg.meta_value != '1970-01-01'
-                    AND um_reg.meta_value != '1970-01-01 00:00:00'
-                THEN STR_TO_DATE(um_reg.meta_value, '%%d/%%m/%%Y')
-                ELSE DATE(t.created_at)
-            END
+            COALESCE(
+                STR_TO_DATE(NULLIF(NULLIF(NULLIF(NULLIF(NULLIF(um_reg.meta_value, ''), '0000-00-00'), '0000-00-00 00:00:00'), '1970-01-01'), '1970-01-01 00:00:00'), '%%d/%%m/%%Y'),
+                STR_TO_DATE(NULLIF(NULLIF(NULLIF(NULLIF(NULLIF(um_reg.meta_value, ''), '0000-00-00'), '0000-00-00 00:00:00'), '1970-01-01'), '1970-01-01 00:00:00'), '%%Y-%%m-%%d'),
+                DATE(t.created_at)
+            )
         ) <= %s
         AND (
             t.expires_at IS NULL
@@ -6475,15 +6459,16 @@ function wcb_get_debug_active_members($date_from, $date_to) {
             LIMIT 1
         ", array_merge([$user_id], $all_membership_ids)));
         
-        // Get the LATEST transaction with MAX expiry date
+        // Get the LATEST transaction with MAX expiry date.
+        // LEFT JOIN posts so a user with a valid txn for a missing/orphaned product post still gets classified.
         $latest_txn = $wpdb->get_row($wpdb->prepare("
             SELECT t.*, p.post_title as membership_name
             FROM {$txn_table} t
-            JOIN {$wpdb->posts} p ON t.product_id = p.ID
+            LEFT JOIN {$wpdb->posts} p ON t.product_id = p.ID
             WHERE t.user_id = %d
             AND t.product_id IN ({$placeholders})
             AND t.status IN ('confirmed', 'complete')
-            ORDER BY 
+            ORDER BY
                 CASE WHEN t.expires_at IS NULL OR t.expires_at = '0000-00-00 00:00:00' THEN '9999-12-31' ELSE t.expires_at END DESC,
                 t.created_at DESC
             LIMIT 1
@@ -6932,13 +6917,16 @@ function get_total_students_breakdown($date_from, $date_to) {
     // - Gateway is 'manual' or empty = Manual payment
     // ========================================
 
+    // LEFT JOIN posts so users whose product post is missing/orphaned still count.
+    // Aligns this query's user set with the student-table and dashboard-students Active queries
+    // (which don't join posts at all) and with the debug current_users_query.
     $all_active_members = $wpdb->get_results($wpdb->prepare("
         SELECT t.user_id, u.display_name, u.user_email, t.expires_at,
                p.post_title as membership_name, t.gateway,
                t.id as transaction_id
         FROM {$txn_table} t
         JOIN {$wpdb->users} u ON t.user_id = u.ID
-        JOIN {$wpdb->posts} p ON t.product_id = p.ID
+        LEFT JOIN {$wpdb->posts} p ON t.product_id = p.ID
         WHERE t.product_id IN ({$placeholders})
         AND t.status IN ('confirmed', 'complete')
         AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
