@@ -27,7 +27,6 @@ function dashboard_stats_shortcode() {
         [$date_from, $date_to] = [$date_to, $date_from];
     }
 
-    // Use the proven logic from active-members-test.php for active members counting
     // Get total students breakdown FIRST (active + non-renewed) with payment method breakdown
     // This calculates corrected counts: Active = currently active only (excludes non-renewed)
     $total_students_breakdown = get_total_students_breakdown($date_from, $date_to);
@@ -35,8 +34,8 @@ function dashboard_stats_shortcode() {
     // Use the corrected active count (excludes non-renewed members)
     $total_students = $total_students_breakdown['active_count'];
     
-    // Get non-renewed members within date range (only from defined groups)
-    $non_renewed_members = get_non_renewed_members_from_defined_groups($date_from, $date_to);
+    // Use the same non-renewed member set as the Total Students breakdown.
+    $non_renewed_members = $total_students_breakdown['non_renewed_members'] ?? [];
 
     // Get sessions count filtered by date range
     $sessions_query = new WP_Query([
@@ -1410,10 +1409,10 @@ function dashboard_stats_shortcode() {
                         <div class="breakdown-percentage">100%</div>
                     </div>
                     <div class="breakdown-item active-item">
-                        <div class="breakdown-number"><?php echo $total_students_breakdown['active_count']; ?></div>
-                        <div class="breakdown-label">Active Members</div>
+                        <div class="breakdown-number"><?php echo $total_students_breakdown['period_active_count']; ?></div>
+                        <div class="breakdown-label">Active (still in academy)</div>
                         <div class="breakdown-percentage">
-                            <?php echo $total_students_breakdown['total'] > 0 ? round(($total_students_breakdown['active_count'] / $total_students_breakdown['total']) * 100, 1) : 0; ?>%
+                            <?php echo $total_students_breakdown['total'] > 0 ? round(($total_students_breakdown['period_active_count'] / $total_students_breakdown['total']) * 100, 1) : 0; ?>%
                         </div>
                     </div>
                     <div class="breakdown-item non-renewed-item">
@@ -1454,8 +1453,8 @@ function dashboard_stats_shortcode() {
                 </div>
 
                 <div class="breakdown-summary">
-                    <p><strong>Currently Active:</strong> <?php echo $total_students_breakdown['active_count']; ?>
-                        <span class="breakdown-detail">(Stripe: <?php echo $total_students_breakdown['stripe_count']; ?> | Manual: <?php echo $total_students_breakdown['manual_count']; ?>)</span>
+                    <p><strong>Active (still in academy):</strong> <?php echo $total_students_breakdown['period_active_count']; ?>
+                        <span class="breakdown-detail">(period members currently active)</span>
                     </p>
                     <p><strong>Non-Renewed:</strong> <?php echo $total_students_breakdown['non_renewed_count']; ?>
                         <span class="breakdown-detail">(expired during period, not renewed)</span>
@@ -1464,6 +1463,9 @@ function dashboard_stats_shortcode() {
                         <span class="breakdown-detail">(suspended subscriptions)</span>
                     </p>
                     <p class="total-line"><strong>Total Students in Period:</strong> <?php echo $total_students_breakdown['total']; ?></p>
+                    <p class="total-line"><strong>Currently Active overall:</strong> <?php echo $total_students_breakdown['active_count']; ?>
+                        <span class="breakdown-detail">(snapshot right now, includes new joiners after this period)</span>
+                    </p>
                 </div>
 
                 <!-- Other Active Memberships Section -->
@@ -1484,7 +1486,7 @@ function dashboard_stats_shortcode() {
 
                     <div class="other-memberships-summary">
                         <p><strong>Student Membership Group Total:</strong> <?php echo $total_students_breakdown['active_count']; ?></p>
-                        <p><strong>Total Unique Members:</strong> <?php echo $other_memberships['total_unique']; ?></p>
+                        <p><strong>Unique Competitive/Mentoring Members:</strong> <?php echo $other_memberships['total_unique']; ?></p>
                         <p><span class="dashicons dashicons-superhero"></span> Only Competitive: <?php echo $other_memberships['only_competitive']; ?></p>
                         <p><span class="dashicons dashicons-heart"></span> Only WCB Mentoring: <?php echo $other_memberships['only_mentoring']; ?></p>
                         <p class="status-active"><span class="dashicons dashicons-yes-alt"></span> Student + Competitive: <?php echo $other_memberships['student_and_competitive']; ?></p>
@@ -4264,60 +4266,7 @@ function get_active_members_from_defined_groups($date_from = null, $date_to = nu
         $group_breakdown[$group_name] = $group_member_count;
     }
 
-    // STEP 2: Also include Competitive Team members (ID: 1932) to match dashboard-students.php logic
-    $competitive_team_id = 1932;
-    if ($date_from && $date_to) {
-        $competitive_members = $wpdb->get_results($wpdb->prepare("
-            SELECT DISTINCT u.ID
-            FROM {$wpdb->users} u
-            JOIN {$txn_table} t ON u.ID = t.user_id
-            LEFT JOIN {$wpdb->usermeta} um_reg ON u.ID = um_reg.user_id 
-                AND um_reg.meta_key IN ('mepr_registration_date', 'mepr_date_registered')
-            WHERE t.product_id = %d
-            AND t.status IN ('confirmed', 'complete')
-            AND (
-                CASE 
-                    WHEN um_reg.meta_value IS NOT NULL 
-                        AND um_reg.meta_value != '0000-00-00' 
-                        AND um_reg.meta_value != '0000-00-00 00:00:00'
-                        AND um_reg.meta_value != '1970-01-01'
-                        AND um_reg.meta_value != '1970-01-01 00:00:00'
-                    THEN STR_TO_DATE(um_reg.meta_value, '%%d/%%m/%%Y')
-                    ELSE DATE(t.created_at)
-                END
-            ) <= %s
-            AND (
-                t.expires_at IS NULL 
-                OR t.expires_at = '0000-00-00 00:00:00'
-                OR DATE(t.expires_at) >= %s
-            )
-            AND u.user_login != 'bwgdev'
-        ", $competitive_team_id, $date_to, $date_from));
-    } else {
-        $competitive_members = $wpdb->get_results($wpdb->prepare("
-            SELECT DISTINCT u.ID
-            FROM {$wpdb->users} u
-            JOIN {$txn_table} t ON u.ID = t.user_id
-            WHERE t.product_id = %d
-            AND t.status IN ('confirmed', 'complete')
-            AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-            AND u.user_login != 'bwgdev'
-        ", $competitive_team_id));
-    }
-
-    $competitive_count = count($competitive_members);
-    
-    // Add Competitive Team members to total count (avoiding duplicates)
-    foreach ($competitive_members as $competitive_member) {
-        $total_active_members[$competitive_member->ID] = true;
-    }
-
-    // Add Competitive Team to breakdown if there are members
-    if ($competitive_count > 0) {
-        $group_breakdown['Competitive Team'] = $competitive_count;
-    }
-
-    // STEP 3: Also include WCB Mentoring members (ID: 1738) for the programs breakdown
+    // STEP 2: Also include WCB Mentoring members (ID: 1738) for the programs breakdown only
     $wcb_mentoring_id = 1738;
     if ($date_from && $date_to) {
         $mentoring_members = $wpdb->get_results($wpdb->prepare("
@@ -4482,51 +4431,6 @@ function get_active_member_ids_consistent_with_total($date_from = null, $date_to
         }
     }
 
-    // STEP 2: Also include Competitive Team members (ID: 1932) to match dashboard-students.php logic
-    $competitive_team_id = 1932;
-    if ($date_from && $date_to) {
-        $competitive_members = $wpdb->get_results($wpdb->prepare("
-            SELECT DISTINCT u.ID
-            FROM {$wpdb->users} u
-            JOIN {$txn_table} t ON u.ID = t.user_id
-            LEFT JOIN {$wpdb->usermeta} um_reg ON u.ID = um_reg.user_id 
-                AND um_reg.meta_key IN ('mepr_registration_date', 'mepr_date_registered')
-            WHERE t.product_id = %d
-            AND t.status IN ('confirmed', 'complete')
-            AND (
-                CASE 
-                    WHEN um_reg.meta_value IS NOT NULL 
-                        AND um_reg.meta_value != '0000-00-00' 
-                        AND um_reg.meta_value != '0000-00-00 00:00:00'
-                        AND um_reg.meta_value != '1970-01-01'
-                        AND um_reg.meta_value != '1970-01-01 00:00:00'
-                    THEN STR_TO_DATE(um_reg.meta_value, '%%d/%%m/%%Y')
-                    ELSE DATE(t.created_at)
-                END
-            ) <= %s
-            AND (
-                t.expires_at IS NULL 
-                OR t.expires_at = '0000-00-00 00:00:00'
-                OR DATE(t.expires_at) >= %s
-            )
-            AND u.user_login != 'bwgdev'
-        ", $competitive_team_id, $date_to, $date_from));
-    } else {
-        $competitive_members = $wpdb->get_results($wpdb->prepare("
-            SELECT DISTINCT u.ID
-            FROM {$wpdb->users} u
-            JOIN {$txn_table} t ON u.ID = t.user_id
-            WHERE t.product_id = %d
-            AND t.status IN ('confirmed', 'complete')
-            AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-            AND u.user_login != 'bwgdev'
-        ", $competitive_team_id));
-    }
-
-    foreach ($competitive_members as $competitive_member) {
-        $total_active_members[$competitive_member->ID] = true;
-    }
-
     return array_keys($total_active_members);
 }
 
@@ -4670,10 +4574,6 @@ function get_non_renewed_members_from_defined_groups($date_from, $date_to) {
         }
     }
     
-    // Also include Competitive Team (ID: 1932) in non-renewed checking
-    $competitive_team_id = 1932;
-    $all_group_membership_ids[] = $competitive_team_id;
-
     if (empty($all_group_membership_ids)) {
         return [];
     }
@@ -4706,19 +4606,27 @@ function get_non_renewed_members_from_defined_groups($date_from, $date_to) {
     foreach ($expired_transactions as $expired_txn) {
         $user_id = $expired_txn->user_id;
 
-        // IMPROVED: Check if this user currently has ANY active membership
-        // This handles weekly subscriptions and Stripe renewals properly
-        $has_active_membership = wcb_user_has_active_membership($user_id);
+        $has_active_membership = $wpdb->get_var($wpdb->prepare("
+            SELECT COUNT(*)
+            FROM {$txn_table} t
+            WHERE t.user_id = %d
+            AND t.product_id IN ({$placeholders})
+            AND t.status IN ('confirmed', 'complete')
+            AND DATE(t.created_at) <= %s
+            AND (t.expires_at IS NULL OR DATE(t.expires_at) >= %s OR t.expires_at = '0000-00-00 00:00:00')
+        ", array_merge([$user_id], $all_group_membership_ids, [$date_to, $date_to])));
         
         // ADDITIONAL: Check for renewal transactions after expiry (for edge cases)
         $renewed_membership = $wpdb->get_var($wpdb->prepare("
             SELECT COUNT(*)
             FROM {$txn_table} t
             WHERE t.user_id = %d
+            AND t.product_id IN ({$placeholders})
             AND t.status IN ('confirmed', 'complete')
             AND t.created_at > %s
-            AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-        ", $user_id, $expired_txn->expires_at));
+            AND DATE(t.created_at) <= %s
+            AND (t.expires_at IS NULL OR DATE(t.expires_at) >= %s OR t.expires_at = '0000-00-00 00:00:00')
+        ", array_merge([$user_id], $all_group_membership_ids, [$expired_txn->expires_at, $date_to, $date_to])));
 
         // DEBUG: Log the checks for troubleshooting
         wcb_debug_log("Non-Renewed Check - User ID: {$user_id}, Name: {$expired_txn->display_name}, Program: {$expired_txn->program_name}");
@@ -4731,8 +4639,9 @@ function get_non_renewed_members_from_defined_groups($date_from, $date_to) {
             SELECT COUNT(*)
             FROM {$wpdb->prefix}mepr_subscriptions
             WHERE user_id = %d
+            AND product_id IN ({$placeholders})
             AND status = 'suspended'
-        ", $user_id));
+        ", array_merge([$user_id], $all_group_membership_ids)));
         
         // Only consider non-renewed if ALL conditions are true:
         // 1. No currently active membership AND 
@@ -4763,8 +4672,8 @@ function get_non_renewed_members_from_defined_groups($date_from, $date_to) {
                 $membership_type = 'Full Term';
             }
 
-            // Avoid duplicates (same user with multiple expired memberships)
-            $user_key = $user_id . '_' . $expired_txn->product_id;
+            // Avoid duplicates; the dashboard buckets count unique students.
+            $user_key = $user_id;
             if (!isset($non_renewed_members[$user_key])) {
                 $non_renewed_members[$user_key] = [
                     'user_id' => $user_id,
@@ -4795,23 +4704,61 @@ function get_paused_members_from_defined_groups($date_from, $date_to) {
 
     $subscriptions_table = $wpdb->prefix . 'mepr_subscriptions';
     $txn_table = $wpdb->prefix . 'mepr_transactions';
+
+    $groups = $wpdb->get_results("SELECT ID, post_title FROM {$wpdb->posts} WHERE post_type = 'memberpressgroup' AND post_status IN ('publish', 'private') ORDER BY post_title");
+    $defined_groups = [
+        'Mini Cadet Boys (9-11 Years) Group 1',
+        'Cadet Boys Group 1',
+        'Cadet Boys Group 2',
+        'Youth Boys Group 1',
+        'Youth Boys Group 2',
+        'Mini Cadets Girls Group 1',
+        'Youth Girls Group 1'
+    ];
+
+    $program_membership_ids = [];
+    foreach ($defined_groups as $group_name) {
+        foreach ($groups as $group) {
+            if (strcasecmp($group->post_title, $group_name) === 0) {
+                $group_memberships = wcb_get_group_memberships($group->ID);
+                if (!empty($group_memberships)) {
+                    foreach ($group_memberships as $membership) {
+                        $program_membership_ids[] = (int) $membership->ID;
+                    }
+                }
+                break;
+            }
+        }
+    }
+
+    if (empty($program_membership_ids)) {
+        return [];
+    }
+
+    $placeholders = implode(',', array_fill(0, count($program_membership_ids), '%d'));
     
-    // Get suspended subscriptions where the last transaction expired within the date range
-    // This means the member paused their subscription during or before the selected period
+    // Only count members whose latest core program subscription is currently suspended.
     $query = $wpdb->prepare("
         SELECT s.user_id, s.id as subscription_id, s.product_id, s.status as subscription_status,
                s.created_at as subscription_created,
                u.display_name, u.user_email, p.post_title as program_name,
                (SELECT MAX(t.expires_at) FROM {$txn_table} t WHERE t.subscription_id = s.id) as last_expires_at
         FROM {$subscriptions_table} s
+        JOIN (
+            SELECT user_id, MAX(id) as latest_subscription_id
+            FROM {$subscriptions_table}
+            WHERE product_id IN ({$placeholders})
+            GROUP BY user_id
+        ) latest ON s.id = latest.latest_subscription_id
         JOIN {$wpdb->users} u ON s.user_id = u.ID
         JOIN {$wpdb->posts} p ON s.product_id = p.ID
         WHERE s.status = 'suspended'
+        AND s.product_id IN ({$placeholders})
         HAVING last_expires_at IS NULL 
            OR last_expires_at = '0000-00-00 00:00:00'
            OR DATE(last_expires_at) <= %s
         ORDER BY last_expires_at DESC
-    ", $date_to);
+    ", array_merge($program_membership_ids, $program_membership_ids, [$date_to]));
     
     $all_paused_subscriptions = $wpdb->get_results($query);
 
@@ -5065,9 +5012,6 @@ function get_non_renewed_debug_info($date_from, $date_to) {
         }
     }
     
-    $competitive_team_id = 1932;
-    $all_group_membership_ids[] = $competitive_team_id;
-
     if (empty($all_group_membership_ids)) {
         return [];
     }
@@ -6443,29 +6387,28 @@ function wcb_get_debug_active_members($date_from, $date_to) {
         }
     }
     
-    $competitive_team_id = 1932;
-    $all_membership_ids[] = $competitive_team_id;
-    $membership_to_group[$competitive_team_id] = 'Competitive Team';
-    
     if (empty($all_membership_ids)) {
         return [];
     }
     
     $placeholders = implode(',', array_fill(0, count($all_membership_ids), '%d'));
-    
-    // STEP 1: Get all active user IDs first (same logic as main count)
-    $active_users_query = $wpdb->prepare("
+
+    // STEP 1: Build the universe of users for this debug view.
+    // Union of:
+    //   (a) members active during the selected period (so Paused/Cancelled/Expired buckets reflect period state), and
+    //   (b) members currently active right now (so the Active bucket matches the dashboard Active card and student-table count).
+    $period_users_query = $wpdb->prepare("
         SELECT DISTINCT u.ID as user_id
         FROM {$wpdb->users} u
         JOIN {$txn_table} t ON u.ID = t.user_id
-        LEFT JOIN {$wpdb->usermeta} um_reg ON u.ID = um_reg.user_id 
+        LEFT JOIN {$wpdb->usermeta} um_reg ON u.ID = um_reg.user_id
             AND um_reg.meta_key IN ('mepr_registration_date', 'mepr_date_registered')
         WHERE t.product_id IN ({$placeholders})
         AND t.status IN ('confirmed', 'complete')
         AND (
-            CASE 
-                WHEN um_reg.meta_value IS NOT NULL 
-                    AND um_reg.meta_value != '0000-00-00' 
+            CASE
+                WHEN um_reg.meta_value IS NOT NULL
+                    AND um_reg.meta_value != '0000-00-00'
                     AND um_reg.meta_value != '0000-00-00 00:00:00'
                     AND um_reg.meta_value != '1970-01-01'
                     AND um_reg.meta_value != '1970-01-01 00:00:00'
@@ -6474,14 +6417,28 @@ function wcb_get_debug_active_members($date_from, $date_to) {
             END
         ) <= %s
         AND (
-            t.expires_at IS NULL 
+            t.expires_at IS NULL
             OR t.expires_at = '0000-00-00 00:00:00'
             OR DATE(t.expires_at) >= %s
         )
         AND u.user_login != 'bwgdev'
     ", array_merge($all_membership_ids, [$date_to, $date_from]));
-    
-    $active_user_ids = $wpdb->get_col($active_users_query);
+
+    $period_user_ids = $wpdb->get_col($period_users_query);
+
+    $current_users_query = $wpdb->prepare("
+        SELECT DISTINCT u.ID as user_id
+        FROM {$wpdb->users} u
+        JOIN {$txn_table} t ON u.ID = t.user_id
+        WHERE t.product_id IN ({$placeholders})
+        AND t.status IN ('confirmed', 'complete')
+        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+        AND u.user_login != 'bwgdev'
+    ", $all_membership_ids);
+
+    $current_user_ids = $wpdb->get_col($current_users_query);
+
+    $active_user_ids = array_values(array_unique(array_merge($period_user_ids, $current_user_ids)));
     
     if (empty($active_user_ids)) {
         return [];
@@ -6662,10 +6619,6 @@ function wcb_get_debug_expired_members($date_from, $date_to) {
             }
         }
     }
-    
-    $competitive_team_id = 1932;
-    $all_membership_ids[] = $competitive_team_id;
-    $membership_to_group[$competitive_team_id] = 'Competitive Team';
     
     if (empty($all_membership_ids)) {
         return [];
@@ -6955,6 +6908,7 @@ function get_total_students_breakdown($date_from, $date_to) {
         return [
             'total' => 0,
             'active_count' => 0,
+            'period_active_count' => 0,
             'non_renewed_count' => 0,
             'paused_count' => 0,
             'manual_count' => 0,
@@ -6962,6 +6916,7 @@ function get_total_students_breakdown($date_from, $date_to) {
             'stripe_active_count' => 0,
             'manual_active_count' => 0,
             'paused_members' => [],
+            'non_renewed_members' => [],
             'currently_active_members' => []
         ];
     }
@@ -6969,17 +6924,14 @@ function get_total_students_breakdown($date_from, $date_to) {
     $placeholders = implode(',', array_fill(0, count($program_membership_ids), '%d'));
 
     // ========================================
-    // STEP 1: Get CURRENTLY ACTIVE members (PAID PROGRAM GROUPS ONLY)
-    // A member is currently active if they have a valid transaction with:
-    // - expires_at > NOW or NULL/0000-00-00 (no expiration)
+    // STEP 1: Get CURRENTLY ACTIVE members right now (PAID PROGRAM GROUPS ONLY)
+    // Active = a valid program transaction whose expires_at is in the future (or NULL).
+    // No period restriction here - "Active" is a snapshot of who is paying right now.
     // Payment type is determined by the transaction's gateway field:
-    // - Gateway contains 'stripe' = Stripe payment
+    // - Gateway contains 'stripe' (or sz...) = Stripe payment
     // - Gateway is 'manual' or empty = Manual payment
     // ========================================
 
-    $active_cutoff_date = $date_to ?: current_time('Y-m-d');
-
-    // Get all members active at the selected end date with their most recent valid transaction
     $all_active_members = $wpdb->get_results($wpdb->prepare("
         SELECT t.user_id, u.display_name, u.user_email, t.expires_at,
                p.post_title as membership_name, t.gateway,
@@ -6989,11 +6941,10 @@ function get_total_students_breakdown($date_from, $date_to) {
         JOIN {$wpdb->posts} p ON t.product_id = p.ID
         WHERE t.product_id IN ({$placeholders})
         AND t.status IN ('confirmed', 'complete')
-        AND DATE(t.created_at) <= %s
-        AND (t.expires_at IS NULL OR DATE(t.expires_at) >= %s OR t.expires_at = '0000-00-00 00:00:00')
+        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
         AND u.user_login != 'bwgdev'
         ORDER BY t.user_id, t.id DESC
-    ", array_merge($program_membership_ids, [$active_cutoff_date, $active_cutoff_date])), ARRAY_A);
+    ", $program_membership_ids), ARRAY_A);
 
     // DEBUG: Log query results
     wcb_debug_log("=== ACTIVE MEMBERS DEBUG ===");
@@ -7016,14 +6967,7 @@ function get_total_students_breakdown($date_from, $date_to) {
         // Determine payment source based on gateway field
         $gateway = strtolower($member['gateway'] ?? '');
 
-        // If gateway is 'manual' or empty = Manual payment
-        // Otherwise it's an online payment (Stripe) - gateway could be ID like 'sz7gj0-4lm' or 'MeproStripeGateway'
-        if (empty($gateway) || $gateway === 'manual' || $gateway === 'free') {
-            $member['source'] = 'manual';
-        } else {
-            // Any other gateway value is considered Stripe/online payment
-            $member['source'] = 'stripe';
-        }
+        $member['source'] = (!empty($gateway) && $gateway !== 'manual' && $gateway !== 'free' && (strpos($gateway, 'stripe') !== false || preg_match('/^sz[a-z0-9\-]+$/', $gateway))) ? 'stripe' : 'manual';
 
         wcb_debug_log("  User: {$member['display_name']}, Gateway: '{$member['gateway']}', Source: {$member['source']}");
 
@@ -7038,15 +6982,45 @@ function get_total_students_breakdown($date_from, $date_to) {
     $paused_count = count($paused_members);
     $paused_user_ids = array_column($paused_members, 'user_id');
 
-    // Remove paused members from active members list
-    $currently_active_members = array_filter($currently_active_members, function($member) use ($paused_user_ids) {
-        return !in_array($member['user_id'], $paused_user_ids);
-    });
-    $currently_active_members = array_values($currently_active_members); // Re-index array
+    // ========================================
+    // STEP 4: Get NON-RENEWED members
+    // These are members who were active during the period but are NOT currently active and NOT paused
+    // ========================================
+    $all_active_during_period = get_active_members_from_defined_groups($date_from, $date_to);
+    $all_during_period_count = $all_active_during_period['total_count'];
 
-    $currently_active_user_ids = array_column($currently_active_members, 'user_id');
+    // Get all member IDs who were active during period
+    $all_during_period_ids = get_active_member_ids_consistent_with_total($date_from, $date_to);
+    $all_during_period_ids = array_map('intval', $all_during_period_ids);
 
-    // Count by source (after excluding paused members)
+    $paused_members = array_values(array_filter($paused_members, function($member) use ($all_during_period_ids) {
+        return in_array((int) $member['user_id'], $all_during_period_ids, true);
+    }));
+    $paused_count = count($paused_members);
+    $paused_user_ids = array_map('intval', array_column($paused_members, 'user_id'));
+
+    $currently_active_members = array_values(array_filter($currently_active_members, function($member) use ($paused_user_ids, $wpdb, $subscriptions_table, $placeholders, $program_membership_ids) {
+        $user_id = (int) $member['user_id'];
+
+        if (in_array($user_id, $paused_user_ids, true)) {
+            return false;
+        }
+
+        $latest_subscription_status = $wpdb->get_var($wpdb->prepare("
+            SELECT status
+            FROM {$subscriptions_table}
+            WHERE user_id = %d
+            AND product_id IN ({$placeholders})
+            ORDER BY id DESC
+            LIMIT 1
+        ", array_merge([$user_id], $program_membership_ids)));
+
+        return !in_array($latest_subscription_status, ['suspended', 'cancelled'], true);
+    }));
+
+    $currently_active_user_ids = array_map('intval', array_column($currently_active_members, 'user_id'));
+
+    // Count by source after aligning to the same period universe and excluding paused members.
     $stripe_active_count = 0;
     $manual_active_count = 0;
     foreach ($currently_active_members as $member) {
@@ -7058,29 +7032,27 @@ function get_total_students_breakdown($date_from, $date_to) {
     }
     $active_count = count($currently_active_members);
 
-    wcb_debug_log("Active count: {$active_count}, Stripe: {$stripe_active_count}, Manual: {$manual_active_count}");
+    // Period-aligned active count: members who were active during the selected period AND are still active now.
+    // Used by the period breakdown popup so its buckets sum to Total Students.
+    $period_active_user_ids = array_intersect($currently_active_user_ids, $all_during_period_ids);
+    $period_active_count = count($period_active_user_ids);
 
-    // ========================================
-    // STEP 4: Get NON-RENEWED members
-    // These are members who were active during the period but are NOT currently active and NOT paused
-    // ========================================
-    $all_active_during_period = get_active_members_from_defined_groups($date_from, $date_to);
-    $all_during_period_count = $all_active_during_period['total_count'];
-
-    // Get all member IDs who were active during period
-    $all_during_period_ids = get_active_member_ids_consistent_with_total($date_from, $date_to);
+    wcb_debug_log("Active count (now): {$active_count}, Period-aligned active: {$period_active_count}, Stripe: {$stripe_active_count}, Manual: {$manual_active_count}");
 
     // Non-renewed = was active during period BUT NOT currently active AND NOT paused
     $non_renewed_user_ids = array_diff($all_during_period_ids, $currently_active_user_ids, $paused_user_ids);
-    $non_renewed_count = count($non_renewed_user_ids);
 
     // Get non-renewed member details for display
     $non_renewed_members = get_non_renewed_members_from_defined_groups($date_from, $date_to);
+    $non_renewed_members = array_values(array_filter($non_renewed_members, function($member) use ($non_renewed_user_ids) {
+        return in_array((int) $member['user_id'], array_map('intval', $non_renewed_user_ids), true);
+    }));
+    $non_renewed_count = count($non_renewed_user_ids);
 
     // ========================================
     // STEP 5: Calculate totals
     // ========================================
-    // Total = everyone who was active during period (historical view)
+    // Total is the same period-membership universe shown in the debug table.
     $total_count = $all_during_period_count;
 
     // For payment breakdown, use the currently active members
@@ -7098,6 +7070,7 @@ function get_total_students_breakdown($date_from, $date_to) {
     return [
         'total' => $total_count,
         'active_count' => $active_count,
+        'period_active_count' => $period_active_count,
         'non_renewed_count' => $non_renewed_count,
         'paused_count' => $paused_count,
         'manual_count' => $manual_count,
@@ -7105,6 +7078,7 @@ function get_total_students_breakdown($date_from, $date_to) {
         'stripe_active_count' => $stripe_active_count,
         'manual_active_count' => $manual_active_count,
         'paused_members' => $paused_members,
+        'non_renewed_members' => $non_renewed_members,
         'currently_active_members' => $currently_active_members
     ];
 }

@@ -231,6 +231,7 @@ function wcb_get_membership_status_counts() {
             'waitlist' => 0,
             'inactive' => 0,
             'wcb_mentoring' => 0,
+            'paid_stripe' => 0,
             'total' => 0
         ];
     }
@@ -248,24 +249,7 @@ function wcb_get_membership_status_counts() {
 
     $all_groups = $wpdb->get_results("SELECT ID, post_title FROM {$wpdb->posts} WHERE post_type = 'memberpressgroup' AND post_status IN ('publish', 'private') ORDER BY post_title");
 
-    $total_active_count = 0;
-
-    // Step 1: Get ALL active members first (excluding mentoring and competitive)
-    $wcb_mentoring_id = 1738;
-    $competitive_team_id = 1932;
-    $all_active_members = $wpdb->get_results($wpdb->prepare("
-        SELECT DISTINCT u.ID, u.display_name
-        FROM {$wpdb->users} u
-        JOIN {$txn_table} t ON u.ID = t.user_id
-        WHERE t.status IN ('confirmed', 'complete')
-        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-        AND t.product_id NOT IN (%d, %d)
-        AND u.user_login != 'bwgdev'
-        ORDER BY u.ID
-    ", $wcb_mentoring_id, $competitive_team_id));
-
-    // Step 2: Filter by groups (same as active-members-test.php)
-    $program_group_members = [];
+    $program_membership_ids = [];
 
     foreach ($defined_groups as $group_name) {
         // Find the group - exact matching (same as active-members-test.php)
@@ -281,35 +265,62 @@ function wcb_get_membership_status_counts() {
             continue; // Group not found
         }
 
-        // Use the EXACT same logic as active-members-test.php
         $group_memberships = wcb_get_group_memberships($group->ID);
 
         if (!empty($group_memberships)) {
-            $membership_ids = array_map(function($m) { return $m->ID; }, $group_memberships);
-
-            // Check each active member to see if they belong to this group (same as active-members-test.php)
-            foreach ($all_active_members as $active_member) {
-                // Get their current transaction
-                $user_transaction = $wpdb->get_row($wpdb->prepare("
-                    SELECT t.*, p.post_title as membership_name
-                    FROM {$txn_table} t
-                    LEFT JOIN {$wpdb->posts} p ON t.product_id = p.ID
-                    WHERE t.user_id = %d
-                    AND t.status IN ('confirmed', 'complete')
-                    AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-                    AND t.product_id NOT IN (%d, %d)
-                    ORDER BY t.created_at DESC
-                    LIMIT 1
-                ", $active_member->ID, $wcb_mentoring_id, $competitive_team_id));
-
-                if ($user_transaction && in_array($user_transaction->product_id, $membership_ids)) {
-                    $program_group_members[$active_member->ID] = $active_member;
-                }
+            foreach ($group_memberships as $membership) {
+                $program_membership_ids[] = (int) $membership->ID;
             }
         }
     }
 
-    $total_active_count = count($program_group_members);
+    $program_membership_ids = array_values(array_unique($program_membership_ids));
+    $total_active_count = 0;
+
+    if (!empty($program_membership_ids)) {
+        $program_placeholders = implode(',', array_fill(0, count($program_membership_ids), '%d'));
+        $subscriptions_table = $wpdb->prefix . 'mepr_subscriptions';
+        $total_active_count = $wpdb->get_var($wpdb->prepare("
+            SELECT COUNT(DISTINCT u.ID)
+            FROM {$wpdb->users} u
+            JOIN {$txn_table} t ON u.ID = t.user_id
+            WHERE t.status IN ('confirmed', 'complete')
+            AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+            AND t.product_id IN ({$program_placeholders})
+            AND u.user_login != 'bwgdev'
+            AND COALESCE((
+                SELECT s.status
+                FROM {$subscriptions_table} s
+                WHERE s.user_id = u.ID
+                AND s.product_id IN ({$program_placeholders})
+                ORDER BY s.id DESC
+                LIMIT 1
+            ), '') NOT IN ('suspended', 'cancelled')
+        ", array_merge($program_membership_ids, $program_membership_ids)));
+    }
+
+    $inactive_count = 0;
+    if (!empty($program_membership_ids)) {
+        $program_placeholders = implode(',', array_fill(0, count($program_membership_ids), '%d'));
+        $inactive_count = $wpdb->get_var($wpdb->prepare("
+            SELECT COUNT(DISTINCT u.ID)
+            FROM {$wpdb->users} u
+            JOIN {$txn_table} t ON u.ID = t.user_id
+            WHERE t.product_id IN ({$program_placeholders})
+            AND (
+                t.status IN ('cancelled', 'failed', 'refunded')
+                OR (t.expires_at IS NOT NULL AND t.expires_at != '0000-00-00 00:00:00' AND t.expires_at <= NOW())
+            )
+            AND u.user_login != 'bwgdev'
+            AND u.ID NOT IN (
+                SELECT DISTINCT t2.user_id
+                FROM {$txn_table} t2
+                WHERE t2.product_id IN ({$program_placeholders})
+                AND t2.status IN ('confirmed', 'complete')
+                AND (t2.expires_at IS NULL OR t2.expires_at > NOW() OR t2.expires_at = '0000-00-00 00:00:00')
+            )
+        ", array_merge($program_membership_ids, $program_membership_ids)));
+    }
 
     // Get waitlist members count (separate from program groups)
     $waitlist_count = $wpdb->get_var("
@@ -328,12 +339,13 @@ function wcb_get_membership_status_counts() {
     $paid_stripe_count = wcb_get_paid_stripe_members_count();
 
     // Get WCB Mentoring members count (MemberPress + processed referrals)
+    $wcb_mentoring_id = 1738;
     $wcb_mentoring_count = function_exists('wcb_get_mentoring_program_members') ? count(wcb_get_mentoring_program_members()) : wcb_get_program_member_count($wcb_mentoring_id);
 
     return [
         'active' => (int) $total_active_count,
         'waitlist' => (int) $waitlist_count,
-        'inactive' => 0,
+        'inactive' => (int) $inactive_count,
         'wcb_mentoring' => (int) $wcb_mentoring_count,
         'paid_stripe' => (int) $paid_stripe_count,
         'total' => (int) ($total_active_count + $waitlist_count)
@@ -388,6 +400,7 @@ function wcb_get_paid_stripe_members_count() {
     }
 
     $placeholders = implode(',', array_fill(0, count($program_membership_ids), '%d'));
+    $subscriptions_table = $wpdb->prefix . 'mepr_subscriptions';
 
     // Get Stripe members from the 7 core student program groups only.
     $stripe_members = $wpdb->get_results($wpdb->prepare("
@@ -398,11 +411,19 @@ function wcb_get_paid_stripe_members_count() {
         AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
         AND t.product_id IN ({$placeholders})
         AND u.user_login != 'bwgdev'
+        AND COALESCE((
+            SELECT s.status
+            FROM {$subscriptions_table} s
+            WHERE s.user_id = u.ID
+            AND s.product_id IN ({$placeholders})
+            ORDER BY s.id DESC
+            LIMIT 1
+        ), '') NOT IN ('suspended', 'cancelled')
         AND t.gateway IS NOT NULL
         AND t.gateway != ''
         AND t.gateway != 'manual'
         AND (t.gateway LIKE '%%stripe%%' OR t.gateway REGEXP '^sz[a-z0-9\\-]+$')
-    ", $program_membership_ids));
+    ", array_merge($program_membership_ids, $program_membership_ids)));
     
     return count($stripe_members);
 }
@@ -1087,25 +1108,7 @@ function wcb_ajax_load_dashboard_students_table() {
         }
     }
 
-    // Use EXACT same two-step approach as active-members-test.php
     $txn_table = $wpdb->prefix . 'mepr_transactions';
-    $wcb_mentoring_id = 1738;
-    $competitive_team_id = 1932; // Competitive Team membership ID
-
-    // Step 1: Get ALL active members first (excluding mentoring and competitive)
-    $all_active_members = $wpdb->get_results($wpdb->prepare("
-        SELECT DISTINCT u.ID, u.display_name, u.user_email, u.user_registered
-        FROM {$wpdb->users} u
-        JOIN {$txn_table} t ON u.ID = t.user_id
-        WHERE t.status IN ('confirmed', 'complete')
-        AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-        AND t.product_id NOT IN (%d, %d)
-        AND u.user_login != 'bwgdev'
-        ORDER BY u.ID
-    ", $wcb_mentoring_id, $competitive_team_id));
-
-    // Step 2: Filter by groups (same as active-members-test.php)
-    $all_program_members = [];
     $program_membership_ids = [];
 
     foreach ($defined_groups as $group_name) {
@@ -1122,37 +1125,40 @@ function wcb_ajax_load_dashboard_students_table() {
             continue; // Group not found
         }
 
-        // Use the EXACT same logic as active-members-test.php
         $group_memberships = wcb_get_group_memberships($group->ID);
 
         if (!empty($group_memberships)) {
-            $membership_ids = array_map(function($m) { return $m->ID; }, $group_memberships);
-            $program_membership_ids = array_merge($program_membership_ids, $membership_ids);
-
-            // Check each active member to see if they belong to this group (same as active-members-test.php)
-            foreach ($all_active_members as $active_member) {
-                // Get their current transaction
-                $user_transaction = $wpdb->get_row($wpdb->prepare("
-                    SELECT t.*, p.post_title as membership_name
-                    FROM {$txn_table} t
-                    LEFT JOIN {$wpdb->posts} p ON t.product_id = p.ID
-                    WHERE t.user_id = %d
-                    AND t.status IN ('confirmed', 'complete')
-                    AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-                    AND t.product_id NOT IN (%d, %d)
-                    ORDER BY t.created_at DESC
-                    LIMIT 1
-                ", $active_member->ID, $wcb_mentoring_id, $competitive_team_id));
-
-                if ($user_transaction && in_array($user_transaction->product_id, $membership_ids)) {
-                    $all_program_members[$active_member->ID] = $active_member;
-                }
+            foreach ($group_memberships as $membership) {
+                $program_membership_ids[] = (int) $membership->ID;
             }
         }
     }
 
-    // Convert to array and apply search filter
-    $filtered_members = array_values($all_program_members);
+    $program_membership_ids = array_values(array_unique($program_membership_ids));
+    $filtered_members = [];
+
+    if (!empty($program_membership_ids)) {
+        $program_placeholders = implode(',', array_fill(0, count($program_membership_ids), '%d'));
+        $subscriptions_table = $wpdb->prefix . 'mepr_subscriptions';
+        $filtered_members = $wpdb->get_results($wpdb->prepare("
+            SELECT DISTINCT u.ID, u.display_name, u.user_email, u.user_registered
+            FROM {$wpdb->users} u
+            JOIN {$txn_table} t ON u.ID = t.user_id
+            WHERE t.status IN ('confirmed', 'complete')
+            AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+            AND t.product_id IN ({$program_placeholders})
+            AND u.user_login != 'bwgdev'
+            AND COALESCE((
+                SELECT s.status
+                FROM {$subscriptions_table} s
+                WHERE s.user_id = u.ID
+                AND s.product_id IN ({$program_placeholders})
+                ORDER BY s.id DESC
+                LIMIT 1
+            ), '') NOT IN ('suspended', 'cancelled')
+            ORDER BY u.display_name ASC
+        ", array_merge($program_membership_ids, $program_membership_ids)));
+    }
 
     if (!empty($search)) {
         $filtered_members = array_filter($filtered_members, function($user) use ($search) {
@@ -1239,9 +1245,63 @@ function wcb_ajax_load_dashboard_students_table() {
                 $target_members[] = $member;
             }
         }
+    } elseif ($membership_status === 'inactive') {
+        $target_members = [];
+        if (!empty($program_membership_ids)) {
+            $program_placeholders = implode(',', array_fill(0, count($program_membership_ids), '%d'));
+            $target_members = $wpdb->get_results($wpdb->prepare("
+                SELECT DISTINCT u.ID, u.display_name, u.user_email, u.user_registered
+                FROM {$wpdb->users} u
+                JOIN {$txn_table} t ON u.ID = t.user_id
+                WHERE t.product_id IN ({$program_placeholders})
+                AND (
+                    t.status IN ('cancelled', 'failed', 'refunded')
+                    OR (t.expires_at IS NOT NULL AND t.expires_at != '0000-00-00 00:00:00' AND t.expires_at <= NOW())
+                )
+                AND u.user_login != 'bwgdev'
+                AND u.ID NOT IN (
+                    SELECT DISTINCT t2.user_id
+                    FROM {$txn_table} t2
+                    WHERE t2.product_id IN ({$program_placeholders})
+                    AND t2.status IN ('confirmed', 'complete')
+                    AND (t2.expires_at IS NULL OR t2.expires_at > NOW() OR t2.expires_at = '0000-00-00 00:00:00')
+                )
+                ORDER BY u.display_name ASC
+            ", array_merge($program_membership_ids, $program_membership_ids)));
+        }
+    } elseif ($membership_status === 'all') {
+        $target_members = [];
+        foreach ($filtered_members as $member) {
+            $target_members[$member->ID] = $member;
+        }
+
+        $waitlist_members = $wpdb->get_results("
+            SELECT DISTINCT u.ID, u.display_name, u.user_email, u.user_registered
+            FROM {$wpdb->users} u
+            JOIN {$txn_table} t ON u.ID = t.user_id
+            JOIN {$wpdb->posts} p ON t.product_id = p.ID
+            WHERE t.status IN ('confirmed', 'complete')
+            AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+            AND p.post_type = 'memberpressproduct'
+            AND p.post_title LIKE '%waitlist%'
+            AND u.user_login != 'bwgdev'
+            ORDER BY u.display_name ASC
+        ");
+
+        foreach ($waitlist_members as $member) {
+            $target_members[$member->ID] = $member;
+        }
+
+        $target_members = array_values($target_members);
     } else {
         // Default: active members (from program groups)
         $target_members = $filtered_members;
+    }
+
+    if (!empty($search) && in_array($membership_status, ['inactive', 'all'], true)) {
+        $target_members = array_values(array_filter($target_members, function($user) use ($search) {
+            return (stripos($user->display_name, $search) !== false || stripos($user->user_email, $search) !== false);
+        }));
     }
 
     if (empty($target_members)) {
@@ -1790,6 +1850,36 @@ function wcb_ajax_export_students() {
     $wcb_mentoring_id = 1738;
     $competitive_team_id = 1932;
 
+    $defined_groups = [
+        'Mini Cadet Boys (9-11 Years) Group 1',
+        'Cadet Boys Group 1',
+        'Cadet Boys Group 2',
+        'Youth Boys Group 1',
+        'Youth Boys Group 2',
+        'Mini Cadets Girls Group 1',
+        'Youth Girls Group 1'
+    ];
+    $all_groups = $wpdb->get_results("SELECT ID, post_title FROM {$wpdb->posts} WHERE post_type = 'memberpressgroup' AND post_status IN ('publish', 'private') ORDER BY post_title");
+    $program_membership_ids = [];
+
+    foreach ($defined_groups as $group_name) {
+        foreach ($all_groups as $group) {
+            if (strcasecmp($group->post_title, $group_name) === 0) {
+                $group_memberships = wcb_get_group_memberships($group->ID);
+                if (!empty($group_memberships)) {
+                    foreach ($group_memberships as $membership) {
+                        $program_membership_ids[] = (int) $membership->ID;
+                    }
+                }
+                break;
+            }
+        }
+    }
+
+    $program_membership_ids = array_values(array_unique($program_membership_ids));
+    $program_placeholders = !empty($program_membership_ids) ? implode(',', $program_membership_ids) : '0';
+    $subscriptions_table = $wpdb->prefix . 'mepr_subscriptions';
+
     // Build query based on status (same logic as table loading)
     $base_where = "WHERE u.user_login != 'bwgdev'";
 
@@ -1809,7 +1899,15 @@ function wcb_ajax_export_students() {
                 {$base_where}
                 AND t.status IN ('confirmed', 'complete')
                 AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-                AND t.product_id NOT IN ({$wcb_mentoring_id}, {$competitive_team_id})
+                AND t.product_id IN ({$program_placeholders})
+                AND COALESCE((
+                    SELECT s.status
+                    FROM {$subscriptions_table} s
+                    WHERE s.user_id = u.ID
+                    AND s.product_id IN ({$program_placeholders})
+                    ORDER BY s.id DESC
+                    LIMIT 1
+                ), '') NOT IN ('suspended', 'cancelled')
                 {$search_where}
                 ORDER BY u.display_name
             ";
@@ -1837,12 +1935,17 @@ function wcb_ajax_export_students() {
                 FROM {$wpdb->users} u
                 JOIN {$txn_table} t ON u.ID = t.user_id
                 {$base_where}
+                AND t.product_id IN ({$program_placeholders})
+                AND (
+                    t.status IN ('cancelled', 'failed', 'refunded')
+                    OR (t.expires_at IS NOT NULL AND t.expires_at != '0000-00-00 00:00:00' AND t.expires_at <= NOW())
+                )
                 AND u.ID NOT IN (
                     SELECT DISTINCT t2.user_id
                     FROM {$txn_table} t2
                     WHERE t2.status IN ('confirmed', 'complete')
                     AND (t2.expires_at IS NULL OR t2.expires_at > NOW() OR t2.expires_at = '0000-00-00 00:00:00')
-                    AND t2.product_id != {$wcb_mentoring_id}
+                    AND t2.product_id IN ({$program_placeholders})
                 )
                 {$search_where}
                 ORDER BY u.display_name
@@ -1903,7 +2006,15 @@ function wcb_ajax_export_students() {
                 {$base_where}
                 AND t.status IN ('confirmed', 'complete')
                 AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-                AND t.product_id NOT IN ({$wcb_mentoring_id}, {$competitive_team_id})
+                AND t.product_id IN ({$program_placeholders})
+                AND COALESCE((
+                    SELECT s.status
+                    FROM {$subscriptions_table} s
+                    WHERE s.user_id = u.ID
+                    AND s.product_id IN ({$program_placeholders})
+                    ORDER BY s.id DESC
+                    LIMIT 1
+                ), '') NOT IN ('suspended', 'cancelled')
                 AND t.gateway IS NOT NULL
                 AND t.gateway != ''
                 AND t.gateway != 'manual'
@@ -1918,7 +2029,14 @@ function wcb_ajax_export_students() {
                 SELECT DISTINCT u.ID, u.display_name, u.user_email, u.user_registered
                 FROM {$wpdb->users} u
                 JOIN {$txn_table} t ON u.ID = t.user_id
+                JOIN {$wpdb->posts} p ON t.product_id = p.ID
                 {$base_where}
+                AND t.status IN ('confirmed', 'complete')
+                AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
+                AND (
+                    t.product_id IN ({$program_placeholders})
+                    OR (p.post_type = 'memberpressproduct' AND p.post_title LIKE '%Waitlist%')
+                )
                 {$search_where}
                 ORDER BY u.display_name
             ";
