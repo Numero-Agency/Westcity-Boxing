@@ -188,6 +188,32 @@ function wcb_register_custom_post_types() {
 }
 add_action('init', 'wcb_register_custom_post_types');
 
+// Block direct front-end access to private CRM content (referrals, session logs,
+// session_type taxonomy archives). Logged-out visitors and non-staff users are
+// redirected to the home page. Staff = anyone who can edit_posts or has the
+// 'coach' role.
+add_action('template_redirect', 'wcb_protect_private_crm_content', 1);
+
+function wcb_protect_private_crm_content() {
+    if (is_admin() || wp_doing_ajax() || wp_doing_cron()) {
+        return;
+    }
+    $is_private_content =
+        is_singular('referral') ||
+        is_singular('session_log') ||
+        is_tax('session_type');
+    if (!$is_private_content) {
+        return;
+    }
+    $current_user = wp_get_current_user();
+    $is_staff = current_user_can('edit_posts') || in_array('coach', (array) $current_user->roles, true);
+    if ($is_staff) {
+        return;
+    }
+    wp_safe_redirect(home_url('/'), 302);
+    exit;
+}
+
 // Flush rewrite rules when theme is activated
 function wcb_flush_rewrite_rules() {
     wcb_register_custom_post_types();
