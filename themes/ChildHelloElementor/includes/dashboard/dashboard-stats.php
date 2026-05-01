@@ -2016,7 +2016,7 @@ function dashboard_stats_shortcode() {
         background: #f6f8fa;
         border: 1px solid #d0d7de;
         border-radius: 4px;
-        color: #1d2327;
+        color: #1d2327 !important;
         font-size: 13px;
         font-weight: 600;
         text-decoration: none;
