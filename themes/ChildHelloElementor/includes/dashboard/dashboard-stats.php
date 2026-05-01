@@ -253,7 +253,7 @@ function dashboard_stats_shortcode() {
         <div class="stat-card referrals">
             <h3><?php echo $total_referrals; ?></h3>
             <p><span class="dashicons dashicons-share"></span> Total Referrals</p>
-            <small>During selected period</small>
+            <small>All referral records</small>
         </div>
         <div class="stat-card schools clickable-stat" data-popup="schools">
             <h3><?php echo $total_schools; ?></h3>
@@ -1483,7 +1483,15 @@ function dashboard_stats_shortcode() {
                     </div>
 
                     <div class="other-memberships-summary">
+                        <p><strong>Student Membership Group Total:</strong> <?php echo $total_students_breakdown['active_count']; ?></p>
                         <p><strong>Total Unique Members:</strong> <?php echo $other_memberships['total_unique']; ?></p>
+                        <p><span class="dashicons dashicons-superhero"></span> Only Competitive: <?php echo $other_memberships['only_competitive']; ?></p>
+                        <p><span class="dashicons dashicons-heart"></span> Only WCB Mentoring: <?php echo $other_memberships['only_mentoring']; ?></p>
+                        <p class="status-active"><span class="dashicons dashicons-yes-alt"></span> Student + Competitive: <?php echo $other_memberships['student_and_competitive']; ?></p>
+                        <p class="status-active"><span class="dashicons dashicons-yes-alt"></span> Student + WCB Mentoring: <?php echo $other_memberships['student_and_mentoring']; ?></p>
+                        <?php if (!empty($other_memberships['student_competitive_and_mentoring'])): ?>
+                        <p class="status-active"><span class="dashicons dashicons-yes-alt"></span> Student + Competitive + WCB Mentoring: <?php echo $other_memberships['student_competitive_and_mentoring']; ?></p>
+                        <?php endif; ?>
                         <p class="status-active"><span class="dashicons dashicons-yes-alt"></span> Also Active in Program: <?php echo $other_memberships['overlap_with_active_programs']; ?></p>
                         <p class="status-expired"><span class="dashicons dashicons-warning"></span> Program Expired (still in Competitive/Mentoring): <?php echo $other_memberships['with_expired_programs']; ?></p>
                         <p class="status-none"><span class="dashicons dashicons-minus"></span> Only Competitive/Mentoring (no program): <?php echo $other_memberships['only_other_memberships']; ?></p>
@@ -6032,87 +6040,17 @@ function get_total_competitions_count() {
 
 // Helper function to get referrals count in date range
 function get_referrals_count_in_date_range($date_from, $date_to) {
-    global $wpdb;
-    
-    // Method 1: Check for referrals stored as custom post type using referral_date field
-    // This is the correct method for your referral form submissions
     $referrals_query = new WP_Query([
         'post_type' => 'referral',
         'post_status' => 'publish',
         'posts_per_page' => -1,
-        'meta_query' => [
-            [
-                'key' => 'referral_date',
-                'value' => [$date_from, $date_to],
-                'compare' => 'BETWEEN',
-                'type' => 'DATE'
-            ]
-        ],
-        'fields' => 'ids' // Only get IDs for performance
+        'fields' => 'ids'
     ]);
-    
+
     $referrals_count = $referrals_query->found_posts;
     wp_reset_postdata();
-    
-    if ($referrals_count > 0) {
-        return $referrals_count;
-    }
-    
-    // Method 2: Check for referrals stored in user meta during date range
-    // This looks for users who were referred during the date range
-    $referrals_meta = $wpdb->get_results($wpdb->prepare("
-        SELECT COUNT(DISTINCT u.ID) as referral_count
-        FROM {$wpdb->users} u
-        JOIN {$wpdb->usermeta} um ON u.ID = um.user_id
-        WHERE um.meta_key = 'referral_date'
-        AND DATE(um.meta_value) BETWEEN %s AND %s
-        AND um.meta_value IS NOT NULL
-        AND um.meta_value != ''
-    ", $date_from, $date_to));
-    
-    if (!empty($referrals_meta) && $referrals_meta[0]->referral_count > 0) {
-        return intval($referrals_meta[0]->referral_count);
-    }
-    
-    // Method 3: Check for referrals stored as user registrations with referral info
-    // This looks for users who registered during the date range and have referral data
-    $referrals_users = $wpdb->get_results($wpdb->prepare("
-        SELECT COUNT(DISTINCT u.ID) as referral_count
-        FROM {$wpdb->users} u
-        JOIN {$wpdb->usermeta} um ON u.ID = um.user_id
-        WHERE um.meta_key IN ('referred_by', 'referral_source', 'mepr_referral_code')
-        AND DATE(u.user_registered) BETWEEN %s AND %s
-        AND um.meta_value IS NOT NULL
-        AND um.meta_value != ''
-    ", $date_from, $date_to));
-    
-    if (!empty($referrals_users) && $referrals_users[0]->referral_count > 0) {
-        return intval($referrals_users[0]->referral_count);
-    }
-    
-    // Method 4: Check if MemberPress has referral data
-    $txn_table = $wpdb->prefix . 'mepr_transactions';
-    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$txn_table'") == $txn_table;
-    
-    if ($table_exists) {
-        // Check for referral data in MemberPress transactions
-        $mp_referrals = $wpdb->get_results($wpdb->prepare("
-            SELECT COUNT(DISTINCT t.user_id) as referral_count
-            FROM {$txn_table} t
-            JOIN {$wpdb->usermeta} um ON t.user_id = um.user_id
-            WHERE um.meta_key IN ('mepr_referral_code', 'mepr_referred_by')
-            AND DATE(t.created_at) BETWEEN %s AND %s
-            AND t.status IN ('confirmed', 'complete')
-            AND um.meta_value IS NOT NULL
-            AND um.meta_value != ''
-        ", $date_from, $date_to));
-        
-        if (!empty($mp_referrals) && $mp_referrals[0]->referral_count > 0) {
-            return intval($mp_referrals[0]->referral_count);
-        }
-    }
-    
-    return 0; // fallback if no referrals found
+
+    return (int) $referrals_count;
 }
 
 // Temporary debug function - remove after testing
@@ -7396,6 +7334,34 @@ function get_other_active_memberships($date_from, $date_to) {
     $expired_program_count = count($members_with_expired_program);
     $only_other = $total_unique - $overlap_count - $expired_program_count;
 
+    $competitive_ids = array_fill_keys(array_map('intval', array_column($competitive_members, 'user_id')), true);
+    $mentoring_ids = array_fill_keys(array_map('intval', array_column($mentoring_members, 'user_id')), true);
+    $active_program_ids = $members_with_active_program;
+
+    $only_competitive = 0;
+    $only_mentoring = 0;
+    $student_and_competitive = 0;
+    $student_and_mentoring = 0;
+    $student_competitive_and_mentoring = 0;
+
+    foreach (array_keys($all_other_member_ids) as $user_id) {
+        $has_competitive = isset($competitive_ids[$user_id]);
+        $has_mentoring = isset($mentoring_ids[$user_id]);
+        $has_active_program = isset($active_program_ids[$user_id]);
+
+        if ($has_active_program && $has_competitive && $has_mentoring) {
+            $student_competitive_and_mentoring++;
+        } elseif ($has_active_program && $has_competitive) {
+            $student_and_competitive++;
+        } elseif ($has_active_program && $has_mentoring) {
+            $student_and_mentoring++;
+        } elseif (!$has_active_program && $has_competitive && !$has_mentoring) {
+            $only_competitive++;
+        } elseif (!$has_active_program && $has_mentoring && !$has_competitive) {
+            $only_mentoring++;
+        }
+    }
+
     return [
         'competitive_team' => $competitive_members,
         'wcb_mentoring' => $mentoring_members,
@@ -7404,7 +7370,12 @@ function get_other_active_memberships($date_from, $date_to) {
         'total_unique' => $total_unique,
         'overlap_with_active_programs' => $overlap_count,
         'with_expired_programs' => $expired_program_count,
-        'only_other_memberships' => $only_other
+        'only_other_memberships' => $only_other,
+        'only_competitive' => $only_competitive,
+        'only_mentoring' => $only_mentoring,
+        'student_and_competitive' => $student_and_competitive,
+        'student_and_mentoring' => $student_and_mentoring,
+        'student_competitive_and_mentoring' => $student_competitive_and_mentoring
     ];
 }
 

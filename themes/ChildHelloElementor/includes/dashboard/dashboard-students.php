@@ -328,7 +328,7 @@ function wcb_get_membership_status_counts() {
     $paid_stripe_count = wcb_get_paid_stripe_members_count();
 
     // Get WCB Mentoring members count (MemberPress + processed referrals)
-    $wcb_mentoring_count = wcb_get_program_member_count($wcb_mentoring_id);
+    $wcb_mentoring_count = function_exists('wcb_get_mentoring_program_members') ? count(wcb_get_mentoring_program_members()) : wcb_get_program_member_count($wcb_mentoring_id);
 
     return [
         'active' => (int) $total_active_count,
@@ -356,23 +356,53 @@ function wcb_get_paid_stripe_members_count() {
         return 0;
     }
     
-    $wcb_mentoring_id = 1738;
-    $competitive_team_id = 1932;
-    
-    // Get members with Stripe payments (excluding mentoring and competitive)
+    $defined_groups = [
+        'Mini Cadet Boys (9-11 Years) Group 1',
+        'Cadet Boys Group 1',
+        'Cadet Boys Group 2',
+        'Youth Boys Group 1',
+        'Youth Boys Group 2',
+        'Mini Cadets Girls Group 1',
+        'Youth Girls Group 1'
+    ];
+
+    $all_groups = $wpdb->get_results("SELECT ID, post_title FROM {$wpdb->posts} WHERE post_type = 'memberpressgroup' AND post_status IN ('publish', 'private') ORDER BY post_title");
+    $program_membership_ids = [];
+
+    foreach ($defined_groups as $group_name) {
+        foreach ($all_groups as $group) {
+            if (strcasecmp($group->post_title, $group_name) === 0) {
+                $group_memberships = wcb_get_group_memberships($group->ID);
+                if (!empty($group_memberships)) {
+                    foreach ($group_memberships as $membership) {
+                        $program_membership_ids[] = $membership->ID;
+                    }
+                }
+                break;
+            }
+        }
+    }
+
+    if (empty($program_membership_ids)) {
+        return 0;
+    }
+
+    $placeholders = implode(',', array_fill(0, count($program_membership_ids), '%d'));
+
+    // Get Stripe members from the 7 core student program groups only.
     $stripe_members = $wpdb->get_results($wpdb->prepare("
         SELECT DISTINCT u.ID
         FROM {$wpdb->users} u
         JOIN {$txn_table} t ON u.ID = t.user_id
         WHERE t.status IN ('confirmed', 'complete')
         AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-        AND t.product_id NOT IN (%d, %d)
+        AND t.product_id IN ({$placeholders})
         AND u.user_login != 'bwgdev'
         AND t.gateway IS NOT NULL
         AND t.gateway != ''
         AND t.gateway != 'manual'
         AND (t.gateway LIKE '%%stripe%%' OR t.gateway REGEXP '^sz[a-z0-9\\-]+$')
-    ", $wcb_mentoring_id, $competitive_team_id));
+    ", $program_membership_ids));
     
     return count($stripe_members);
 }
@@ -1076,6 +1106,7 @@ function wcb_ajax_load_dashboard_students_table() {
 
     // Step 2: Filter by groups (same as active-members-test.php)
     $all_program_members = [];
+    $program_membership_ids = [];
 
     foreach ($defined_groups as $group_name) {
         // Find the group - exact matching (same as active-members-test.php)
@@ -1096,6 +1127,7 @@ function wcb_ajax_load_dashboard_students_table() {
 
         if (!empty($group_memberships)) {
             $membership_ids = array_map(function($m) { return $m->ID; }, $group_memberships);
+            $program_membership_ids = array_merge($program_membership_ids, $membership_ids);
 
             // Check each active member to see if they belong to this group (same as active-members-test.php)
             foreach ($all_active_members as $active_member) {
@@ -1186,6 +1218,9 @@ function wcb_ajax_load_dashboard_students_table() {
     } elseif ($membership_status === 'paid_stripe') {
         // Filter for Stripe/paid members only
         $target_members = [];
+        $program_membership_ids = array_values(array_unique(array_map('intval', $program_membership_ids)));
+        $program_placeholders = !empty($program_membership_ids) ? implode(',', array_fill(0, count($program_membership_ids), '%d')) : '0';
+
         foreach ($filtered_members as $member) {
             $has_stripe = $wpdb->get_var($wpdb->prepare("
                 SELECT COUNT(*)
@@ -1193,12 +1228,12 @@ function wcb_ajax_load_dashboard_students_table() {
                 WHERE t.user_id = %d
                 AND t.status IN ('confirmed', 'complete')
                 AND (t.expires_at IS NULL OR t.expires_at > NOW() OR t.expires_at = '0000-00-00 00:00:00')
-                AND t.product_id NOT IN (%d, %d)
+                AND t.product_id IN ({$program_placeholders})
                 AND t.gateway IS NOT NULL
                 AND t.gateway != ''
                 AND t.gateway != 'manual'
                 AND (t.gateway LIKE '%%stripe%%' OR t.gateway REGEXP '^sz[a-z0-9\\\\-]+$')
-            ", $member->ID, $wcb_mentoring_id, $competitive_team_id));
+            ", array_merge([$member->ID], $program_membership_ids)));
             
             if ($has_stripe > 0) {
                 $target_members[] = $member;
