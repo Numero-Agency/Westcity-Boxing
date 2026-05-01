@@ -73,6 +73,9 @@ function wcb_load_files() {
         'shortcodes/community-class.php',
         'shortcodes/single-referral.php',
         
+        // Admin (settings pages)
+        'admin/instructors-settings.php',
+
         // Forms
         'forms/class-session-form.php',
         'forms/intervention-form.php',

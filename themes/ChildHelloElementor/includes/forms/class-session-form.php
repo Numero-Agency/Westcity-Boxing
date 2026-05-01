@@ -121,8 +121,10 @@ function wcb_class_session_form_shortcode() {
     
     // Note: Members will be loaded dynamically via AJAX when a group is selected
     
-    // Define coaches list
-    $coaches = [
+    // Instructors list — managed via Settings → Instructors. Falls back to the
+    // default list when the option has never been saved, so behaviour is
+    // unchanged until an admin edits the list.
+    $coaches = function_exists('wcb_get_instructors') ? wcb_get_instructors() : [
         'Xarisma Paga',
         'Dion Tafa',
         'Hala Houma',
@@ -130,7 +132,7 @@ function wcb_class_session_form_shortcode() {
         'Zarah Kumar',
         'Sebastian Grey',
         'Matthew Grey',
-        'Shamil Kumar'
+        'Shamil Kumar',
     ];
     
     // Get schools for dropdown - try both possible post type names
