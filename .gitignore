@@ -62,3 +62,6 @@ session-*.md
 /README.md
 themes/ChildHelloElementor/docs/
 *.md.bak
+
+# PHP error logs written into theme folders
+error_log
