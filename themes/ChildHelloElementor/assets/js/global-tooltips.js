@@ -106,7 +106,8 @@
             },
             content: function() {
                 // Support for both title and data-tooltip attributes
-                return $(this).attr('data-tooltip') || $(this).attr('title');
+                // Render as plain text so names or notes in titles can't inject HTML
+                return $('<div>').text($(this).attr('data-tooltip') || $(this).attr('title') || '').html();
             }
         };
         

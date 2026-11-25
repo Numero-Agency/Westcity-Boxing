@@ -1063,6 +1063,8 @@ add_shortcode('dashboard_students', 'dashboard_students_shortcode');
  * AJAX handler for loading dashboard students table using proven logic
  */
 function wcb_ajax_load_dashboard_students_table() {
+    wcb_ajax_require_staff();
+
     if (!wp_verify_nonce($_POST['nonce'], 'wcb_nonce')) {
         wp_die('Security check failed');
     }
@@ -1349,7 +1351,6 @@ function wcb_ajax_load_dashboard_students_table() {
     ]);
 }
 add_action('wp_ajax_wcb_load_dashboard_students_table', 'wcb_ajax_load_dashboard_students_table');
-add_action('wp_ajax_nopriv_wcb_load_dashboard_students_table', 'wcb_ajax_load_dashboard_students_table');
 
 /**
  * Generate students table HTML
@@ -1773,6 +1774,8 @@ function wcb_generate_pagination_html($current_page, $total_pages, $total_items)
  * AJAX handler for dashboard student search
  */
 function wcb_ajax_dashboard_search_students() {
+    wcb_ajax_require_staff();
+
     if (!wp_verify_nonce($_POST['nonce'], 'wcb_nonce')) {
         wp_die('Security check failed');
     }
@@ -1813,7 +1816,6 @@ function wcb_ajax_dashboard_search_students() {
     wp_send_json_success($results);
 }
 add_action('wp_ajax_wcb_dashboard_search_students', 'wcb_ajax_dashboard_search_students');
-add_action('wp_ajax_nopriv_wcb_dashboard_search_students', 'wcb_ajax_dashboard_search_students');
 
 /**
  * Dashboard Students Component - Enhanced Student Management Interface
@@ -1824,6 +1826,8 @@ if (!function_exists('wcb_get_student_payment_status')) {
     require_once WCB_INCLUDES_PATH . '/shortcodes/student-table.php';
 }
 function wcb_ajax_get_student_stats() {
+    wcb_ajax_require_staff();
+
     if (!wp_verify_nonce($_POST['nonce'], 'wcb_nonce')) {
         wp_die('Security check failed');
     }
@@ -1832,12 +1836,13 @@ function wcb_ajax_get_student_stats() {
     wp_send_json_success($stats);
 }
 add_action('wp_ajax_wcb_get_student_stats', 'wcb_ajax_get_student_stats');
-add_action('wp_ajax_nopriv_wcb_get_student_stats', 'wcb_ajax_get_student_stats');
 
 /**
  * AJAX handler for exporting students
  */
 function wcb_ajax_export_students() {
+    wcb_ajax_require_staff();
+
     if (!wp_verify_nonce($_GET['nonce'], 'wcb_nonce')) {
         wp_die('Security check failed');
     }
@@ -2090,4 +2095,3 @@ function wcb_ajax_export_students() {
     exit;
 }
 add_action('wp_ajax_wcb_export_students', 'wcb_ajax_export_students');
-add_action('wp_ajax_nopriv_wcb_export_students', 'wcb_ajax_export_students');

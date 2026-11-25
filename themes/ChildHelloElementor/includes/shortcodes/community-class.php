@@ -1467,6 +1467,8 @@ add_shortcode('wcb_community_class', 'community_class_shortcode');
 
 // Load Community Members
 function wcb_ajax_load_community_members() {
+    wcb_ajax_require_staff();
+
     if (!wp_verify_nonce($_POST['nonce'], 'wcb_nonce')) {
         wp_die('Security check failed');
     }
@@ -1534,10 +1536,11 @@ function wcb_ajax_load_community_members() {
     ]);
 }
 add_action('wp_ajax_wcb_load_community_members', 'wcb_ajax_load_community_members');
-add_action('wp_ajax_nopriv_wcb_load_community_members', 'wcb_ajax_load_community_members');
 
 // Load Community Sessions
 function wcb_ajax_load_community_sessions() {
+    wcb_ajax_require_staff();
+
     if (!wp_verify_nonce($_POST['nonce'], 'wcb_nonce')) {
         wp_die('Security check failed');
     }
@@ -1707,10 +1710,11 @@ function wcb_ajax_load_community_sessions() {
     ]);
 }
 add_action('wp_ajax_wcb_load_community_sessions', 'wcb_ajax_load_community_sessions');
-add_action('wp_ajax_nopriv_wcb_load_community_sessions', 'wcb_ajax_load_community_sessions');
 
 // Load Members for Attendance
 function wcb_ajax_load_members_for_attendance() {
+    wcb_ajax_require_session_logger();
+
     if (!wp_verify_nonce($_POST['nonce'], 'wcb_nonce')) {
         wp_die('Security check failed');
     }
@@ -1748,6 +1752,8 @@ add_action('wp_ajax_nopriv_wcb_load_members_for_attendance', 'wcb_ajax_load_memb
 
 // Add Community Session
 function wcb_ajax_add_community_session() {
+    wcb_ajax_require_session_logger();
+
     if (!wp_verify_nonce($_POST['nonce'], 'wcb_nonce')) {
         wp_die('Security check failed');
     }
@@ -1813,6 +1819,8 @@ add_action('wp_ajax_nopriv_wcb_add_community_session', 'wcb_ajax_add_community_s
 
 // Get Session Details
 function wcb_ajax_get_session_details() {
+    wcb_ajax_require_staff();
+
     if (!wp_verify_nonce($_POST['nonce'], 'wcb_nonce')) {
         wp_die('Security check failed');
     }
@@ -1922,7 +1930,6 @@ function wcb_ajax_get_session_details() {
     wp_send_json_success($session_data);
 }
 add_action('wp_ajax_wcb_get_session_details', 'wcb_ajax_get_session_details');
-add_action('wp_ajax_nopriv_wcb_get_session_details', 'wcb_ajax_get_session_details');
 
 // Helper Functions
 
@@ -2289,6 +2296,8 @@ function wcb_get_member_expiry($user_id) {
 
 // AJAX handler for getting community member details
 function wcb_ajax_get_community_member_details() {
+    wcb_ajax_require_staff();
+
     if (!wp_verify_nonce($_POST['nonce'], 'wcb_nonce')) {
         wp_die('Security check failed');
     }
@@ -2381,7 +2390,6 @@ function wcb_ajax_get_community_member_details() {
     ]);
 }
 add_action('wp_ajax_wcb_get_community_member_details', 'wcb_ajax_get_community_member_details');
-add_action('wp_ajax_nopriv_wcb_get_community_member_details', 'wcb_ajax_get_community_member_details');
 
 // Helper function to get user subscription details
 function wcb_get_user_subscription_details($user_id) {

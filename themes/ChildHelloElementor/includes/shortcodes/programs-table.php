@@ -173,7 +173,7 @@ function programs_table_shortcode($atts) {
             
             // Update header title with sign-up button if applicable
             var signupUrl = getSignupUrl(programName);
-            var titleHtml = '<span class="dashicons dashicons-awards"></span> ' + programName;
+            var titleHtml = '<span class="dashicons dashicons-awards"></span> ' + $('<div>').text(programName).html();
             if (signupUrl) {
                 titleHtml += '<a href="' + signupUrl + '" target="_blank" class="program-signup-btn-inline">' +
                            '<span class="dashicons dashicons-plus-alt"></span> Sign Up</a>';
@@ -1022,6 +1022,8 @@ function wcb_get_program_signup_url($program_title) {
 
 // AJAX Handler for loading programs table
 function wcb_ajax_load_programs_table() {
+    wcb_ajax_require_staff();
+
     // Verify nonce
     if (!wp_verify_nonce($_POST['nonce'], 'wcb_nonce')) {
         wp_send_json_error('Security check failed');
@@ -1182,10 +1184,11 @@ function wcb_ajax_load_programs_table() {
     ]);
 }
 add_action('wp_ajax_wcb_load_programs_table', 'wcb_ajax_load_programs_table');
-add_action('wp_ajax_nopriv_wcb_load_programs_table', 'wcb_ajax_load_programs_table');
 
 // AJAX Handler for loading program details
 function wcb_ajax_load_program_details() {
+    wcb_ajax_require_staff();
+
     // Verify nonce
     if (!wp_verify_nonce($_POST['nonce'], 'wcb_nonce')) {
         wp_send_json_error('Security check failed');
@@ -1481,7 +1484,6 @@ function wcb_ajax_load_program_details() {
     ]);
 }
 add_action('wp_ajax_wcb_load_program_details', 'wcb_ajax_load_program_details');
-add_action('wp_ajax_nopriv_wcb_load_program_details', 'wcb_ajax_load_program_details');
 
 // AJAX Handler for manually fixing mentoring sessions
 function wcb_ajax_fix_mentoring_sessions() {

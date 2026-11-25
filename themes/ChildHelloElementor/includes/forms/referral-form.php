@@ -692,8 +692,9 @@ if (!function_exists('wcb_add_referral_settings_page')) {
 
 if (!function_exists('wcb_referral_notifications_page')) {
     function wcb_referral_notifications_page() {
-        if (isset($_POST['submit'])) {
-            update_option('wcb_referral_notification_emails', sanitize_textarea_field($_POST['notification_emails']));
+        if (isset($_POST['submit']) && current_user_can('manage_options')) {
+            check_admin_referer('wcb_referral_notifications');
+            update_option('wcb_referral_notification_emails', sanitize_textarea_field(wp_unslash($_POST['notification_emails'] ?? '')));
             echo '<div class="notice notice-success"><p>Settings saved!</p></div>';
         }
         
@@ -702,6 +703,7 @@ if (!function_exists('wcb_referral_notifications_page')) {
         <div class="wrap">
             <h1>Referral Notification Settings</h1>
             <form method="post">
+                <?php wp_nonce_field('wcb_referral_notifications'); ?>
                 <table class="form-table">
                     <tr>
                         <th scope="row">Notification Email Addresses</th>
@@ -729,7 +731,7 @@ if (!function_exists('wcb_referral_notifications_page')) {
                         <?php endif;
                     endforeach;
                 else: ?>
-                    <li><strong>Fallback:</strong> <?php echo get_option('admin_email'); ?> (WordPress Admin Email - only used if no custom emails are set)</li>
+                    <li><strong>Fallback:</strong> <?php echo esc_html(get_option('admin_email')); ?> (WordPress Admin Email - only used if no custom emails are set)</li>
                 <?php endif; ?>
             </ul>
             

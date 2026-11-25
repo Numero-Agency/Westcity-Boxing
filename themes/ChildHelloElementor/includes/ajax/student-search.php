@@ -239,6 +239,8 @@ add_shortcode('student_search', 'student_search_shortcode');
 
 // AJAX Handler for student search
 function wcb_ajax_search_students() {
+    wcb_ajax_require_staff();
+
     // Verify nonce
     if (!wp_verify_nonce($_POST['nonce'], 'wcb_nonce')) {
         wp_send_json_error('Security check failed');
@@ -310,4 +312,3 @@ function wcb_ajax_search_students() {
     ]);
 }
 add_action('wp_ajax_wcb_search_students', 'wcb_ajax_search_students');
-add_action('wp_ajax_nopriv_wcb_search_students', 'wcb_ajax_search_students');

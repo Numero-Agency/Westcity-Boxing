@@ -55,3 +55,10 @@ languages/
 
 # Local session transcripts
 session-*.md
+
+# Developer docs: keep locally, never deploy (wp-content is web-served)
+/CLAUDE.md
+/AGENTS.md
+/README.md
+themes/ChildHelloElementor/docs/
+*.md.bak

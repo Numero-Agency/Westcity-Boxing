@@ -1,0 +1,9 @@
+# Theme PHP is loaded by WordPress internally and must never be requested
+# directly. Only the two admin tools below are meant to be opened in a browser
+# (both check for a logged-in administrator and a nonce).
+<FilesMatch "\.(php|phtml|md|rtf|log|txt|sql|bak|disabled)$">
+    Require all denied
+</FilesMatch>
+<FilesMatch "^(manual-membership-assignment|cleanup-waitlist-memberships)\.php$">
+    Require all granted
+</FilesMatch>

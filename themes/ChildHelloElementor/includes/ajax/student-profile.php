@@ -215,6 +215,8 @@ add_shortcode('student_profile_container', 'student_profile_container_shortcode'
 
 // AJAX Handler for loading student profile
 function wcb_ajax_load_student_profile() {
+    wcb_ajax_require_staff();
+
     // Verify nonce
     if (!wp_verify_nonce($_POST['nonce'], 'wcb_nonce')) {
         wp_send_json_error('Security check failed');
@@ -420,4 +422,3 @@ function wcb_ajax_load_student_profile() {
     ]);
 }
 add_action('wp_ajax_wcb_load_student_profile', 'wcb_ajax_load_student_profile');
-add_action('wp_ajax_nopriv_wcb_load_student_profile', 'wcb_ajax_load_student_profile');

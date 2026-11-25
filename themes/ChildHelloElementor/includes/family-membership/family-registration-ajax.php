@@ -107,7 +107,6 @@ function wcb_ajax_add_family_child() {
     ]);
 }
 add_action('wp_ajax_wcb_add_family_child', 'wcb_ajax_add_family_child');
-add_action('wp_ajax_nopriv_wcb_add_family_child', 'wcb_ajax_add_family_child');
 
 /**
  * Edit Child AJAX Handler
@@ -218,7 +217,6 @@ function wcb_ajax_edit_family_child() {
     ]);
 }
 add_action('wp_ajax_wcb_edit_family_child', 'wcb_ajax_edit_family_child');
-add_action('wp_ajax_nopriv_wcb_edit_family_child', 'wcb_ajax_edit_family_child');
 
 /**
  * Remove Child AJAX Handler
@@ -282,7 +280,6 @@ function wcb_ajax_remove_family_child() {
     ]);
 }
 add_action('wp_ajax_wcb_remove_family_child', 'wcb_ajax_remove_family_child');
-add_action('wp_ajax_nopriv_wcb_remove_family_child', 'wcb_ajax_remove_family_child');
 
 /**
  * Get Child Details AJAX Handler
@@ -338,7 +335,6 @@ function wcb_ajax_get_family_child_details() {
     ]);
 }
 add_action('wp_ajax_wcb_get_family_child_details', 'wcb_ajax_get_family_child_details');
-add_action('wp_ajax_nopriv_wcb_get_family_child_details', 'wcb_ajax_get_family_child_details');
 
 /**
  * Link Child to Parent AJAX Handler
@@ -377,7 +373,6 @@ function wcb_ajax_link_child_to_parent() {
     }
 }
 add_action('wp_ajax_wcb_link_child_to_parent', 'wcb_ajax_link_child_to_parent');
-add_action('wp_ajax_nopriv_wcb_link_child_to_parent', 'wcb_ajax_link_child_to_parent');
 
 /**
  * Get Member Details AJAX Handler
@@ -467,7 +462,6 @@ function wcb_ajax_get_member_details() {
     ]);
 }
 add_action('wp_ajax_wcb_get_member_details', 'wcb_ajax_get_member_details');
-add_action('wp_ajax_nopriv_wcb_get_member_details', 'wcb_ajax_get_member_details');
 
 /**
  * Send Parent Invitation AJAX Handler

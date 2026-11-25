@@ -842,6 +842,8 @@ function wcb_handle_class_session_submission() {
 
 // AJAX handler for loading group members
 function wcb_ajax_load_group_members() {
+    wcb_ajax_require_session_logger();
+
     // Verify nonce
     if (!wp_verify_nonce($_POST['nonce'], 'wcb_load_group_members')) {
         wp_die('Security check failed');
@@ -936,7 +938,6 @@ function wcb_load_group_members_data($group_id, $group_name) {
         $members[] = [
             'id' => $member->ID,
             'name' => $member->display_name,
-            'email' => $member->user_email
         ];
     }
 
@@ -979,7 +980,6 @@ function wcb_load_membership_members_data($membership_id, $membership_name) {
         $members[] = [
             'id' => $member->ID,
             'name' => $member->display_name,
-            'email' => $member->user_email
         ];
     }
 
@@ -1023,6 +1023,8 @@ function wcb_get_standalone_memberships() {
 
 // AJAX handler for loading school students
 function wcb_ajax_load_school_students() {
+    wcb_ajax_require_session_logger();
+
     // Verify nonce
     if (!wp_verify_nonce($_POST['nonce'], 'wcb_load_school_students')) {
         wp_send_json_error('Security check failed - nonce invalid');

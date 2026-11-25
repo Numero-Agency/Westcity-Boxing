@@ -39,6 +39,9 @@ define('WCB_INCLUDES_PATH', WCB_THEME_PATH . '/includes');
 // Auto-loader for our custom files
 function wcb_load_files() {
     $files = [
+        // Access control (load first: used by everything below)
+        'security/access.php',
+
         // Post Types
         'post-types/schools.php',
         
@@ -75,6 +78,7 @@ function wcb_load_files() {
         
         // Admin (settings pages)
         'admin/instructors-settings.php',
+        'admin/memberpress-additional-membership.php',
 
         // Forms
         'forms/class-session-form.php',
@@ -188,28 +192,35 @@ function wcb_register_custom_post_types() {
 }
 add_action('init', 'wcb_register_custom_post_types');
 
-// Block direct front-end access to private CRM content (referrals, session logs,
-// session_type taxonomy archives). Logged-out visitors and non-staff users are
-// redirected to the home page. Staff = anyone who can edit_posts or has the
-// 'coach' role.
+// Block direct front-end access to private CRM content (single pages,
+// archives, feeds and taxonomy pages for referrals, session logs, community
+// sessions, competitions, schools and family records). Non-staff visitors are
+// redirected to the home page. Staff = wcb_is_staff() (edit_posts or 'coach').
 add_action('template_redirect', 'wcb_protect_private_crm_content', 1);
 
 function wcb_protect_private_crm_content() {
     if (is_admin() || wp_doing_ajax() || wp_doing_cron()) {
         return;
     }
+
+    $private_types = wcb_private_post_types();
+    $queried_types = array_filter((array) get_query_var('post_type'));
+
+    // ?p=ID / ?page_id=ID: WordPress would otherwise canonical-redirect to the
+    // post's pretty URL, leaking its slug (referral slugs contain names).
+    $queried_id = (int) get_query_var('p') ?: (int) get_query_var('page_id');
+
     $is_private_content =
-        is_singular('referral') ||
-        is_singular('session_log') ||
-        is_tax('session_type');
-    if (!$is_private_content) {
+        is_singular($private_types) ||
+        is_post_type_archive($private_types) ||
+        is_tax(wcb_private_taxonomies()) ||
+        (!empty($queried_types) && array_intersect($queried_types, $private_types)) ||
+        ($queried_id && in_array(get_post_type($queried_id), $private_types, true));
+
+    if (!$is_private_content || wcb_is_staff()) {
         return;
     }
-    $current_user = wp_get_current_user();
-    $is_staff = current_user_can('edit_posts') || in_array('coach', (array) $current_user->roles, true);
-    if ($is_staff) {
-        return;
-    }
+
     wp_safe_redirect(home_url('/'), 302);
     exit;
 }
@@ -483,15 +494,12 @@ add_action('init', 'wcb_register_shortcodes');
 function wcb_register_ajax_handlers() {
     // Student search AJAX
     add_action('wp_ajax_wcb_search_students', 'wcb_ajax_search_students');
-    add_action('wp_ajax_nopriv_wcb_search_students', 'wcb_ajax_search_students');
     
     // Student profile AJAX
     add_action('wp_ajax_wcb_load_student_profile', 'wcb_ajax_load_student_profile');
-    add_action('wp_ajax_nopriv_wcb_load_student_profile', 'wcb_ajax_load_student_profile');
     
     // Student table AJAX
     add_action('wp_ajax_wcb_load_students_table', 'wcb_ajax_load_students_table');
-    add_action('wp_ajax_nopriv_wcb_load_students_table', 'wcb_ajax_load_students_table');
 }
 add_action('init', 'wcb_register_ajax_handlers');
 
@@ -787,17 +795,6 @@ function wcb_handle_competition_template($template) {
 }
 add_filter('template_include', 'wcb_handle_competition_template');
 
-// Manual function to clear competition database (for testing)
-function wcb_clear_competitions_database() {
-    if (current_user_can('manage_options')) {
-        global $wpdb;
-        $table_name = $wpdb->prefix . 'wcb_competitions';
-        $wpdb->query("DELETE FROM $table_name");
-        wp_redirect(add_query_arg('cleared', '1', wp_get_referer()));
-        exit;
-    }
-}
-
 // Filter to exclude monthly memberships from MemberPress group pages
 function wcb_filter_monthly_memberships_from_group_display($output, $product, $group, $preview) {
     // Check if this is a monthly membership
@@ -810,54 +807,14 @@ function wcb_filter_monthly_memberships_from_group_display($output, $product, $g
     return $output;
 }
 add_filter('mepr-group-page-item-output', 'wcb_filter_monthly_memberships_from_group_display', 10, 4);
-add_action('wp_ajax_wcb_clear_competitions', 'wcb_clear_competitions_database');
 
-// Manual function to create competition page (for testing)
-function wcb_manual_create_competition_page() {
-    if (current_user_can('manage_options')) {
-        wcb_create_competition_page();
-        wp_redirect(add_query_arg('page_created', '1', wp_get_referer()));
-        exit;
-    }
-}
-add_action('wp_ajax_wcb_create_competition_page', 'wcb_manual_create_competition_page');
-
-// Create test competition for debugging
-function wcb_create_test_competition() {
-    if (current_user_can('manage_options')) {
-        // Include database helper
-        if (!class_exists('WCB_Competition_DB')) {
-            wp_die('Competition database helper not available');
-        }
-        
-        // Create test competition
-        $competition_data = [
-            'event_name' => 'Test Competition',
-            'event_date' => date('Y-m-d'),
-            'event_location' => 'Test Location',
-            'supporters' => 'Test supporters',
-            'results_wins' => 3,
-            'results_losses' => 1,
-            'highlights' => 'Test highlights',
-            'conversations' => 'Test conversations',
-            'created_by' => get_current_user_id()
-        ];
-        
-        $competition_id = WCB_Competition_DB::insert_competition($competition_data);
-        
-        if ($competition_id) {
-            wp_redirect(add_query_arg('test_created', $competition_id, wp_get_referer()));
-        } else {
-            wp_redirect(add_query_arg('test_failed', '1', wp_get_referer()));
-        }
-        exit;
-    }
-}
-add_action('wp_ajax_wcb_create_test_competition', 'wcb_create_test_competition');
 
 // Include family membership system
 require_once get_stylesheet_directory() . '/includes/family-membership/family-membership-setup.php';
 require_once get_stylesheet_directory() . '/includes/family-membership/family-registration-ajax.php';
 require_once get_stylesheet_directory() . '/includes/family-membership/family-dashboard.php';
 require_once get_stylesheet_directory() . '/includes/family-membership/parent-registration.php';
-require_once get_stylesheet_directory() . '/includes/family-membership/create-test-data.php';
+// Test-data tools are for local development only.
+if (function_exists('wp_get_environment_type') && wp_get_environment_type() === 'local') {
+    require_once get_stylesheet_directory() . '/includes/family-membership/create-test-data.php';
+}

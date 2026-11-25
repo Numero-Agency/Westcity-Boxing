@@ -219,7 +219,7 @@ function student_table_shortcode($atts) {
             }
             
             // Update header title
-            $('.student-table-header h3').html('<span class="dashicons dashicons-admin-users"></span> ' + studentName);
+            $('.student-table-header h3').html('<span class="dashicons dashicons-admin-users"></span> ').append(document.createTextNode(' ' + studentName));
             
             // Hide table content and pagination
             $('.student-table-content, .pagination').hide();
@@ -260,7 +260,7 @@ function student_table_shortcode($atts) {
                 return;
             }
 
-            $('.student-table-header h3').html('<span class="dashicons dashicons-admin-users"></span> ' + studentName);
+            $('.student-table-header h3').html('<span class="dashicons dashicons-admin-users"></span> ').append(document.createTextNode(' ' + studentName));
             $('.student-table-content, .pagination').hide();
             $('#table-profile-overlay .profile-overlay-content').html(
                 '<div class="profile-loading"><p>Loading referral profile...</p></div>'
@@ -1971,6 +1971,8 @@ function wcb_get_user_session_count($user_id) {
 
 // AJAX Handler for loading students table
 function wcb_ajax_load_students_table() {
+    wcb_ajax_require_staff();
+
     // Verify nonce
     if (!wp_verify_nonce($_POST['nonce'], 'wcb_nonce')) {
         wp_send_json_error('Security check failed');
@@ -2377,7 +2379,6 @@ function wcb_ajax_load_students_table() {
     ]);
 }
 add_action('wp_ajax_wcb_load_students_table', 'wcb_ajax_load_students_table');
-add_action('wp_ajax_nopriv_wcb_load_students_table', 'wcb_ajax_load_students_table');
 
 // Helper function to get group for a membership ID
 function wcb_get_membership_group($membership_id) {
@@ -2767,6 +2768,8 @@ add_action('wp_ajax_wcb_associate_monthly_memberships', 'wcb_ajax_associate_mont
 
 // AJAX Handler for loading student profile overlay
 function wcb_ajax_load_student_profile_overlay() {
+    wcb_ajax_require_staff();
+
     // Verify nonce
     if (!wp_verify_nonce($_POST['nonce'], 'wcb_nonce')) {
         wp_send_json_error('Security check failed');
@@ -3320,9 +3323,10 @@ function wcb_ajax_load_student_profile_overlay() {
     ]);
 }
 add_action('wp_ajax_wcb_load_student_profile_overlay', 'wcb_ajax_load_student_profile_overlay');
-add_action('wp_ajax_nopriv_wcb_load_student_profile_overlay', 'wcb_ajax_load_student_profile_overlay');
 
 function wcb_ajax_load_referral_profile_overlay() {
+    wcb_ajax_require_staff();
+
     if (!wp_verify_nonce($_POST['nonce'], 'wcb_nonce')) {
         wp_send_json_error('Security check failed');
         return;
@@ -3612,7 +3616,6 @@ function wcb_ajax_load_referral_profile_overlay() {
     ]);
 }
 add_action('wp_ajax_wcb_load_referral_profile_overlay', 'wcb_ajax_load_referral_profile_overlay');
-add_action('wp_ajax_nopriv_wcb_load_referral_profile_overlay', 'wcb_ajax_load_referral_profile_overlay');
 
 // Get detailed payment information for student profile
 function wcb_get_student_detailed_payment_info($user_id) {
