@@ -1082,7 +1082,7 @@ function wcb_ajax_load_programs_table() {
 
     // Add Schools to the programs array
     // Try different possible post type names
-    $possible_school_types = ['schools', 'school', 'wcb_schools', 'wcb_school'];
+    $possible_school_types = ['school'];
     $schools_found = false;
     
     foreach ($possible_school_types as $post_type_name) {
@@ -2303,9 +2303,12 @@ function wcb_get_school_students($school_id) {
                 $dob = $student['date_of_birth'];
                 
                 try {
-                    // ACF date picker can return dates in different formats
-                    // Try to parse the date
-                    $birth_date = new DateTime($dob);
+                    // The school Date of Birth field returns d/m/Y, which
+                    // DateTime can't parse directly; also accept Ymd / Y-m-d.
+                    $birth_date = DateTime::createFromFormat('!d/m/Y', $dob)
+                        ?: DateTime::createFromFormat('!Ymd', $dob)
+                        ?: new DateTime($dob);
+                    $dob = $birth_date->format('Y-m-d');
                     $today = new DateTime();
                     $age_diff = $today->diff($birth_date);
                     $age = $age_diff->y . ' years';

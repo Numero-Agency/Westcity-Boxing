@@ -6278,7 +6278,7 @@ function get_longest_wait_time($waitlist_members) {
 
 // NEW: Function to get schools data
 function get_schools_data() {
-    $possible_school_types = ['schools', 'school', 'wcb_schools', 'wcb_school'];
+    $possible_school_types = ['school'];
     $schools_data = [];
 
     foreach ($possible_school_types as $post_type_name) {

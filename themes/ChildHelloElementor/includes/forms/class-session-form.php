@@ -135,27 +135,15 @@ function wcb_class_session_form_shortcode() {
         'Shamil Kumar',
     ];
     
-    // Get schools for dropdown - try both possible post type names
+    // Schools for the dropdown (ACF `school` post type)
     $schools = get_posts([
-        'post_type' => 'schools',
+        'post_type' => 'school',
         'post_status' => 'publish',
         'posts_per_page' => -1,
         'orderby' => 'title',
         'order' => 'ASC'
     ]);
-    
-    // If no schools found, try singular form
-    if (empty($schools)) {
-        $schools = get_posts([
-            'post_type' => 'school',
-            'post_status' => 'publish',
-            'posts_per_page' => -1,
-            'orderby' => 'title',
-            'order' => 'ASC'
-        ]);
-    }
 
-    
     ob_start();
     ?>
     <div class="wcb-form-container">
